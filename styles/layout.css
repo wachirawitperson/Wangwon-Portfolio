@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Layout Styles
+   Layout Styles - Header, Hero Intro, Containers, Action Bar & Footer
    ========================================================================== */
 
 /* Top Navigation / App Header */
@@ -13,9 +13,9 @@
 }
 
 .header-inner {
-  max-width: 1400px;
+  max-width: 1280px;
   margin: 0 auto;
-  padding: var(--space-4) var(--space-6);
+  padding: var(--space-3) var(--space-6);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -32,8 +32,8 @@
 .brand-logo-icon {
   width: 44px;
   height: 44px;
-  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
-  color: #ffffff;
+  background: linear-gradient(135deg, var(--color-primary), #3b82f6);
+  color: var(--color-text-inverse);
   border-radius: var(--radius-md);
   display: flex;
   align-items: center;
@@ -50,9 +50,9 @@
 
 .app-title {
   font-size: var(--font-size-xl);
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   color: var(--color-primary);
-  line-height: 1.2;
+  line-height: var(--line-height-tight);
 }
 
 .app-subtitle {
@@ -60,17 +60,25 @@
   color: var(--color-text-muted);
 }
 
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+/* Privacy Indicator */
 .privacy-badge {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  background-color: var(--color-success-bg);
+  background-color: var(--color-success-soft);
   color: var(--color-success);
-  border: 1px solid #bbf7d0;
-  padding: var(--space-1) var(--space-3);
-  border-radius: 9999px;
+  border: 1px solid var(--color-success-border);
+  padding: 4px var(--space-3);
+  border-radius: var(--radius-pill);
   font-size: var(--font-size-xs);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .privacy-dot {
@@ -79,14 +87,49 @@
   background-color: var(--color-success);
   border-radius: 50%;
   display: inline-block;
+  flex-shrink: 0;
+}
+
+/* Hero / Compact Intro Block */
+.app-intro-card {
+  background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%);
+  border: 1px solid #bfdbfe;
+  border-radius: var(--radius-lg);
+  padding: var(--space-4) var(--space-6);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  box-shadow: var(--shadow-xs);
+}
+
+.intro-content h2 {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-primary);
+  margin-bottom: 2px;
+}
+
+.intro-content p {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-soft);
+}
+
+.intro-note {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
 }
 
 /* Main Container */
 .main-content {
-  max-width: 1400px;
+  max-width: 1280px;
   width: 100%;
   margin: 0 auto;
-  padding: var(--space-6);
+  padding: var(--space-5) var(--space-6) var(--space-12);
   display: flex;
   flex-direction: column;
   gap: var(--space-6);
@@ -114,9 +157,9 @@
 }
 
 .section-title {
-  font-size: var(--font-size-lg);
-  font-weight: 600;
-  color: var(--color-text-main);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
   display: flex;
   align-items: center;
   gap: var(--space-2);
@@ -125,27 +168,43 @@
 .section-subtitle {
   font-size: var(--font-size-sm);
   color: var(--color-text-muted);
+  margin-top: 2px;
 }
 
-/* Bottom Action Bar */
+/* Primary Sticky / Bottom Action Toolbar */
 .action-toolbar {
   position: sticky;
   bottom: 0;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(8px);
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(10px);
   border-top: 1px solid var(--color-border);
-  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.05);
-  padding: var(--space-4) var(--space-6);
+  box-shadow: 0 -4px 16px rgba(15, 23, 42, 0.06);
+  padding: var(--space-3) var(--space-6);
   z-index: 40;
 }
 
 .toolbar-inner {
-  max-width: 1400px;
+  max-width: 1280px;
   margin: 0 auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.toolbar-info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
   flex-wrap: wrap;
 }
 
@@ -155,4 +214,6 @@
   padding: var(--space-6);
   font-size: var(--font-size-xs);
   color: var(--color-text-muted);
+  border-top: 1px solid var(--color-border);
+  background-color: var(--color-surface);
 }

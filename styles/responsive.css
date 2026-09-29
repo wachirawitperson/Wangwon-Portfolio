@@ -1,18 +1,27 @@
 /* ==========================================================================
-   Responsive Breakpoints & Mobile Optimization
+   Responsive Breakpoints & Layout Optimization
+   Covers Desktop (1440, 1280), Tablet (1024, 768), Mobile (390, 375).
+   Strict requirement: No horizontal scroll on any viewport.
    ========================================================================== */
 
-/* Prevent horizontal scroll on small viewports */
+/* Viewport safety */
 html, body {
   max-width: 100vw;
   overflow-x: hidden;
 }
 
-/* Tablet & Smaller (< 1024px) */
+/* Large Screens (Desktop > 1200px) */
+@media (min-width: 1200px) {
+  .workspace-grid {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  }
+}
+
+/* Medium Tablets & Small Desktops (<= 1024px) */
 @media (max-width: 1024px) {
   .main-content {
-    padding: var(--space-4);
-    gap: var(--space-4);
+    padding: var(--space-4) var(--space-4) var(--space-10);
+    gap: var(--space-5);
   }
 
   .header-inner {
@@ -23,17 +32,27 @@ html, body {
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
     gap: var(--space-4);
   }
+
+  .app-intro-card {
+    padding: var(--space-4);
+  }
 }
 
-/* Tablet Portrait & Large Phone (< 768px) */
+/* Tablet Portrait & Large Phones (<= 768px) */
 @media (max-width: 768px) {
   .header-inner {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
+    gap: var(--space-3);
   }
 
-  .privacy-badge {
-    align-self: flex-start;
+  .brand-section {
+    justify-content: space-between;
+  }
+
+  .header-right {
+    justify-content: space-between;
+    width: 100%;
   }
 
   .form-grid {
@@ -45,18 +64,20 @@ html, body {
   }
 
   .workspace-grid {
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: var(--space-3);
   }
 
   .toolbar-inner {
     flex-direction: column;
     align-items: stretch;
+    gap: var(--space-3);
   }
 
   .toolbar-actions {
+    width: 100%;
     display: flex;
     flex-direction: column;
-    width: 100%;
     gap: var(--space-2);
   }
 
@@ -67,48 +88,67 @@ html, body {
   #toast-container {
     left: 16px;
     right: 16px;
-    bottom: 140px;
+    bottom: 120px;
   }
 
   .toast {
     max-width: 100%;
+    min-width: 0;
   }
 }
 
-/* Mobile Screens (375px - 390px, e.g. iPhone SE / iPhone 12/13/14) */
+/* Compact Mobile Screens (375px - 390px e.g. iPhone SE, iPhone 12/13/14) */
 @media (max-width: 480px) {
   .main-content {
-    padding: var(--space-3);
+    padding: var(--space-3) var(--space-3) var(--space-12);
   }
 
   .app-section {
-    padding: var(--space-4);
+    padding: var(--space-4) var(--space-3);
+    border-radius: var(--radius-md);
   }
 
   .brand-logo-icon {
-    width: 36px;
-    height: 36px;
+    width: 38px;
+    height: 38px;
     font-size: 1.25rem;
   }
 
   .app-title {
-    font-size: 1.125rem;
+    font-size: var(--font-size-lg);
   }
 
   .app-subtitle {
-    font-size: 0.8rem;
+    font-size: var(--font-size-xs);
+  }
+
+  .privacy-badge {
+    font-size: 0.7rem;
+    padding: 3px var(--space-2);
   }
 
   .workspace-grid {
     grid-template-columns: 1fr;
   }
 
-  .portfolio-card,
-  .add-images-card {
-    min-height: 280px;
+  .portfolio-card {
+    min-height: 340px;
   }
 
-  .cover-visual-preview {
-    height: 200px;
+  .empty-images-card {
+    min-height: 300px;
+    padding: var(--space-4);
+  }
+
+  .modal-dialog {
+    margin: var(--space-2);
+    max-height: calc(100vh - 24px);
+    border-radius: var(--radius-lg);
+  }
+
+  .modal-header,
+  .modal-body,
+  .modal-footer {
+    padding: var(--space-4);
   }
 }

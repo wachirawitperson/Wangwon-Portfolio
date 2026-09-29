@@ -1,8 +1,8 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('Wangwon Portfolio - Phase 1 Smoke Tests', () => {
+test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () => {
 
-  test('1. Page loads successfully and 2. Has no uncaught JavaScript errors', async ({ page }) => {
+  test('1. Page loads without error', async ({ page }) => {
     const jsErrors = [];
     page.on('pageerror', (exception) => {
       jsErrors.push(exception.message);
@@ -13,28 +13,34 @@ test.describe('Wangwon Portfolio - Phase 1 Smoke Tests', () => {
     expect(jsErrors).toEqual([]);
   });
 
-  test('3. Header appears with branding and privacy indicator', async ({ page }) => {
+  test('2. Header visible and 3. Product title visible', async ({ page }) => {
     await page.goto('/');
 
     const header = page.locator('header.app-header');
     await expect(header).toBeVisible();
 
     const title = header.locator('.app-title');
+    await expect(title).toBeVisible();
     await expect(title).toHaveText('Wangwon Portfolio');
 
     const subtitle = header.locator('.app-subtitle');
-    await expect(subtitle).toContainText('โรงเรียนบ้านวังวน');
+    await expect(subtitle).toBeVisible();
+    await expect(subtitle).toHaveText('ระบบสร้าง Portfolio นักเรียน');
+  });
 
-    const privacyBadge = header.locator('.privacy-badge');
+  test('4. Privacy indicator visible with verified copy', async ({ page }) => {
+    await page.goto('/');
+
+    const privacyBadge = page.locator('.privacy-badge');
     await expect(privacyBadge).toBeVisible();
     await expect(privacyBadge).toContainText('ประมวลผลรูปในเครื่อง • ไม่อัปโหลดรูปนักเรียน');
   });
 
-  test('4. Student form appears with required fields and live filename badge', async ({ page }) => {
+  test('5. Student information section visible with required fields and live filename', async ({ page }) => {
     await page.goto('/');
 
-    const form = page.locator('#student-info-form');
-    await expect(form).toBeVisible();
+    const section = page.locator('#student-section');
+    await expect(section).toBeVisible();
 
     await expect(page.locator('#student-prefix')).toBeVisible();
     await expect(page.locator('#student-firstname')).toBeVisible();
@@ -43,89 +49,213 @@ test.describe('Wangwon Portfolio - Phase 1 Smoke Tests', () => {
     await expect(page.locator('#student-number')).toBeVisible();
     await expect(page.locator('#student-year')).toBeVisible();
 
-    // Verify live filename updating
+    // Verify live filename badge
     const filenameBadge = page.locator('#preview-filename-badge');
     await expect(filenameBadge).toBeVisible();
 
-    await page.fill('#student-firstname', 'สมชาย');
-    await page.fill('#student-lastname', 'ใจดี');
-    await expect(filenameBadge).toHaveText('ด.ช.สมชาย_ใจดี.pdf');
+    await page.fill('#student-firstname', 'กิตติพัฒน์');
+    await page.fill('#student-lastname', 'วัฒนากุลชัย');
+    await expect(filenameBadge).toHaveText('ด.ช.กิตติพัฒน์_วัฒนากุลชัย.pdf');
   });
 
-  test('5. Front cover placeholder exists and is locked at page 1', async ({ page }) => {
+  test('6. Front cover card visible and 7. Front cover card shows locked state', async ({ page }) => {
     await page.goto('/');
 
     const frontCover = page.locator('#front-cover-card');
     await expect(frontCover).toBeVisible();
 
-    const lockedBadge = frontCover.locator('.locked-badge');
-    await expect(lockedBadge).toContainText('หน้า 1: ปกหน้า (ล็อค)');
-
-    // Ensure school tag and template selector exist
-    await expect(frontCover.locator('.cover-school-tag')).toHaveText('โรงเรียนบ้านวังวน');
-    await expect(frontCover.locator('#front-template-select')).toBeVisible();
+    const lockedBadge = frontCover.locator('.badge-locked');
+    await expect(lockedBadge).toBeVisible();
+    await expect(lockedBadge).toContainText('หน้า 1');
+    await expect(frontCover).toContainText('ปกหน้าจะอยู่หน้าแรกเสมอ');
   });
 
-  test('6. Back cover placeholder exists and is locked at last page', async ({ page }) => {
+  test('8. Back cover card visible and 9. Back cover card shows locked state', async ({ page }) => {
     await page.goto('/');
 
     const backCover = page.locator('#back-cover-card');
     await expect(backCover).toBeVisible();
 
-    const lockedBadge = backCover.locator('.locked-badge');
-    await expect(lockedBadge).toContainText('ปกหลัง (ล็อค)');
-    await expect(backCover.locator('#back-template-select')).toBeVisible();
+    const lockedBadge = backCover.locator('.badge-locked');
+    await expect(lockedBadge).toBeVisible();
+    await expect(lockedBadge).toContainText('หน้าสุดท้าย');
+    await expect(backCover).toContainText('ปกหลังจะอยู่หน้าสุดท้ายเสมอ');
   });
 
-  test('7. Add-image action exists and is accessible', async ({ page }) => {
+  test('10. Add-image empty state visible between covers', async ({ page }) => {
     await page.goto('/');
 
-    const addAction = page.locator('#btn-add-images');
-    await expect(addAction).toBeVisible();
-
-    const uploadInput = page.locator('#file-upload-input');
-    await expect(uploadInput).toHaveCount(1);
-    await expect(uploadInput).toHaveAttribute('type', 'file');
+    const emptyCard = page.locator('#images-empty-placeholder');
+    await expect(emptyCard).toBeVisible();
+    await expect(emptyCard).toContainText('เพิ่มภาพผลงานนักเรียน');
+    await expect(emptyCard).toContainText('ภาพแรกที่เพิ่มจะเป็นหน้า 2');
+    await expect(page.locator('#btn-empty-add-images')).toBeVisible();
   });
 
-  test('8. Layout does not overflow mobile viewport (375x667 and 390x844)', async ({ page }) => {
-    const viewports = [
-      { width: 375, height: 667 }, // iPhone SE
-      { width: 390, height: 844 }, // iPhone 12/13/14
-      { width: 768, height: 1024 }, // iPad Portrait
-      { width: 1440, height: 900 } // Desktop
-    ];
-
-    for (const vp of viewports) {
-      await page.setViewportSize(vp);
-      await page.goto('/');
-
-      // Evaluate whether scrollWidth exceeds clientWidth
-      const hasHorizontalScroll = await page.evaluate(() => {
-        return document.documentElement.scrollWidth > document.documentElement.clientWidth;
-      });
-
-      expect(hasHorizontalScroll, `Horizontal overflow detected at ${vp.width}x${vp.height}`).toBe(false);
-    }
-  });
-
-  test('9. PDF quality settings default to balanced with small, balanced, high options', async ({ page }) => {
+  test('11. Settings section visible with paper, placement, quality, and watermark', async ({ page }) => {
     await page.goto('/');
 
-    const qualitySelect = page.locator('#setting-quality');
-    await expect(qualitySelect).toBeVisible();
-    await expect(qualitySelect).toHaveValue('balanced');
+    const settings = page.locator('#settings-panel');
+    await expect(settings).toBeVisible();
+    await expect(page.locator('#setting-orientation')).toBeVisible();
+    await expect(page.locator('[data-setting="placement"][data-value="fit"]')).toBeVisible();
+    await expect(page.locator('#setting-quality')).toHaveValue('balanced');
+    await expect(page.locator('#setting-watermark-enabled')).toBeVisible();
+  });
 
-    // Check allowed options
-    const options = await qualitySelect.locator('option').all();
-    const values = await Promise.all(options.map((opt) => opt.getAttribute('value')));
-    expect(values).toEqual(['small', 'balanced', 'high']);
+  test('12. Preview action visible and 13. Create PDF action visible', async ({ page }) => {
+    await page.goto('/');
 
-    // Check projectStore default state
-    const storeQuality = await page.evaluate(() => {
-      return window.__WANGWON_STORE__?.getState()?.pdfSettings?.quality;
+    const previewBtn = page.locator('#btn-preview-portfolio');
+    await expect(previewBtn).toBeVisible();
+
+    const exportBtn = page.locator('#btn-export-pdf');
+    await expect(exportBtn).toBeVisible();
+    await expect(exportBtn).toHaveClass(/btn-primary/);
+  });
+
+  test('14. Keyboard focus visible on primary controls', async ({ page }) => {
+    await page.goto('/');
+
+    const exportBtn = page.locator('#btn-export-pdf');
+    await exportBtn.focus();
+    await expect(exportBtn).toBeFocused();
+
+    const previewBtn = page.locator('#btn-preview-portfolio');
+    await previewBtn.focus();
+    await expect(previewBtn).toBeFocused();
+
+    const firstnameInput = page.locator('#student-firstname');
+    await firstnameInput.focus();
+    await expect(firstnameInput).toBeFocused();
+  });
+
+  test('15. Mobile 390x844 has no horizontal overflow', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/');
+
+    const hasHorizontalScroll = await page.evaluate(() => {
+      return document.documentElement.scrollWidth > document.documentElement.clientWidth;
     });
-    expect(storeQuality).toBe('balanced');
+    expect(hasHorizontalScroll).toBe(false);
+  });
+
+  test('16. Mobile 375x667 has no horizontal overflow', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 667 });
+    await page.goto('/');
+
+    const hasHorizontalScroll = await page.evaluate(() => {
+      return document.documentElement.scrollWidth > document.documentElement.clientWidth;
+    });
+    expect(hasHorizontalScroll).toBe(false);
+  });
+
+  test('17. Tablet 768x1024 has no horizontal overflow', async ({ page }) => {
+    await page.setViewportSize({ width: 768, height: 1024 });
+    await page.goto('/');
+
+    const hasHorizontalScroll = await page.evaluate(() => {
+      return document.documentElement.scrollWidth > document.documentElement.clientWidth;
+    });
+    expect(hasHorizontalScroll).toBe(false);
+  });
+
+  test('18. Desktop 1440x900 renders correct hierarchy without horizontal overflow', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/');
+
+    const header = page.locator('header.app-header');
+    await expect(header).toBeVisible();
+    const main = page.locator('#main-content');
+    await expect(main).toBeVisible();
+    const actionToolbar = page.locator('#action-toolbar');
+    await expect(actionToolbar).toBeVisible();
+
+    const hasHorizontalScroll = await page.evaluate(() => {
+      return document.documentElement.scrollWidth > document.documentElement.clientWidth;
+    });
+    expect(hasHorizontalScroll).toBe(false);
+  });
+
+  test('19. Modal foundation can open and close with accessible focus handling and ESC key', async ({ page }) => {
+    await page.goto('/');
+
+    const helpBtn = page.locator('#btn-help');
+    const helpModal = page.locator('#help-modal');
+
+    await expect(helpModal).toHaveAttribute('aria-hidden', 'true');
+    await helpBtn.click();
+
+    // Verify modal is open and visible
+    await expect(helpModal).toHaveAttribute('aria-hidden', 'false');
+    await expect(helpModal.locator('#help-modal-title')).toBeVisible();
+
+    // Verify ESC key closes modal
+    await page.keyboard.press('Escape');
+    await expect(helpModal).toHaveAttribute('aria-hidden', 'true');
+    await expect(helpBtn).toBeFocused();
+
+    // Verify Reset modal opens and closes via dismiss button
+    const resetBtn = page.locator('#btn-reset-project');
+    const resetModal = page.locator('#reset-confirm-modal');
+    await resetBtn.click();
+    await expect(resetModal).toHaveAttribute('aria-hidden', 'false');
+
+    const cancelBtn = resetModal.locator('[data-dismiss="modal"]', { hasText: 'ยกเลิก' });
+    await cancelBtn.click();
+    await expect(resetModal).toHaveAttribute('aria-hidden', 'true');
+  });
+
+  test('20. Toast component renders correctly across notification types', async ({ page }) => {
+    await page.goto('/');
+
+    // Trigger toast via global test helper
+    await page.evaluate(() => {
+      window.__WANGWON_TOAST__.showToast('ทดสอบการแจ้งเตือนสำเร็จ', 'success');
+      window.__WANGWON_TOAST__.showToast('ทดสอบการแจ้งเตือนเตือนภัย', 'warning');
+    });
+
+    const successToast = page.locator('.toast.toast-success');
+    await expect(successToast).toBeVisible();
+    await expect(successToast).toContainText('ทดสอบการแจ้งเตือนสำเร็จ');
+
+    const warningToast = page.locator('.toast.toast-warning');
+    await expect(warningToast).toBeVisible();
+    await expect(warningToast).toContainText('ทดสอบการแจ้งเตือนเตือนภัย');
+  });
+
+  test('Visual QA: Capture Screenshots for Desktop, Tablet, Mobile and Long Thai Name', async ({ page }) => {
+    // 1. Desktop 1440x900
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/');
+    await page.screenshot({ path: 'tests/screenshots/desktop-1440x900.png', fullPage: true });
+
+    // 2. Tablet 768x1024
+    await page.setViewportSize({ width: 768, height: 1024 });
+    await page.goto('/');
+    await page.screenshot({ path: 'tests/screenshots/tablet-768x1024.png', fullPage: true });
+
+    // 3. Mobile 390x844 (iPhone 12/13/14)
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/');
+    await page.screenshot({ path: 'tests/screenshots/mobile-390x844.png', fullPage: true });
+
+    // 4. Mobile 375x667 (iPhone SE)
+    await page.setViewportSize({ width: 375, height: 667 });
+    await page.goto('/');
+    await page.screenshot({ path: 'tests/screenshots/mobile-375x667.png', fullPage: true });
+
+    // 5. Long Thai Student Name QA (เด็กชายกิตติพัฒน์ วัฒนากุลชัย)
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto('/');
+    await page.fill('#student-firstname', 'กิตติพัฒน์');
+    await page.fill('#student-lastname', 'วัฒนากุลชัย');
+    await page.screenshot({ path: 'tests/screenshots/long-student-name.png', fullPage: false });
+
+    // 6. Modal Open Screenshot
+    const helpBtn = page.locator('#btn-help');
+    await helpBtn.click();
+    await page.screenshot({ path: 'tests/screenshots/modal-open.png', fullPage: false });
   });
 
 });

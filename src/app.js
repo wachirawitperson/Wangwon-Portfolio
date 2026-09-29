@@ -1,15 +1,17 @@
 /**
- * Wangwon Portfolio - Application Entry Point
- * Bootstraps modular UI components and initializes state.
+ * Wangwon Portfolio - Application Entry Point (Phase 2 App Shell)
+ * Bootstraps modular UI components, accessible modal dialogs, and initializes state.
  */
-import { projectStore } from './portfolio/portfolio-state.js';
+import { projectStore, createDefaultProjectState } from './portfolio/portfolio-state.js';
 import { initStudentForm } from './ui/student-form.js';
 import { initWorkspace } from './ui/workspace.js';
 import { initSettingsPanel } from './ui/settings-panel.js';
 import { initPreviewActions } from './ui/preview.js';
+import { openModal, closeModal } from './ui/modal.js';
+import { showToast } from './ui/notifications.js';
 
 document.addEventListener('DOMContentLoaded', () => {
-  console.info('🚀 Wangwon Portfolio v0.1.0 initialized (Client-side & Privacy-First)');
+  console.info('🚀 Wangwon Portfolio v0.2.0 initialized (Design System + App Shell)');
 
   // Initialize Student Form
   const studentForm = document.querySelector('#student-info-form');
@@ -27,6 +29,35 @@ document.addEventListener('DOMContentLoaded', () => {
   const actionToolbar = document.querySelector('#action-toolbar');
   initPreviewActions(actionToolbar);
 
-  // Expose store for debugging in development if needed
+  // Header Modal Triggers: Help & Reset Project
+  const btnHelp = document.querySelector('#btn-help');
+  const helpModal = document.querySelector('#help-modal');
+  if (btnHelp && helpModal) {
+    btnHelp.addEventListener('click', () => {
+      openModal(helpModal, btnHelp);
+    });
+  }
+
+  const btnReset = document.querySelector('#btn-reset-project');
+  const resetModal = document.querySelector('#reset-confirm-modal');
+  if (btnReset && resetModal) {
+    btnReset.addEventListener('click', () => {
+      openModal(resetModal, btnReset);
+    });
+  }
+
+  // Confirm Reset Action
+  const btnConfirmReset = document.querySelector('#btn-confirm-reset');
+  if (btnConfirmReset && resetModal) {
+    btnConfirmReset.addEventListener('click', () => {
+      projectStore.reset(createDefaultProjectState());
+      closeModal(resetModal);
+      showToast('เริ่มโครงการใหม่เรียบร้อยแล้ว', 'info');
+    });
+  }
+
+  // Expose store & modal utilities for testing & development
   window.__WANGWON_STORE__ = projectStore;
+  window.__WANGWON_MODAL__ = { openModal, closeModal };
+  window.__WANGWON_TOAST__ = { showToast };
 });
