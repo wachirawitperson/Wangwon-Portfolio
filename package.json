@@ -1,0 +1,25 @@
+{
+  "name": "wangwon-portfolio",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Browser-based student portfolio PDF generator for Ban Wangwon School teachers",
+  "type": "module",
+  "scripts": {
+    "start": "node scripts/serve.js",
+    "test": "npx playwright test",
+    "test:ui": "npx playwright test --ui"
+  },
+  "keywords": [
+    "portfolio",
+    "pdf",
+    "education",
+    "privacy-first",
+    "local-first",
+    "wangwon"
+  ],
+  "author": "Ban Wangwon School",
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.50.0"
+  }
+}

@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wangwon Portfolio | ระบบสร้าง Portfolio นักเรียน โรงเรียนบ้านวังวน</title>
+  <meta name="description" content="ระบบสร้างแฟ้มสะสมผลงาน (Portfolio) นักเรียนแบบอัตโนมัติ สำหรับคุณครูโรงเรียนบ้านวังวน ประมวลผลบนเครื่อง 100% ปลอดภัย ไม่ส่งข้อมูลออกภายนอก" />
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="./styles/base.css" />
+  <link rel="stylesheet" href="./styles/layout.css" />
+  <link rel="stylesheet" href="./styles/components.css" />
+  <link rel="stylesheet" href="./styles/responsive.css" />
+</head>
+<body>
+  <!-- Application Header -->
+  <header class="app-header" role="banner">
+    <div class="header-inner">
+      <div class="brand-section">
+        <div class="brand-logo-icon" aria-hidden="true">🏫</div>
+        <div class="brand-text-group">
+          <h1 class="app-title">Wangwon Portfolio</h1>
+          <span class="app-subtitle">ระบบสร้าง Portfolio นักเรียน โรงเรียนบ้านวังวน</span>
+        </div>
+      </div>
+      <div class="privacy-badge" role="status" aria-label="สถานะความปลอดภัย: ข้อมูลประมวลผลบนเบราว์เซอร์เท่านั้น">
+        <span class="privacy-dot" aria-hidden="true"></span>
+        <span>100% ประมวลผลในเครื่อง ปลอดภัย ไม่มีข้อมูลส่งออกภายนอก</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Application Body -->
+  <main class="main-content" id="main-content">
+    
+    <!-- Section 1: Student Information -->
+    <section class="app-section" id="student-section" aria-labelledby="heading-student-info">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title" id="heading-student-info">
+            <span aria-hidden="true">👤</span> ข้อมูลนักเรียน
+          </h2>
+          <p class="section-subtitle">กรอกข้อมูลนักเรียนเพื่อนำไปสร้างหน้าปกและตั้งชื่อไฟล์เอกสารอัตโนมัติ</p>
+        </div>
+      </div>
+
+      <form id="student-info-form" class="form-grid" novalidate onsubmit="return false;">
+        <div class="form-group">
+          <label for="student-prefix" class="form-label">คำนำหน้า</label>
+          <select id="student-prefix" name="prefix" class="form-select">
+            <option value="ด.ช.">เด็กชาย (ด.ช.)</option>
+            <option value="ด.ญ.">เด็กหญิง (ด.ญ.)</option>
+            <option value="นาย">นาย</option>
+            <option value="นางสาว">นางสาว</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="student-firstname" class="form-label">ชื่อจริง</label>
+          <input
+            type="text"
+            id="student-firstname"
+            name="firstName"
+            class="form-input"
+            placeholder="เช่น สมชาย"
+            autocomplete="off"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="student-lastname" class="form-label">นามสกุล</label>
+          <input
+            type="text"
+            id="student-lastname"
+            name="lastName"
+            class="form-input"
+            placeholder="เช่น ใจดี"
+            autocomplete="off"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="student-grade" class="form-label">ระดับชั้น</label>
+          <select id="student-grade" name="grade" class="form-select">
+            <option value="อนุบาล 2">อนุบาล 2</option>
+            <option value="อนุบาล 3">อนุบาล 3</option>
+            <option value="ประถมศึกษาปีที่ 1" selected>ประถมศึกษาปีที่ 1</option>
+            <option value="ประถมศึกษาปีที่ 2">ประถมศึกษาปีที่ 2</option>
+            <option value="ประถมศึกษาปีที่ 3">ประถมศึกษาปีที่ 3</option>
+            <option value="ประถมศึกษาปีที่ 4">ประถมศึกษาปีที่ 4</option>
+            <option value="ประถมศึกษาปีที่ 5">ประถมศึกษาปีที่ 5</option>
+            <option value="ประถมศึกษาปีที่ 6">ประถมศึกษาปีที่ 6</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="student-number" class="form-label">เลขที่</label>
+          <input
+            type="text"
+            id="student-number"
+            name="studentNumber"
+            class="form-input"
+            placeholder="เช่น 01"
+            autocomplete="off"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="student-year" class="form-label">ปีการศึกษา</label>
+          <input
+            type="text"
+            id="student-year"
+            name="academicYear"
+            class="form-input"
+            value="2567"
+            autocomplete="off"
+          />
+        </div>
+      </form>
+
+      <!-- Live PDF Filename Preview -->
+      <div class="filename-badge-box" aria-live="polite">
+        <span aria-hidden="true">📄</span>
+        <span>ชื่อไฟล์ PDF ที่จะได้รับ:</span>
+        <span id="preview-filename-badge" class="filename-badge">แฟ้มสะสมงาน_นักเรียน.pdf</span>
+      </div>
+    </section>
+
+    <!-- Section 2: Portfolio Workspace -->
+    <section class="app-section" id="portfolio-workspace" aria-labelledby="heading-workspace">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title" id="heading-workspace">
+            <span aria-hidden="true">📑</span> หน้าเอกสารในแฟ้มสะสมงาน
+          </h2>
+          <p class="section-subtitle">จัดเรียงหน้าเอกสาร: ปกหน้า (หน้า 1) → รูปภาพผลงาน/กิจกรรม → ปกหลัง (หน้าสุดท้าย)</p>
+        </div>
+        <div>
+          <span id="total-pages-badge" class="badge page-badge">2 หน้า (ปกหน้า 1 + ปกหลัง 1)</span>
+        </div>
+      </div>
+
+      <!-- Workspace Cards Container -->
+      <div class="workspace-grid" id="workspace-grid" role="list" aria-label="ลำดับหน้าเอกสาร">
+        
+        <!-- Locked Front Cover Item (Page 1) -->
+        <article class="portfolio-card cover-card" id="front-cover-card" role="listitem">
+          <!-- Rendered dynamically by workspace.js -->
+        </article>
+
+        <!-- Dynamic Student Images Container -->
+        <div id="student-images-container" style="display: contents;"></div>
+
+        <!-- Add Images Action Card -->
+        <div class="add-images-card" id="btn-add-images" role="button" tabindex="0" aria-label="เพิ่มรูปภาพผลงานหรือกิจกรรมนักเรียน">
+          <input
+            type="file"
+            id="file-upload-input"
+            multiple
+            accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+            class="sr-only"
+            aria-hidden="true"
+          />
+          <div class="add-images-icon" aria-hidden="true">➕</div>
+          <div class="add-images-text">เพิ่มรูปผลงาน / กิจกรรม</div>
+          <div class="add-images-sub">คลิกหรือลากไฟล์ภาพมาวางที่นี่<br />(รองรับ JPG, PNG, WEBP, HEIC)</div>
+        </div>
+
+        <!-- Locked Back Cover Item (Last Page) -->
+        <article class="portfolio-card cover-card" id="back-cover-card" role="listitem">
+          <!-- Rendered dynamically by workspace.js -->
+        </article>
+
+      </div>
+    </section>
+
+    <!-- Section 3: PDF Settings & Watermark (Placeholder for Phase 2/3) -->
+    <section class="app-section" id="settings-panel" aria-labelledby="heading-settings">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title" id="heading-settings">
+            <span aria-hidden="true">⚙️</span> การตั้งค่าเอกสารและลายน้ำ
+          </h2>
+          <p class="section-subtitle">ปรับแต่งขนาดกระดาษ การจัดวางภาพ และลายน้ำโรงเรียน</p>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="setting-orientation" class="form-label">ทิศทางกระดาษ</label>
+          <select id="setting-orientation" class="form-select">
+            <option value="portrait" selected>แนวตั้ง (Portrait - A4)</option>
+            <option value="landscape">แนวนอน (Landscape - A4)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="setting-placement" class="form-label">การจัดวางรูปภาพ</label>
+          <select id="setting-placement" class="form-select">
+            <option value="fit" selected>พอดีหน้ากระดาษ (Fit - ไม่ตัดรูป)</option>
+            <option value="fill">เต็มหน้ากระดาษ (Fill - เติมเต็มพื้นที่)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="setting-quality" class="form-label">คุณภาพเอกสาร PDF</label>
+          <select id="setting-quality" class="form-select">
+            <option value="standard" selected>มาตรฐาน (ขนาดไฟล์กะทัดรัด คมชัด)</option>
+            <option value="high">คมชัดสูง (สำหรับพิมพ์กระดาษโฟโต้)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="setting-watermark-enabled">ลายน้ำโรงเรียน</label>
+          <div style="display: flex; align-items: center; gap: 8px; height: 38px;">
+            <input type="checkbox" id="setting-watermark-enabled" style="width: 18px; height: 18px;" />
+            <label for="setting-watermark-enabled" style="font-size: var(--font-size-sm); color: var(--color-text-sub);">
+              ใส่ลายน้ำชื่อโรงเรียนในหน้าผลงาน
+            </label>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Sticky Bottom Toolbar for Primary Actions -->
+  <aside class="action-toolbar" id="action-toolbar" aria-label="แถบการกระทำหลัก">
+    <div class="toolbar-inner">
+      <div class="toolbar-info">
+        <span style="font-size: var(--font-size-sm); color: var(--color-text-muted);">
+          โรงเรียนบ้านวังวน • ตรวจสอบความถูกต้องก่อนสร้างเอกสาร
+        </span>
+      </div>
+      <div class="toolbar-actions" style="display: flex; gap: var(--space-3); flex-wrap: wrap;">
+        <button type="button" class="btn btn-secondary" id="btn-preview-portfolio">
+          <span aria-hidden="true">👁️</span> ดูตัวอย่าง (Preview)
+        </button>
+        <button type="button" class="btn btn-primary" id="btn-export-pdf">
+          <span aria-hidden="true">📥</span> สร้างไฟล์ PDF (Export PDF)
+        </button>
+        <button type="button" class="btn btn-secondary" id="btn-export-zip">
+          <span aria-hidden="true">📦</span> ส่งออก ZIP Package
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- App Footer -->
+  <footer class="app-footer">
+    <p>Wangwon Portfolio • โรงเรียนบ้านวังวน • ระบบประมวลผลไฟล์ภายในเว็บเบราว์เซอร์ เพื่อความเป็นส่วนตัวสูงสุด</p>
+  </footer>
+
+  <!-- Application Bootstrap (ES Modules) -->
+  <script type="module" src="./src/app.js"></script>
+</body>
+</html>
