@@ -49,6 +49,32 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
     await expect(page.locator('#student-number')).toBeVisible();
     await expect(page.locator('#student-year')).toBeVisible();
 
+    // Verify all 9 grade options exist in exact order
+    const expectedGrades = [
+      'อนุบาล 1',
+      'อนุบาล 2',
+      'อนุบาล 3',
+      'ประถมศึกษาปีที่ 1',
+      'ประถมศึกษาปีที่ 2',
+      'ประถมศึกษาปีที่ 3',
+      'ประถมศึกษาปีที่ 4',
+      'ประถมศึกษาปีที่ 5',
+      'ประถมศึกษาปีที่ 6'
+    ];
+    const gradeOptions = await page.locator('#student-grade option').all();
+    expect(gradeOptions.length).toBe(9);
+
+    const actualGradeValues = await Promise.all(gradeOptions.map((opt) => opt.getAttribute('value')));
+    expect(actualGradeValues).toEqual(expectedGrades);
+
+    const actualGradeLabels = await Promise.all(gradeOptions.map((opt) => opt.textContent()));
+    expect(actualGradeLabels.map((t) => t?.trim())).toEqual(expectedGrades);
+
+    // Verify selected value reflects correctly in app state
+    await page.selectOption('#student-grade', 'อนุบาล 1');
+    const stateGrade = await page.evaluate(() => window.__WANGWON_STORE__?.getState()?.student?.grade);
+    expect(stateGrade).toBe('อนุบาล 1');
+
     // Verify live filename badge
     const filenameBadge = page.locator('#preview-filename-badge');
     await expect(filenameBadge).toBeVisible();
