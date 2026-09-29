@@ -13,14 +13,17 @@ import { rotateStudentImage, removeStudentImage } from '../portfolio/image-manag
  */
 export function createImageCard(image, displayIndex) {
   const card = document.createElement('div');
-  card.className = 'portfolio-card student-image-card';
+  const isLowRes = image.qualityStatus === 'low';
+  card.className = `portfolio-card student-image-card ${isLowRes ? 'has-warning-lowres' : ''}`;
   card.dataset.id = image.id;
   card.setAttribute('role', 'listitem');
   card.setAttribute('aria-label', `รูปผลงานที่ ${displayIndex}: ${image.originalFilename}`);
 
+  const pageNum = displayIndex + 1;
+
   card.innerHTML = `
     <div class="card-header">
-      <span class="badge page-badge">หน้าที่ ${displayIndex + 1}</span>
+      <span class="badge page-badge" title="หน้า ${pageNum} ของเอกสาร">หน้า ${pageNum}</span>
       <span class="image-name" title="${image.originalFilename}">${image.originalFilename}</span>
     </div>
     <div class="card-preview">
@@ -31,6 +34,11 @@ export function createImageCard(image, displayIndex) {
         loading="lazy"
       />
     </div>
+    ${isLowRes ? `
+      <div class="warning-badge-area" role="alert" title="${image.qualityWarning || 'ภาพมีความละเอียดต่ำกว่าเกณฑ์มาตรฐาน'}">
+        <span aria-hidden="true">⚠️</span> ความละเอียดต่ำ (${image.width} × ${image.height})
+      </div>
+    ` : ''}
     <div class="card-actions">
       <button
         type="button"

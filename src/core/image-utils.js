@@ -23,13 +23,154 @@ export function revokePreviewUrl(url) {
 }
 
 /**
- * Normalizes rotation angle into 0, 90, 180, or 270 degrees.
- * @param {number} angle
- * @returns {number}
- */
+  * Normalizes rotation angle into 0, 90, 180, or 270 degrees.
+  * @param {number} angle
+  * @returns {number}
+  */
 export function normalizeRotation(angle = 0) {
   const normalized = ((angle % 360) + 360) % 360;
   return [0, 90, 180, 270].includes(normalized) ? normalized : 0;
+}
+
+/**
+  * Reads the natural width and height of an image File or Blob.
+  * @param {Blob|File} blob
+  * @returns {Promise<{ width: number, height: number, aspectRatio: number }>}
+  */
+export function getImageDimensions(blob) {
+  return new Promise((resolve, reject) => {
+    if (!blob) {
+      return reject(new Error('No blob provided'));
+    }
+    const tempUrl = URL.createObjectURL(blob);
+    const img = new Image();
+    img.onload = () => {
+      const width = img.naturalWidth || img.width;
+      const height = img.naturalHeight || img.height;
+      URL.revokeObjectURL(tempUrl);
+      if (!width || !height) {
+        reject(new Error('Invalid image dimensions'));
+      } else {
+        resolve({
+          width,
+          height,
+          aspectRatio: parseFloat((width / height).toFixed(4))
+        });
+      }
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(tempUrl);
+      reject(new Error('Image failed to load (corrupted or unreadable format)'));
+    };
+    img.src = tempUrl;
+  });
+}
+
+/**
+  * Assesses whether an image is considered low resolution for print.
+  * Criterion: longest edge < 1200px or (width < 1000 and height < 1000)
+  * @param {number} width
+  * @param {number} height
+  * @returns {{ status: 'normal' | 'low', warning: string | null }}
+  */
+export function assessImageQuality(width, height) {
+  if (!width || !height) {
+    return { status: 'normal', warning: null };
+  }
+  const longestEdge = Math.max(width, height);
+  if (longestEdge < 1200 || (width < 1000 && height < 1000)) {
+    return {
+      status: 'low',
+      warning: `ความละเอียดค่อนข้างต่ำ (${width} × ${height} px) อาจไม่คมชัดเมื่อพิมพ์ A4`
+    };
+  }
+  return { status: 'normal', warning: null };
+}
+
+/**
+  * Builds a robust duplicate detection key from file properties.
+  * Fingerprint: name + size + lastModified (or fallback dimensions)
+  * @param {File|Blob} file
+  * @param {object} [metadata]
+  * @returns {string}
+  */
+export function buildDuplicateKey(file, metadata = {}) {
+  const name = (file && file.name) ? file.name.trim().toLowerCase() : '';
+  const size = (file && typeof file.size === 'number') ? file.size : 0;
+  const lastModified = (file && typeof file.lastModified === 'number') ? file.lastModified : 0;
+  const w = metadata.width || 0;
+  const h = metadata.height || 0;
+
+  if (name && size) {
+    return `${name}_${size}_${lastModified || `${w}x${h}`}`;
+  }
+  return `blob_${size}_${w}x${h}`;
+}
+
+/**
+  * Decodes HEIC/HEIF file to standard JPEG/PNG Blob if needed.
+  * Handles browser environment with window.heic2any or graceful fallback.
+  * @param {File} file
+  * @returns {Promise<{ blob: Blob|File, converted: boolean, filename: string, mimeType: string }>}
+  */
+export async function decodeHeicIfNeeded(file) {
+  const isHeic = (file.type && (file.type.includes('heic') || file.type.includes('heif'))) ||
+                 (file.name && /\.(heic|heif)$/i.test(file.name));
+
+  if (!isHeic) {
+    return {
+      blob: file,
+      converted: false,
+      filename: file.name || 'image.jpg',
+      mimeType: file.type || 'image/jpeg'
+    };
+  }
+
+  // Check if heic2any is available in window
+  if (typeof window !== 'undefined' && typeof window.heic2any === 'function') {
+    try {
+      const conversionResult = await window.heic2any({
+        blob: file,
+        toType: 'image/jpeg',
+        quality: 0.92
+      });
+      const convertedBlob = Array.isArray(conversionResult) ? conversionResult[0] : conversionResult;
+      const originalName = file.name || 'image.heic';
+      const newFilename = originalName.replace(/\.(heic|heif)$/i, '.jpg');
+
+      return {
+        blob: convertedBlob,
+        converted: true,
+        filename: newFilename,
+        mimeType: 'image/jpeg'
+      };
+    } catch (err) {
+      throw new Error(`HEIC decoding failed: ${err.message || 'unknown error'}`);
+    }
+  }
+
+  // If heic2any is not globally available, check if browser natively supports decoding HEIC
+  try {
+    const dims = await getImageDimensions(file);
+    if (dims.width > 0) {
+      return {
+        blob: file,
+        converted: false,
+        filename: file.name,
+        mimeType: file.type || 'image/heic'
+      };
+    }
+  } catch (e) {
+    // Native decode failed and no converter available
+    throw new Error('เบราว์เซอร์ไม่รองรับไฟล์ HEIC และไม่มีโมดูลแปลงไฟล์');
+  }
+
+  return {
+    blob: file,
+    converted: false,
+    filename: file.name,
+    mimeType: file.type || 'image/heic'
+  };
 }
 
 /**

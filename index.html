@@ -419,6 +419,38 @@
     </div>
   </div>
 
+  <!-- Duplicate Image Detection Summary Modal -->
+  <div
+    class="modal-backdrop"
+    id="duplicate-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-hidden="true"
+    aria-labelledby="duplicate-modal-title"
+    aria-describedby="duplicate-modal-desc"
+  >
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title" id="duplicate-modal-title">
+          <span aria-hidden="true">📋</span> พบภาพซ้ำในการนำเข้า
+        </h3>
+        <button type="button" class="btn-icon" data-dismiss="modal" aria-label="ปิดหน้าต่างภาพซ้ำ">✕</button>
+      </div>
+      <div class="modal-body" id="duplicate-modal-desc">
+        <p id="duplicate-summary-text">พบรูปภาพที่มีชื่อและขนาดตรงกับภาพที่มีอยู่แล้วในระบบ</p>
+        <ul id="duplicate-file-list" class="duplicate-list" style="margin-top: 12px; max-height: 180px; overflow-y: auto; padding-left: 20px; font-size: var(--font-size-xs); color: var(--color-text-soft);">
+        </ul>
+        <p style="margin-top: 12px; font-size: var(--font-size-xs); color: var(--color-text-muted);">
+          คุณต้องการนำเข้ารูปภาพที่ซ้ำเหล่านี้ซ้ำอีกครั้ง หรือข้ามเฉพาะภาพที่ซ้ำ?
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="btn-skip-duplicates">ข้ามภาพที่ซ้ำ (แนะนำ)</button>
+        <button type="button" class="btn btn-primary" id="btn-allow-duplicates">นำเข้ารูปซ้ำทั้งหมด</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Application Bootstrap (ES Modules) -->
   <script type="module" src="./src/app.js"></script>
 </body>

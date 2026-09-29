@@ -22,6 +22,22 @@ import {
   normalizeStudentData
 } from './core/student-utils.js';
 import { generatePdfFilename, sanitizeFilename } from './core/filename-utils.js';
+import {
+  createPreviewUrl,
+  revokePreviewUrl,
+  getImageDimensions,
+  assessImageQuality,
+  buildDuplicateKey,
+  decodeHeicIfNeeded
+} from './core/image-utils.js';
+import {
+  importStudentImages,
+  addStudentImages,
+  removeStudentImage,
+  rotateStudentImage,
+  reorderStudentImages,
+  clearAllStudentImages
+} from './portfolio/image-manager.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   console.info('🚀 Wangwon Portfolio v0.3.0 initialized (Student Information + Reactive App State)');
@@ -88,5 +104,21 @@ document.addEventListener('DOMContentLoaded', () => {
     updateStudentField,
     updateStudent,
     resetPortfolioProject
+  };
+  window.__WANGWON_IMAGE_UTILS__ = {
+    createPreviewUrl,
+    revokePreviewUrl,
+    getImageDimensions,
+    assessImageQuality,
+    buildDuplicateKey,
+    decodeHeicIfNeeded
+  };
+  window.__WANGWON_IMAGE_MANAGER__ = {
+    importStudentImages,
+    addStudentImages,
+    removeStudentImage,
+    rotateStudentImage,
+    reorderStudentImages,
+    clearAllStudentImages
   };
 });

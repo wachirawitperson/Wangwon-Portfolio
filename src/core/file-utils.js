@@ -7,11 +7,12 @@ const SUPPORTED_IMAGE_TYPES = new Set([
   'image/jpg',
   'image/png',
   'image/webp',
+  'image/bmp',
   'image/heic',
   'image/heif'
 ]);
 
-const SUPPORTED_EXTENSIONS = new Set(['jpg', 'jpeg', 'png', 'webp', 'heic', 'heif']);
+const SUPPORTED_EXTENSIONS = new Set(['jpg', 'jpeg', 'png', 'webp', 'bmp', 'heic', 'heif']);
 
 /**
  * Format bytes into human-readable string.
@@ -66,3 +67,22 @@ export function isHeicFile(file) {
   const ext = getFileExtension(file.name || '');
   return type.includes('heic') || type.includes('heif') || ext === 'heic' || ext === 'heif';
 }
+
+/**
+ * Get normalized lower-case extension from filename or mime type.
+ * @param {string} filename
+ * @param {string} [mimeType]
+ * @returns {string}
+ */
+export function getNormalizedExtension(filename = '', mimeType = '') {
+  let ext = getFileExtension(filename);
+  if (!ext && mimeType) {
+    const parts = mimeType.toLowerCase().split('/');
+    if (parts[1]) {
+      ext = parts[1].replace('jpeg', 'jpg');
+    }
+  }
+  if (ext === 'jpeg') return 'jpg';
+  return ext;
+}
+

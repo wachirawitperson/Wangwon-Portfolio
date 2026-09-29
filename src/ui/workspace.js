@@ -4,10 +4,11 @@
  * [Locked Front Cover (Page 1)] -> [Empty Image State / Student Images] -> [Locked Back Cover (Last Page)]
  */
 import { projectStore } from '../portfolio/portfolio-state.js';
-import { addStudentImages } from '../portfolio/image-manager.js';
+import { importStudentImages } from '../portfolio/image-manager.js';
 import { createImageCard } from './image-card.js';
 import { COVER_TEMPLATES, getCoverTemplate } from '../portfolio/cover-manager.js';
 import { showToast } from './notifications.js';
+import { openModal, closeModal } from './modal.js';
 
 export function initWorkspace(workspaceElement) {
   if (!workspaceElement) return;
@@ -21,13 +22,89 @@ export function initWorkspace(workspaceElement) {
   const backCoverCard = workspaceElement.querySelector('#back-cover-card');
   const totalPagesBadge = document.querySelector('#total-pages-badge');
   const imageCountBadge = document.querySelector('#image-count-badge');
+  const duplicateModal = document.querySelector('#duplicate-modal');
+  const btnSkipDuplicates = document.querySelector('#btn-skip-duplicates');
+  const btnAllowDuplicates = document.querySelector('#btn-allow-duplicates');
+  const duplicateFileList = document.querySelector('#duplicate-file-list');
+  const duplicateSummaryText = document.querySelector('#duplicate-summary-text');
 
-  function handleFileSelect(files) {
-    if (files && files.length > 0) {
-      addStudentImages(files);
-      showToast(`เพิ่มภาพเรียบร้อย (${files.length} ภาพ)`, 'success');
+  let pendingDuplicateBatch = null;
+
+  async function processFiles(files, source = 'file-picker') {
+    if (!files || files.length === 0) return;
+
+    try {
+      const result = await importStudentImages(files, { source, allowDuplicates: false });
+
+      // Feedback for unsupported files
+      if (result.unsupported.length > 0) {
+        showToast(
+          `ไม่รองรับไฟล์: ${result.unsupported.slice(0, 2).join(', ')}${result.unsupported.length > 2 ? ` และอีก ${result.unsupported.length - 2} ไฟล์` : ''} (รองรับ JPG, PNG, WebP, BMP, HEIC)`,
+          'warning'
+        );
+      }
+
+      // Feedback for corrupted/unreadable files
+      if (result.corrupted.length > 0) {
+        showToast(
+          `ไม่สามารถเปิดไฟล์รูปภาพได้: ${result.corrupted.slice(0, 2).join(', ')}${result.corrupted.length > 2 ? ` และอีก ${result.corrupted.length - 2} ไฟล์` : ''}`,
+          'danger'
+        );
+      }
+
+      // Feedback for low-resolution images
+      if (result.lowResolution.length > 0) {
+        showToast(
+          `พบ ${result.lowResolution.length} ภาพที่มีความละเอียดต่ำกว่าเกณฑ์มาตรฐาน อาจพิมพ์ไม่คมชัด`,
+          'info'
+        );
+      }
+
+      // Success feedback for imported files
+      if (result.imported.length > 0) {
+        showToast(`เพิ่มรูปภาพเรียบร้อย (${result.imported.length} ภาพ)`, 'success');
+      }
+
+      // Handle duplicate files via modal
+      if (result.duplicates.length > 0 && duplicateModal) {
+        pendingDuplicateBatch = result.duplicates;
+        if (duplicateSummaryText) {
+          duplicateSummaryText.textContent = `พบรูปภาพ ${result.duplicates.length} ภาพที่มีชื่อหรือขนาดตรงกับภาพในระบบแล้ว:`;
+        }
+        if (duplicateFileList) {
+          duplicateFileList.innerHTML = result.duplicates
+            .map((dup) => `<li><strong>${dup.name}</strong> (ตรงกับ: ${dup.existingName})</li>`)
+            .join('');
+        }
+        openModal(duplicateModal);
+      }
+    } catch (err) {
+      console.error('File import error:', err);
+      showToast('เกิดข้อผิดพลาดในการนำเข้ารูปภาพ', 'danger');
+    } finally {
       if (addImagesInput) addImagesInput.value = '';
     }
+  }
+
+  // Duplicate modal button events
+  if (btnSkipDuplicates && duplicateModal) {
+    btnSkipDuplicates.addEventListener('click', () => {
+      closeModal(duplicateModal);
+      showToast(`ข้ามรูปภาพที่ซ้ำ ${pendingDuplicateBatch?.length || 0} ภาพแล้ว`, 'info');
+      pendingDuplicateBatch = null;
+    });
+  }
+
+  if (btnAllowDuplicates && duplicateModal) {
+    btnAllowDuplicates.addEventListener('click', async () => {
+      if (pendingDuplicateBatch && pendingDuplicateBatch.length > 0) {
+        const dupFiles = pendingDuplicateBatch.map((d) => d.file);
+        closeModal(duplicateModal);
+        const dupResult = await importStudentImages(dupFiles, { source: 'file-picker', allowDuplicates: true });
+        showToast(`นำเข้ารูปภาพที่ซ้ำเรียบร้อย (${dupResult.imported.length} ภาพ)`, 'success');
+        pendingDuplicateBatch = null;
+      }
+    });
   }
 
   // Trigger file selection from both upload buttons
@@ -60,9 +137,68 @@ export function initWorkspace(workspaceElement) {
 
   if (addImagesInput) {
     addImagesInput.addEventListener('change', (e) => {
-      handleFileSelect(Array.from(e.target.files || []));
+      processFiles(Array.from(e.target.files || []), 'file-picker');
     });
   }
+
+  // Drag and drop onto workspaceElement and emptyPlaceholder
+  const dropTargets = [workspaceElement, emptyPlaceholder].filter(Boolean);
+  dropTargets.forEach((target) => {
+    target.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      target.classList.add('is-dragover');
+    });
+
+    target.addEventListener('dragleave', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      target.classList.remove('is-dragover');
+    });
+
+    target.addEventListener('drop', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      target.classList.remove('is-dragover');
+      const dt = e.dataTransfer;
+      if (dt && dt.files && dt.files.length > 0) {
+        processFiles(Array.from(dt.files), 'drag-drop');
+      }
+    });
+  });
+
+  // Global Clipboard paste support (Ctrl/Cmd+V) when not inside text inputs
+  window.addEventListener('paste', (e) => {
+    const active = document.activeElement;
+    if (
+      active &&
+      (active.tagName === 'INPUT' ||
+        active.tagName === 'TEXTAREA' ||
+        active.tagName === 'SELECT' ||
+        active.isContentEditable)
+    ) {
+      return; // Do not intercept paste in form inputs
+    }
+
+    const clipboardData = e.clipboardData;
+    if (!clipboardData || !clipboardData.items) return;
+
+    const files = [];
+    for (let i = 0; i < clipboardData.items.length; i++) {
+      const item = clipboardData.items[i];
+      if (item.kind === 'file' && item.type.startsWith('image/')) {
+        const file = item.getAsFile();
+        if (file) {
+          files.push(file);
+        }
+      }
+    }
+
+    if (files.length > 0) {
+      e.preventDefault();
+      processFiles(files, 'clipboard');
+    }
+  });
 
   // Render Front Cover Card
   function renderFrontCover(state) {

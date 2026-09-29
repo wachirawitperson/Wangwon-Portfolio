@@ -101,6 +101,16 @@ export function updateStudent(partial = {}) {
  * Canonical reset function for the entire project state.
  */
 export function resetPortfolioProject() {
+  const currentImages = projectStore.getState().images || [];
+  currentImages.forEach((img) => {
+    if (img.previewUrl && typeof img.previewUrl === 'string' && img.previewUrl.startsWith('blob:')) {
+      try {
+        URL.revokeObjectURL(img.previewUrl);
+      } catch (e) {
+        // ignore
+      }
+    }
+  });
   projectStore.reset(createDefaultProjectState());
 }
 

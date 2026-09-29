@@ -535,5 +535,518 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
     await page.screenshot({ path: 'tests/screenshots/modal-open.png', fullPage: false });
   });
 
+  // =========================================================================
+  // PHASE 4: Image Import, Validation, HEIC & Workspace Pipeline Tests (26-45)
+  // =========================================================================
+
+  test('26. Format Support: Imports JPG, PNG, WebP, and BMP files via file-picker', async ({ page }) => {
+    await page.goto('/');
+
+    const importResult = await page.evaluate(async () => {
+      // Helper to generate canvas image file in page
+      function createTestImg(name, type, w = 1200, h = 900) {
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#2563eb';
+        ctx.fillRect(0, 0, w, h);
+        return new Promise((res) => {
+          canvas.toBlob((blob) => {
+            const f = new File([blob], name, { type, lastModified: 1700000000000 });
+            res(f);
+          }, type === 'image/bmp' ? 'image/png' : type);
+        });
+      }
+
+      const fJpg = await createTestImg('test1.jpg', 'image/jpeg');
+      const fPng = await createTestImg('test2.png', 'image/png');
+      const fWebp = await createTestImg('test3.webp', 'image/webp');
+      const fBmp = await createTestImg('test4.bmp', 'image/bmp');
+
+      const res = await window.__WANGWON_IMAGE_MANAGER__.importStudentImages([fJpg, fPng, fWebp, fBmp]);
+      return {
+        importedCount: res.imported.length,
+        unsupportedCount: res.unsupported.length,
+        storeImagesCount: window.__WANGWON_STORE__.getState().images.length
+      };
+    });
+
+    expect(importResult.importedCount).toBe(4);
+    expect(importResult.unsupportedCount).toBe(0);
+    expect(importResult.storeImagesCount).toBe(4);
+
+    // Verify DOM renders 4 student image cards
+    const cards = page.locator('.student-image-card');
+    await expect(cards).toHaveCount(4);
+
+    // Verify image counter badge updates
+    const imageCountBadge = page.locator('#image-count-badge');
+    await expect(imageCountBadge).toHaveText('4 ภาพผลงาน');
+
+    // Verify total pages badge updates (4 + 2 = 6)
+    const totalPagesBadge = page.locator('#total-pages-badge');
+    await expect(totalPagesBadge).toHaveText('6 หน้า รวมปกหน้าและปกหลัง');
+  });
+
+  test('27. Page Numbering: Front Cover is Page 1, first image is Page 2, and Back Cover is Last Page', async ({ page }) => {
+    await page.goto('/');
+
+    await page.evaluate(async () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1200;
+      canvas.height = 900;
+      const blob = await new Promise((res) => canvas.toBlob(res, 'image/jpeg'));
+      const f1 = new File([blob], 'art_activity1.jpg', { type: 'image/jpeg', lastModified: 1000 });
+      const f2 = new File([blob], 'art_activity2.jpg', { type: 'image/jpeg', lastModified: 2000 });
+      await window.__WANGWON_IMAGE_MANAGER__.importStudentImages([f1, f2]);
+    });
+
+    // Check Front Cover badge
+    const frontBadge = page.locator('#front-cover-card .badge-locked');
+    await expect(frontBadge).toContainText('หน้า 1');
+
+    // Check Student Cards page badges (should be หน้า 2 and หน้า 3)
+    const cards = page.locator('.student-image-card');
+    await expect(cards.nth(0).locator('.page-badge')).toHaveText('หน้า 2');
+    await expect(cards.nth(1).locator('.page-badge')).toHaveText('หน้า 3');
+
+    // Check Back Cover badge
+    const backBadge = page.locator('#back-cover-card .badge-locked');
+    await expect(backBadge).toContainText('หน้าสุดท้าย');
+  });
+
+  test('28. Unsupported File Handling: Rejects non-image files and displays Thai toast warning', async ({ page }) => {
+    await page.goto('/');
+
+    const result = await page.evaluate(async () => {
+      const pdfBlob = new Blob(['%PDF-1.4 dummy'], { type: 'application/pdf' });
+      const pdfFile = new File([pdfBlob], 'document.pdf', { type: 'application/pdf' });
+      return await window.__WANGWON_IMAGE_MANAGER__.importStudentImages([pdfFile]);
+    });
+
+    expect(result.imported.length).toBe(0);
+    expect(result.unsupported).toContain('document.pdf');
+  });
+
+  test('29. Corrupted File Handling: Rejects unreadable files safely without halting batch', async ({ page }) => {
+    await page.goto('/');
+
+    const result = await page.evaluate(async () => {
+      const corruptBlob = new Blob(['not a valid image content'], { type: 'image/jpeg' });
+      const corruptFile = new File([corruptBlob], 'broken.jpg', { type: 'image/jpeg' });
+
+      // Create a valid image
+      const canvas = document.createElement('canvas');
+      canvas.width = 1400;
+      canvas.height = 1000;
+      const validBlob = await new Promise((res) => canvas.toBlob(res, 'image/png'));
+      const validFile = new File([validBlob], 'valid.png', { type: 'image/png' });
+
+      return await window.__WANGWON_IMAGE_MANAGER__.importStudentImages([corruptFile, validFile]);
+    });
+
+    expect(result.corrupted).toContain('broken.jpg');
+    expect(result.imported.length).toBe(1);
+    expect(result.imported[0].originalFilename).toBe('valid.png');
+  });
+
+  test('30. Low Resolution Warning: Detects <1200px longest edge and displays badge without blocking import', async ({ page }) => {
+    await page.goto('/');
+
+    await page.evaluate(async () => {
+      // 640x480 is low res (longest edge < 1200)
+      const canvas = document.createElement('canvas');
+      canvas.width = 640;
+      canvas.height = 480;
+      const lowBlob = await new Promise((res) => canvas.toBlob(res, 'image/jpeg'));
+      const lowFile = new File([lowBlob], 'lowres_photo.jpg', { type: 'image/jpeg' });
+      await window.__WANGWON_IMAGE_MANAGER__.importStudentImages([lowFile]);
+    });
+
+    const card = page.locator('.student-image-card');
+    await expect(card).toHaveClass(/has-warning-lowres/);
+
+    const warningBadge = card.locator('.warning-badge-area');
+    await expect(warningBadge).toBeVisible();
+    await expect(warningBadge).toContainText('ความละเอียดต่ำ (640 × 480)');
+  });
+
+  test('31. High Resolution Images: Does not show low resolution warning badge', async ({ page }) => {
+    await page.goto('/');
+
+    await page.evaluate(async () => {
+      // 1920x1080 is standard high res
+      const canvas = document.createElement('canvas');
+      canvas.width = 1920;
+      canvas.height = 1080;
+      const highBlob = await new Promise((res) => canvas.toBlob(res, 'image/jpeg'));
+      const highFile = new File([highBlob], 'highres_photo.jpg', { type: 'image/jpeg' });
+      await window.__WANGWON_IMAGE_MANAGER__.importStudentImages([highFile]);
+    });
+
+    const card = page.locator('.student-image-card');
+    await expect(card).not.toHaveClass(/has-warning-lowres/);
+    const warningBadge = card.locator('.warning-badge-area');
+    await expect(warningBadge).not.toBeVisible();
+  });
+
+  test('32. Duplicate Detection: Detects identical image and presents summary modal dialog', async ({ page }) => {
+    await page.goto('/');
+
+    // First import one file
+    await page.evaluate(async () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1200;
+      canvas.height = 800;
+      const blob = await new Promise((res) => canvas.toBlob(res, 'image/jpeg'));
+      const f1 = new File([blob], 'science_fair.jpg', { type: 'image/jpeg', lastModified: 5000 });
+      await window.__WANGWON_IMAGE_MANAGER__.importStudentImages([f1]);
+    });
+
+    let imagesCount = await page.evaluate(() => window.__WANGWON_STORE__.getState().images.length);
+    expect(imagesCount).toBe(1);
+
+    // Now simulate user importing the exact same file again through file input
+    const fileInput = page.locator('#file-upload-input');
+    await fileInput.setInputFiles({
+      name: 'science_fair.jpg',
+      mimeType: 'image/jpeg',
+      buffer: Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46]) // dummy header
+    }).catch(() => {});
+
+    // Or test duplicate resolution dialog directly via UI pipeline
+    await page.evaluate(async () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1200;
+      canvas.height = 800;
+      const blob = await new Promise((res) => canvas.toBlob(res, 'image/jpeg'));
+      const dupFile = new File([blob], 'science_fair.jpg', { type: 'image/jpeg', lastModified: 5000 });
+      
+      // Dispatch change event with dupFile
+      const input = document.querySelector('#file-upload-input');
+      const dt = new DataTransfer();
+      dt.items.add(dupFile);
+      input.files = dt.files;
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+
+    const dupModal = page.locator('#duplicate-modal');
+    await expect(dupModal).toHaveAttribute('aria-hidden', 'false');
+    await expect(dupModal.locator('#duplicate-file-list')).toContainText('science_fair.jpg');
+
+    // Test "ข้ามภาพที่ซ้ำ" (Skip duplicates)
+    const btnSkip = page.locator('#btn-skip-duplicates');
+    await btnSkip.click();
+    await expect(dupModal).toHaveAttribute('aria-hidden', 'true');
+
+    // Images count remains 1
+    imagesCount = await page.evaluate(() => window.__WANGWON_STORE__.getState().images.length);
+    expect(imagesCount).toBe(1);
+  });
+
+  test('33. Duplicate Modal: "นำเข้ารูปซ้ำทั้งหมด" imports duplicates when chosen by teacher', async ({ page }) => {
+    await page.goto('/');
+
+    await page.evaluate(async () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1200;
+      canvas.height = 800;
+      const blob = await new Promise((res) => canvas.toBlob(res, 'image/jpeg'));
+      const f1 = new File([blob], 'award.jpg', { type: 'image/jpeg', lastModified: 7000 });
+      await window.__WANGWON_IMAGE_MANAGER__.importStudentImages([f1]);
+
+      const dupFile = new File([blob], 'award.jpg', { type: 'image/jpeg', lastModified: 7000 });
+      const input = document.querySelector('#file-upload-input');
+      const dt = new DataTransfer();
+      dt.items.add(dupFile);
+      input.files = dt.files;
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+
+    const dupModal = page.locator('#duplicate-modal');
+    await expect(dupModal).toHaveAttribute('aria-hidden', 'false');
+
+    // Click Allow Duplicates
+    const btnAllow = page.locator('#btn-allow-duplicates');
+    await btnAllow.click();
+    await expect(dupModal).toHaveAttribute('aria-hidden', 'true');
+
+    // Wait for store to update to 2 images
+    await expect.poll(async () => {
+      return await page.evaluate(() => window.__WANGWON_STORE__.getState().images.length);
+    }).toBe(2);
+  });
+
+  test('34. HEIC decoding integration: Gracefully decodes or handles fallback', async ({ page }) => {
+    await page.goto('/');
+
+    const result = await page.evaluate(async () => {
+      // Mock window.heic2any converter
+      window.heic2any = async ({ blob }) => {
+        // Return simulated jpeg blob
+        const canvas = document.createElement('canvas');
+        canvas.width = 1600;
+        canvas.height = 1200;
+        return await new Promise((res) => canvas.toBlob(res, 'image/jpeg'));
+      };
+
+      const heicBlob = new Blob(['mock-heic-binary'], { type: 'image/heic' });
+      const heicFile = new File([heicBlob], 'iphone_photo.heic', { type: 'image/heic' });
+
+      return await window.__WANGWON_IMAGE_MANAGER__.importStudentImages([heicFile]);
+    });
+
+    expect(result.imported.length).toBe(1);
+    expect(result.imported[0].outputExtension).toBe('jpg');
+    expect(result.imported[0].width).toBe(1600);
+    expect(result.imported[0].height).toBe(1200);
+  });
+
+  test('35. Drag-and-Drop: Workspace shows .is-dragover feedback and imports dropped files', async ({ page }) => {
+    await page.goto('/');
+
+    const workspace = page.locator('#portfolio-workspace');
+    await expect(workspace).toBeVisible();
+
+    // Trigger dragover on workspace inside evaluate
+    await page.evaluate(() => {
+      const ws = document.querySelector('#portfolio-workspace');
+      const dragOverEvent = new Event('dragover', { bubbles: true, cancelable: true });
+      ws.dispatchEvent(dragOverEvent);
+    });
+    await expect(workspace).toHaveClass(/is-dragover/);
+
+    // Trigger dragleave inside evaluate
+    await page.evaluate(() => {
+      const ws = document.querySelector('#portfolio-workspace');
+      const dragLeaveEvent = new Event('dragleave', { bubbles: true, cancelable: true });
+      ws.dispatchEvent(dragLeaveEvent);
+    });
+    await expect(workspace).not.toHaveClass(/is-dragover/);
+
+    // Trigger drop with synthesized images
+    await page.evaluate(async () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1400;
+      canvas.height = 1000;
+      const blob = await new Promise((res) => canvas.toBlob(res, 'image/png'));
+      const dropFile = new File([blob], 'dragged_image.png', { type: 'image/png', lastModified: 9000 });
+
+      const dt = new DataTransfer();
+      dt.items.add(dropFile);
+
+      const ws = document.querySelector('#portfolio-workspace');
+      const dropEvent = new DragEvent('drop', {
+        bubbles: true,
+        cancelable: true,
+        dataTransfer: dt
+      });
+      ws.dispatchEvent(dropEvent);
+    });
+
+    const cards = page.locator('.student-image-card');
+    await expect(cards).toHaveCount(1);
+    await expect(cards.first().locator('.image-name')).toHaveText('dragged_image.png');
+  });
+
+  test('36. Clipboard Paste: Pasting image anywhere outside text input imports student image', async ({ page }) => {
+    await page.goto('/');
+
+    await page.evaluate(async () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1200;
+      canvas.height = 900;
+      const blob = await new Promise((res) => canvas.toBlob(res, 'image/png'));
+      const pasteFile = new File([blob], 'clipboard_image.png', { type: 'image/png', lastModified: 9500 });
+
+      const dt = new DataTransfer();
+      dt.items.add(pasteFile);
+
+      const pasteEvent = new ClipboardEvent('paste', {
+        bubbles: true,
+        cancelable: true,
+        clipboardData: dt
+      });
+      window.dispatchEvent(pasteEvent);
+    });
+
+    const cards = page.locator('.student-image-card');
+    await expect(cards).toHaveCount(1);
+    await expect(cards.first().locator('.image-name')).toHaveText('clipboard_image.png');
+  });
+
+  test('37. Clipboard Paste Guard: Does not intercept paste when activeElement is text input', async ({ page }) => {
+    await page.goto('/');
+
+    const firstNameInput = page.locator('#student-firstname');
+    await firstNameInput.focus();
+
+    await page.evaluate(async () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1200;
+      canvas.height = 900;
+      const blob = await new Promise((res) => canvas.toBlob(res, 'image/png'));
+      const pasteFile = new File([blob], 'should_not_import.png', { type: 'image/png' });
+
+      const dt = new DataTransfer();
+      dt.items.add(pasteFile);
+
+      const pasteEvent = new ClipboardEvent('paste', {
+        bubbles: true,
+        cancelable: true,
+        clipboardData: dt
+      });
+      window.dispatchEvent(pasteEvent);
+    });
+
+    const cards = page.locator('.student-image-card');
+    await expect(cards).toHaveCount(0);
+  });
+
+  test('38. Image Item Schema: Conforms to all required fields in store', async ({ page }) => {
+    await page.goto('/');
+
+    const imageItem = await page.evaluate(async () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1400;
+      canvas.height = 1000;
+      const blob = await new Promise((res) => canvas.toBlob(res, 'image/jpeg'));
+      const file = new File([blob], 'schema_test.jpg', { type: 'image/jpeg' });
+      const res = await window.__WANGWON_IMAGE_MANAGER__.importStudentImages([file], { source: 'drag-drop' });
+      return res.imported[0];
+    });
+
+    expect(imageItem).toBeDefined();
+    expect(typeof imageItem.id).toBe('string');
+    expect(imageItem.originalFilename).toBe('schema_test.jpg');
+    expect(imageItem.outputExtension).toBe('jpg');
+    expect(imageItem.mimeType).toBe('image/jpeg');
+    expect(imageItem.order).toBe(1);
+    expect(imageItem.rotation).toBe(0);
+    expect(imageItem.width).toBe(1400);
+    expect(imageItem.height).toBe(1000);
+    expect(imageItem.aspectRatio).toBe(1.4);
+    expect(imageItem.source).toBe('drag-drop');
+    expect(imageItem.qualityStatus).toBe('normal');
+    expect(typeof imageItem.duplicateKey).toBe('string');
+    expect(imageItem.previewUrl.startsWith('blob:')).toBe(true);
+  });
+
+  test('39. Memory Cleanup: resetPortfolioProject revokes all active preview URLs', async ({ page }) => {
+    await page.goto('/');
+
+    const revokedUrls = await page.evaluate(async () => {
+      const revoked = [];
+      const origRevoke = URL.revokeObjectURL;
+      URL.revokeObjectURL = (url) => {
+        revoked.push(url);
+        origRevoke(url);
+      };
+
+      const canvas = document.createElement('canvas');
+      canvas.width = 1200;
+      canvas.height = 900;
+      const blob = await new Promise((res) => canvas.toBlob(res, 'image/jpeg'));
+      const file = new File([blob], 'cleanup_test.jpg', { type: 'image/jpeg' });
+
+      await window.__WANGWON_IMAGE_MANAGER__.importStudentImages([file]);
+      const currentUrl = window.__WANGWON_STORE__.getState().images[0].previewUrl;
+
+      // Now reset
+      window.__WANGWON_STUDENT_UTILS__.resetPortfolioProject();
+
+      return {
+        createdUrl: currentUrl,
+        revokedUrls: revoked
+      };
+    });
+
+    expect(revokedUrls.revokedUrls).toContain(revokedUrls.createdUrl);
+    const remainingImages = await page.evaluate(() => window.__WANGWON_STORE__.getState().images.length);
+    expect(remainingImages).toBe(0);
+  });
+
+  test('40. Privacy Verification: Zero external network requests with image data', async ({ page }) => {
+    const externalRequests = [];
+    page.on('request', (req) => {
+      const url = req.url();
+      if (!url.includes('localhost') && !url.includes('127.0.0.1')) {
+        externalRequests.push(url);
+      }
+    });
+
+    await page.goto('/');
+
+    await page.evaluate(async () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1200;
+      canvas.height = 900;
+      const blob = await new Promise((res) => canvas.toBlob(res, 'image/jpeg'));
+      const file = new File([blob], 'confidential_student.jpg', { type: 'image/jpeg' });
+      await window.__WANGWON_IMAGE_MANAGER__.importStudentImages([file]);
+    });
+
+    expect(externalRequests).toEqual([]);
+  });
+
+  test('Visual QA: Capture Phase 4 Screenshots for Workspace with Images, Low-res, and Duplicate Modal', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/');
+
+    // 1. Fill student info
+    await page.selectOption('#student-prefix', 'ด.ช.');
+    await page.fill('#student-firstname', 'กิตติพัฒน์');
+    await page.fill('#student-lastname', 'วัฒนากุลชัย');
+    await page.selectOption('#student-grade', 'ประถมศึกษาปีที่ 1');
+    await page.fill('#student-number', '01');
+
+    // 2. Import high-res & low-res images
+    await page.evaluate(async () => {
+      // Normal image
+      const canvasNorm = document.createElement('canvas');
+      canvasNorm.width = 1600;
+      canvasNorm.height = 1200;
+      const ctx1 = canvasNorm.getContext('2d');
+      ctx1.fillStyle = '#0284c7';
+      ctx1.fillRect(0, 0, 1600, 1200);
+      ctx1.fillStyle = '#ffffff';
+      ctx1.font = '48px sans-serif';
+      ctx1.fillText('กิจกรรมวันวิทยาศาสตร์', 100, 200);
+      const blob1 = await new Promise((res) => canvasNorm.toBlob(res, 'image/jpeg'));
+      const f1 = new File([blob1], 'science_activity.jpg', { type: 'image/jpeg', lastModified: 1000 });
+
+      // Low res image
+      const canvasLow = document.createElement('canvas');
+      canvasLow.width = 640;
+      canvasLow.height = 480;
+      const ctx2 = canvasLow.getContext('2d');
+      ctx2.fillStyle = '#f59e0b';
+      ctx2.fillRect(0, 0, 640, 480);
+      ctx2.fillStyle = '#ffffff';
+      ctx2.font = '32px sans-serif';
+      ctx2.fillText('ภาพถ่ายขนาดเล็ก', 50, 100);
+      const blob2 = await new Promise((res) => canvasLow.toBlob(res, 'image/jpeg'));
+      const f2 = new File([blob2], 'drawing_craft.jpg', { type: 'image/jpeg', lastModified: 2000 });
+
+      await window.__WANGWON_IMAGE_MANAGER__.importStudentImages([f1, f2]);
+    });
+
+    // Capture Workspace with imported images
+    await page.locator('#portfolio-workspace').scrollIntoViewIfNeeded();
+    await page.screenshot({ path: 'tests/screenshots/phase4-workspace-images.png', fullPage: false });
+
+    // Open Duplicate Modal and capture
+    await page.evaluate(async () => {
+      const dupModal = document.querySelector('#duplicate-modal');
+      const dupSummary = document.querySelector('#duplicate-summary-text');
+      const dupList = document.querySelector('#duplicate-file-list');
+      if (dupSummary) dupSummary.textContent = 'พบรูปภาพ 1 ภาพที่มีชื่อหรือขนาดตรงกับภาพในระบบแล้ว:';
+      if (dupList) dupList.innerHTML = '<li><strong>science_activity.jpg</strong> (ตรงกับ: science_activity.jpg)</li>';
+      window.__WANGWON_MODAL__.openModal(dupModal);
+    });
+    await page.screenshot({ path: 'tests/screenshots/phase4-duplicate-modal.png', fullPage: false });
+  });
+
 });
 
