@@ -27,7 +27,7 @@ test.describe('Wangwon Portfolio - Phase 1 Smoke Tests', () => {
 
     const privacyBadge = header.locator('.privacy-badge');
     await expect(privacyBadge).toBeVisible();
-    await expect(privacyBadge).toContainText('100% ประมวลผลในเครื่อง');
+    await expect(privacyBadge).toContainText('ประมวลผลรูปในเครื่อง • ไม่อัปโหลดรูปนักเรียน');
   });
 
   test('4. Student form appears with required fields and live filename badge', async ({ page }) => {
@@ -107,6 +107,25 @@ test.describe('Wangwon Portfolio - Phase 1 Smoke Tests', () => {
 
       expect(hasHorizontalScroll, `Horizontal overflow detected at ${vp.width}x${vp.height}`).toBe(false);
     }
+  });
+
+  test('9. PDF quality settings default to balanced with small, balanced, high options', async ({ page }) => {
+    await page.goto('/');
+
+    const qualitySelect = page.locator('#setting-quality');
+    await expect(qualitySelect).toBeVisible();
+    await expect(qualitySelect).toHaveValue('balanced');
+
+    // Check allowed options
+    const options = await qualitySelect.locator('option').all();
+    const values = await Promise.all(options.map((opt) => opt.getAttribute('value')));
+    expect(values).toEqual(['small', 'balanced', 'high']);
+
+    // Check projectStore default state
+    const storeQuality = await page.evaluate(() => {
+      return window.__WANGWON_STORE__?.getState()?.pdfSettings?.quality;
+    });
+    expect(storeQuality).toBe('balanced');
   });
 
 });

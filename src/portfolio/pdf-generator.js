@@ -2,7 +2,7 @@
  * PDF Generation Pipeline (Architecture Stub for Phase 3/4)
  * Responsible for rendering local pages into standard A4 PDF document using pdf-lib.
  *
- * All operations run 100% locally in the browser with zero server uploads.
+ * Image and PDF operations run in the browser without uploading student photos to external servers.
  */
 
 /**

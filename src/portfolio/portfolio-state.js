@@ -56,7 +56,7 @@ export function createDefaultProjectState() {
       orientation: 'portrait', // 'portrait' | 'landscape'
       placement: 'fit', // 'fit' | 'fill'
       margin: 'none', // 'none' | 'normal'
-      quality: 'standard' // 'draft' | 'standard' | 'high'
+      quality: 'balanced' // 'small' | 'balanced' | 'high'
     },
 
     // Output target info

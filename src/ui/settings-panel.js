@@ -22,7 +22,7 @@ export function initSettingsPanel(panelElement) {
         ...currentState.pdfSettings,
         orientation: orientationSelect ? orientationSelect.value : 'portrait',
         placement: placementSelect ? placementSelect.value : 'fit',
-        quality: qualitySelect ? qualitySelect.value : 'standard'
+        quality: qualitySelect ? qualitySelect.value : 'balanced'
       },
       watermark: {
         ...currentState.watermark,

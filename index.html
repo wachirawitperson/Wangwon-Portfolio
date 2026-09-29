@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Wangwon Portfolio | ระบบสร้าง Portfolio นักเรียน โรงเรียนบ้านวังวน</title>
-  <meta name="description" content="ระบบสร้างแฟ้มสะสมผลงาน (Portfolio) นักเรียนแบบอัตโนมัติ สำหรับคุณครูโรงเรียนบ้านวังวน ประมวลผลบนเครื่อง 100% ปลอดภัย ไม่ส่งข้อมูลออกภายนอก" />
+  <meta name="description" content="ระบบสร้างแฟ้มสะสมผลงาน (Portfolio) นักเรียนแบบอัตโนมัติ สำหรับคุณครูโรงเรียนบ้านวังวน รูปภาพนักเรียนประมวลผลในเบราว์เซอร์ของคุณ และไม่ถูกอัปโหลดเพื่อประมวลผล" />
 
   <!-- Stylesheets -->
   <link rel="stylesheet" href="./styles/base.css" />
@@ -23,9 +23,9 @@
           <span class="app-subtitle">ระบบสร้าง Portfolio นักเรียน โรงเรียนบ้านวังวน</span>
         </div>
       </div>
-      <div class="privacy-badge" role="status" aria-label="สถานะความปลอดภัย: ข้อมูลประมวลผลบนเบราว์เซอร์เท่านั้น">
+      <div class="privacy-badge" role="status" aria-label="สถานะความปลอดภัย: รูปภาพนักเรียนประมวลผลในเบราว์เซอร์ของคุณ และไม่ถูกอัปโหลดเพื่อประมวลผล">
         <span class="privacy-dot" aria-hidden="true"></span>
-        <span>100% ประมวลผลในเครื่อง ปลอดภัย ไม่มีข้อมูลส่งออกภายนอก</span>
+        <span>ประมวลผลรูปในเครื่อง • ไม่อัปโหลดรูปนักเรียน</span>
       </div>
     </div>
   </header>
@@ -207,8 +207,9 @@
         <div class="form-group">
           <label for="setting-quality" class="form-label">คุณภาพเอกสาร PDF</label>
           <select id="setting-quality" class="form-select">
-            <option value="standard" selected>มาตรฐาน (ขนาดไฟล์กะทัดรัด คมชัด)</option>
-            <option value="high">คมชัดสูง (สำหรับพิมพ์กระดาษโฟโต้)</option>
+            <option value="small">ไฟล์ขนาดเล็ก (Small - เหมาะสำหรับแชร์ทางไลน์)</option>
+            <option value="balanced" selected>สมดุล (Balanced - คมชัดพอดี ขนาดไฟล์เหมาะสม)</option>
+            <option value="high">คุณภาพสูง (High - คมชัดสูงสำหรับพิมพ์ลงกระดาษ)</option>
           </select>
         </div>
 
@@ -250,7 +251,7 @@
 
   <!-- App Footer -->
   <footer class="app-footer">
-    <p>Wangwon Portfolio • โรงเรียนบ้านวังวน • ระบบประมวลผลไฟล์ภายในเว็บเบราว์เซอร์ เพื่อความเป็นส่วนตัวสูงสุด</p>
+    <p>Wangwon Portfolio • โรงเรียนบ้านวังวน • รูปภาพนักเรียนประมวลผลในเบราว์เซอร์ของคุณ และไม่ถูกอัปโหลดเพื่อประมวลผล</p>
   </footer>
 
   <!-- Application Bootstrap (ES Modules) -->
