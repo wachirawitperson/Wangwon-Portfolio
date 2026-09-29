@@ -6,6 +6,8 @@
 // Unsafe characters in Windows and POSIX filenames: \ / : * ? " < > | and control characters
 const UNSAFE_FILENAME_CHARS = /[\\/:*?"<>|\x00-\x1f\x7f]/g;
 
+export const DEFAULT_PDF_FALLBACK_FILENAME = 'portfolio-นักเรียน.pdf';
+
 /**
  * Sanitizes a string for use as a valid filename.
  * Preserves Thai characters (Unicode \u0E00-\u0E7F), alphanumeric, underscores, and dashes.
@@ -20,11 +22,17 @@ export function sanitizeFilename(rawName, fallback = 'portfolio') {
     return fallback;
   }
 
-  const cleaned = rawName
-    .replace(UNSAFE_FILENAME_CHARS, '')
-    .trim()
-    .replace(/\s+/g, '_')
-    .replace(/_+/g, '_');
+  // Remove unsafe filesystem characters
+  let cleaned = rawName.replace(UNSAFE_FILENAME_CHARS, '').trim();
+
+  // Replace spaces and whitespace sequences with single underscore
+  cleaned = cleaned.replace(/\s+/g, '_');
+
+  // Collapse consecutive underscores
+  cleaned = cleaned.replace(/_+/g, '_');
+
+  // Strip leading or trailing underscores
+  cleaned = cleaned.replace(/^_+|_+$/g, '');
 
   return cleaned || fallback;
 }
@@ -37,21 +45,27 @@ export function sanitizeFilename(rawName, fallback = 'portfolio') {
  * @returns {string} Sanitized PDF filename
  */
 export function generatePdfFilename(student = {}) {
-  const prefix = student.prefix ? student.prefix.trim() : '';
-  const firstName = student.firstName ? student.firstName.trim() : '';
-  const lastName = student.lastName ? student.lastName.trim() : '';
+  const prefix = (student.prefix || '').trim();
+  const firstName = (student.firstName || '').trim();
+  const lastName = (student.lastName || '').trim();
 
-  let baseName = '';
-  if (firstName && lastName) {
-    baseName = `${prefix}${firstName}_${lastName}`;
-  } else if (firstName) {
-    baseName = `${prefix}${firstName}`;
-  } else {
-    baseName = 'แฟ้มสะสมงาน_นักเรียน';
+  // When student data is incomplete, return safe fallback
+  if (!firstName) {
+    return DEFAULT_PDF_FALLBACK_FILENAME;
   }
 
-  const safe = sanitizeFilename(baseName, 'portfolio');
-  return safe.endsWith('.pdf') ? safe : `${safe}.pdf`;
+  let baseName = '';
+  if (lastName) {
+    baseName = `${prefix}${firstName}_${lastName}`;
+  } else {
+    baseName = `${prefix}${firstName}`;
+  }
+
+  const safe = sanitizeFilename(baseName, 'portfolio-นักเรียน');
+
+  // Ensure it doesn't end with double .pdf or missing .pdf
+  const withoutExt = safe.replace(/\.pdf$/i, '');
+  return `${withoutExt}.pdf`;
 }
 
 /**
@@ -59,7 +73,7 @@ export function generatePdfFilename(student = {}) {
  * Example: "ด.ช.สมชาย_ใจดี_01.jpg"
  *
  * @param {object} student - Student state object
- * @param {number} index - 1-based or 0-based index
+ * @param {number} index - 1-based index
  * @param {string} extension - Image file extension (default: 'jpg')
  * @returns {string} Sanitized image filename
  */

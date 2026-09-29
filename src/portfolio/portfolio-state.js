@@ -4,6 +4,7 @@
  */
 import { createStore } from '../core/state.js';
 import { generatePdfFilename } from '../core/filename-utils.js';
+import { getDefaultAcademicYear } from '../core/student-utils.js';
 
 /**
  * Creates a default, blank PortfolioProject state structure.
@@ -13,9 +14,9 @@ export function createDefaultProjectState() {
     prefix: 'ด.ช.',
     firstName: '',
     lastName: '',
-    grade: 'ประถมศึกษาปีที่ 1',
+    grade: '',
     studentNumber: '',
-    academicYear: '2567'
+    academicYear: getDefaultAcademicYear()
   };
 
   return {
@@ -69,7 +70,41 @@ export function createDefaultProjectState() {
 // Global project store instance
 export const projectStore = createStore(createDefaultProjectState());
 
-// Auto-update output filename whenever student info changes
+/**
+ * Controlled update API for a single student field.
+ * @param {string} field
+ * @param {string} value
+ */
+export function updateStudentField(field, value) {
+  projectStore.setState((state) => ({
+    student: {
+      ...state.student,
+      [field]: value
+    }
+  }));
+}
+
+/**
+ * Controlled update API for multiple student fields.
+ * @param {object} partial
+ */
+export function updateStudent(partial = {}) {
+  projectStore.setState((state) => ({
+    student: {
+      ...state.student,
+      ...partial
+    }
+  }));
+}
+
+/**
+ * Canonical reset function for the entire project state.
+ */
+export function resetPortfolioProject() {
+  projectStore.reset(createDefaultProjectState());
+}
+
+// Canonical subscription: Auto-update output filename whenever student info changes
 projectStore.subscribe((state) => {
   const currentFilename = state.output?.filename;
   const newFilename = generatePdfFilename(state.student);

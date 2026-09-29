@@ -76,8 +76,10 @@
 
       <form id="student-info-form" class="form-grid" novalidate onsubmit="return false;">
         <div class="form-group">
-          <label for="student-prefix" class="form-label">คำนำหน้า</label>
-          <select id="student-prefix" name="prefix" class="form-select">
+          <label for="student-prefix" class="form-label">
+            คำนำหน้า <span class="required-indicator" aria-hidden="true">*</span>
+          </label>
+          <select id="student-prefix" name="prefix" class="form-select" aria-required="true" required>
             <option value="ด.ช.">เด็กชาย (ด.ช.)</option>
             <option value="ด.ญ.">เด็กหญิง (ด.ญ.)</option>
             <option value="นาย">นาย</option>
@@ -96,6 +98,7 @@
             class="form-input"
             placeholder="เช่น กิตติพัฒน์"
             autocomplete="off"
+            aria-required="true"
             required
           />
         </div>
@@ -111,17 +114,21 @@
             class="form-input"
             placeholder="เช่น วัฒนากุลชัย"
             autocomplete="off"
+            aria-required="true"
             required
           />
         </div>
 
         <div class="form-group">
-          <label for="student-grade" class="form-label">ชั้น</label>
-          <select id="student-grade" name="grade" class="form-select">
+          <label for="student-grade" class="form-label">
+            ชั้น <span class="required-indicator" aria-hidden="true">*</span>
+          </label>
+          <select id="student-grade" name="grade" class="form-select" aria-required="true" required>
+            <option value="" disabled selected>-- เลือกระดับชั้น --</option>
             <option value="อนุบาล 1">อนุบาล 1</option>
             <option value="อนุบาล 2">อนุบาล 2</option>
             <option value="อนุบาล 3">อนุบาล 3</option>
-            <option value="ประถมศึกษาปีที่ 1" selected>ประถมศึกษาปีที่ 1</option>
+            <option value="ประถมศึกษาปีที่ 1">ประถมศึกษาปีที่ 1</option>
             <option value="ประถมศึกษาปีที่ 2">ประถมศึกษาปีที่ 2</option>
             <option value="ประถมศึกษาปีที่ 3">ประถมศึกษาปีที่ 3</option>
             <option value="ประถมศึกษาปีที่ 4">ประถมศึกษาปีที่ 4</option>
@@ -143,14 +150,18 @@
         </div>
 
         <div class="form-group">
-          <label for="student-year" class="form-label">ปีการศึกษา</label>
+          <label for="student-year" class="form-label">
+            ปีการศึกษา <span class="required-indicator" aria-hidden="true">*</span>
+          </label>
           <input
             type="text"
             id="student-year"
             name="academicYear"
             class="form-input"
-            value="2567"
+            placeholder="เช่น 2569"
             autocomplete="off"
+            aria-required="true"
+            required
           />
         </div>
       </form>
@@ -159,7 +170,7 @@
       <div class="filename-badge-box" aria-live="polite">
         <span aria-hidden="true">📄</span>
         <span>ชื่อไฟล์ PDF อัตโนมัติ:</span>
-        <span id="preview-filename-badge" class="filename-badge">แฟ้มสะสมงาน_นักเรียน.pdf</span>
+        <span id="preview-filename-badge" class="filename-badge">portfolio-นักเรียน.pdf</span>
       </div>
     </section>
 
