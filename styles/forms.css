@@ -1,0 +1,231 @@
+/**
+ * Wangwon Portfolio - Form Controls Design System
+ * Text inputs, select menus, segmented controls, checkboxes, radios, and validation states.
+ */
+
+/* Form Grid */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-4);
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.form-group.col-span-2 {
+  grid-column: span 2;
+}
+
+/* Labels */
+.form-label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-soft);
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.form-label .required-indicator {
+  color: var(--color-danger);
+  font-size: var(--font-size-xs);
+}
+
+/* Text Inputs & Selects */
+.form-input,
+.form-select {
+  height: var(--target-min-height);
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+  line-height: normal;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background-color var(--transition-fast);
+  width: 100%;
+}
+
+.form-input:hover,
+.form-select:hover {
+  border-color: var(--color-border-strong);
+}
+
+.form-input:focus,
+.form-select:focus {
+  border-color: var(--color-border-focus);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+  outline: none;
+}
+
+.form-input::placeholder {
+  color: var(--color-text-muted);
+}
+
+/* Invalid / Error State */
+.form-input.is-invalid,
+.form-select.is-invalid,
+.form-input:invalid:not(:placeholder-shown) {
+  border-color: var(--color-danger);
+  background-color: #fffbfa;
+}
+
+.form-input.is-invalid:focus,
+.form-select.is-invalid:focus {
+  box-shadow: 0 0 0 3px rgba(185, 28, 28, 0.15);
+}
+
+.form-error-msg {
+  font-size: var(--font-size-xs);
+  color: var(--color-danger);
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-top: 2px;
+}
+
+/* Helper Text */
+.form-helper {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  line-height: var(--line-height-base);
+  margin-top: 2px;
+}
+
+/* Disabled & Readonly */
+.form-input:disabled,
+.form-select:disabled,
+.form-input[readonly] {
+  background-color: var(--color-surface-alt);
+  color: var(--color-text-muted);
+  border-color: var(--color-border);
+  cursor: not-allowed;
+}
+
+/* Segmented Control (Pill Selector) */
+.segmented-control {
+  display: inline-flex;
+  background-color: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 3px;
+  gap: 2px;
+  width: 100%;
+}
+
+.segmented-option {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-height: 38px;
+  padding: 0 var(--space-3);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-soft);
+  border-radius: calc(var(--radius-md) - 3px);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  user-select: none;
+  background: transparent;
+  border: none;
+}
+
+.segmented-option:hover:not(.is-active) {
+  background-color: rgba(255, 255, 255, 0.6);
+  color: var(--color-text);
+}
+
+.segmented-option.is-active,
+.segmented-option[aria-checked="true"] {
+  background-color: var(--color-surface);
+  color: var(--color-primary);
+  font-weight: var(--font-weight-semibold);
+  box-shadow: var(--shadow-sm);
+}
+
+.segmented-option:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 1px;
+}
+
+/* Custom Accessible Checkbox */
+.custom-checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-soft);
+  user-select: none;
+  min-height: var(--target-min-height);
+}
+
+.custom-checkbox-input {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  border: 1.5px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-surface);
+  display: inline-grid;
+  place-content: center;
+  transition: all var(--transition-fast);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.custom-checkbox-input::before {
+  content: "";
+  width: 10px;
+  height: 6px;
+  border-left: 2px solid var(--color-text-inverse);
+  border-bottom: 2px solid var(--color-text-inverse);
+  transform: rotate(-45deg) translate(1px, -1px) scale(0);
+  transition: transform var(--transition-fast);
+}
+
+.custom-checkbox-input:checked {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.custom-checkbox-input:checked::before {
+  transform: rotate(-45deg) translate(1px, -1px) scale(1);
+}
+
+.custom-checkbox-input:focus-visible {
+  outline: 3px solid rgba(37, 99, 235, 0.25);
+  outline-offset: 2px;
+}
+
+/* Filename Badge Box */
+.filename-badge-box {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  background-color: var(--color-primary-subtle);
+  border-radius: var(--radius-md);
+  border: 1px dashed #93c5fd;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-soft);
+}
+
+.filename-badge {
+  font-family: var(--font-family-mono);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-primary);
+  background-color: var(--color-surface);
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid #bfdbfe;
+  word-break: break-all;
+}

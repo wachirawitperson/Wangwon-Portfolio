@@ -6,9 +6,12 @@
   <title>Wangwon Portfolio | ระบบสร้าง Portfolio นักเรียน โรงเรียนบ้านวังวน</title>
   <meta name="description" content="ระบบสร้างแฟ้มสะสมผลงาน (Portfolio) นักเรียนแบบอัตโนมัติ สำหรับคุณครูโรงเรียนบ้านวังวน รูปภาพนักเรียนประมวลผลในเบราว์เซอร์ของคุณ และไม่ถูกอัปโหลดเพื่อประมวลผล" />
 
-  <!-- Stylesheets -->
+  <!-- Stylesheets (Modular Design System) -->
+  <link rel="stylesheet" href="./styles/tokens.css" />
   <link rel="stylesheet" href="./styles/base.css" />
   <link rel="stylesheet" href="./styles/layout.css" />
+  <link rel="stylesheet" href="./styles/forms.css" />
+  <link rel="stylesheet" href="./styles/workspace.css" />
   <link rel="stylesheet" href="./styles/components.css" />
   <link rel="stylesheet" href="./styles/responsive.css" />
 </head>
@@ -20,18 +23,45 @@
         <div class="brand-logo-icon" aria-hidden="true">🏫</div>
         <div class="brand-text-group">
           <h1 class="app-title">Wangwon Portfolio</h1>
-          <span class="app-subtitle">ระบบสร้าง Portfolio นักเรียน โรงเรียนบ้านวังวน</span>
+          <span class="app-subtitle">ระบบสร้าง Portfolio นักเรียน</span>
         </div>
       </div>
-      <div class="privacy-badge" role="status" aria-label="สถานะความปลอดภัย: รูปภาพนักเรียนประมวลผลในเบราว์เซอร์ของคุณ และไม่ถูกอัปโหลดเพื่อประมวลผล">
-        <span class="privacy-dot" aria-hidden="true"></span>
-        <span>ประมวลผลรูปในเครื่อง • ไม่อัปโหลดรูปนักเรียน</span>
+
+      <div class="header-right">
+        <!-- Privacy Status Badge -->
+        <div class="privacy-badge" role="status" aria-label="สถานะความเป็นส่วนตัว: รูปภาพนักเรียนประมวลผลในเบราว์เซอร์ของคุณ และไม่ถูกอัปโหลดเพื่อประมวลผล">
+          <span class="privacy-dot" aria-hidden="true"></span>
+          <span>ประมวลผลรูปในเครื่อง • ไม่อัปโหลดรูปนักเรียน</span>
+        </div>
+
+        <!-- Header Secondary Actions -->
+        <button type="button" class="btn btn-secondary btn-sm" id="btn-reset-project" aria-label="เริ่มทำแฟ้มใหม่ หรือ ล้างข้อมูล">
+          <span aria-hidden="true">🔄</span> เริ่มทำแฟ้มใหม่
+        </button>
+        <button type="button" class="btn btn-ghost btn-sm" id="btn-help" aria-label="คู่มือการใช้งานระบบ">
+          <span aria-hidden="true">❓</span> ช่วยเหลือ
+        </button>
       </div>
     </div>
   </header>
 
   <!-- Main Application Body -->
   <main class="main-content" id="main-content">
+
+    <!-- Page Intro / Compact Hero Area -->
+    <section class="app-intro-card" aria-label="แนะนำการใช้งานเบื้องต้น">
+      <div class="intro-content">
+        <h2>สร้าง Portfolio นักเรียน โรงเรียนบ้านวังวน</h2>
+        <p>รวบรวมภาพผลงาน จัดเรียง และสร้างเป็น PDF ได้ในไม่กี่ขั้นตอน</p>
+        <div class="intro-note">
+          <span aria-hidden="true">🔒</span>
+          <span>รูปภาพทั้งหมดประมวลผลในเบราว์เซอร์ของคุณ • ระบบจะไม่ส่งรูปนักเรียนขึ้นเซิร์ฟเวอร์</span>
+        </div>
+      </div>
+      <div class="intro-badge-group">
+        <span class="badge badge-page">โรงเรียนบ้านวังวน</span>
+      </div>
+    </section>
     
     <!-- Section 1: Student Information -->
     <section class="app-section" id="student-section" aria-labelledby="heading-student-info">
@@ -40,7 +70,7 @@
           <h2 class="section-title" id="heading-student-info">
             <span aria-hidden="true">👤</span> ข้อมูลนักเรียน
           </h2>
-          <p class="section-subtitle">กรอกข้อมูลนักเรียนเพื่อนำไปสร้างหน้าปกและตั้งชื่อไฟล์เอกสารอัตโนมัติ</p>
+          <p class="section-subtitle">ข้อมูลนี้จะใช้สำหรับตั้งชื่อไฟล์และสร้างหน้าปก</p>
         </div>
       </div>
 
@@ -56,33 +86,37 @@
         </div>
 
         <div class="form-group">
-          <label for="student-firstname" class="form-label">ชื่อจริง</label>
+          <label for="student-firstname" class="form-label">
+            ชื่อ <span class="required-indicator" aria-hidden="true">*</span>
+          </label>
           <input
             type="text"
             id="student-firstname"
             name="firstName"
             class="form-input"
-            placeholder="เช่น สมชาย"
+            placeholder="เช่น กิตติพัฒน์"
             autocomplete="off"
             required
           />
         </div>
 
         <div class="form-group">
-          <label for="student-lastname" class="form-label">นามสกุล</label>
+          <label for="student-lastname" class="form-label">
+            นามสกุล <span class="required-indicator" aria-hidden="true">*</span>
+          </label>
           <input
             type="text"
             id="student-lastname"
             name="lastName"
             class="form-input"
-            placeholder="เช่น ใจดี"
+            placeholder="เช่น วัฒนากุลชัย"
             autocomplete="off"
             required
           />
         </div>
 
         <div class="form-group">
-          <label for="student-grade" class="form-label">ระดับชั้น</label>
+          <label for="student-grade" class="form-label">ชั้น</label>
           <select id="student-grade" name="grade" class="form-select">
             <option value="อนุบาล 2">อนุบาล 2</option>
             <option value="อนุบาล 3">อนุบาล 3</option>
@@ -123,124 +157,174 @@
       <!-- Live PDF Filename Preview -->
       <div class="filename-badge-box" aria-live="polite">
         <span aria-hidden="true">📄</span>
-        <span>ชื่อไฟล์ PDF ที่จะได้รับ:</span>
+        <span>ชื่อไฟล์ PDF อัตโนมัติ:</span>
         <span id="preview-filename-badge" class="filename-badge">แฟ้มสะสมงาน_นักเรียน.pdf</span>
       </div>
     </section>
 
-    <!-- Section 2: Portfolio Workspace -->
-    <section class="app-section" id="portfolio-workspace" aria-labelledby="heading-workspace">
+    <!-- Section 2: Portfolio Workspace Shell -->
+    <section class="app-section workspace-section" id="portfolio-workspace" aria-labelledby="heading-workspace">
       <div class="section-header">
         <div>
           <h2 class="section-title" id="heading-workspace">
-            <span aria-hidden="true">📑</span> หน้าเอกสารในแฟ้มสะสมงาน
+            <span aria-hidden="true">📑</span> หน้าของ Portfolio
           </h2>
           <p class="section-subtitle">จัดเรียงหน้าเอกสาร: ปกหน้า (หน้า 1) → รูปภาพผลงาน/กิจกรรม → ปกหลัง (หน้าสุดท้าย)</p>
         </div>
-        <div>
-          <span id="total-pages-badge" class="badge page-badge">2 หน้า (ปกหน้า 1 + ปกหลัง 1)</span>
+        <div class="workspace-stats-bar">
+          <span id="image-count-badge" class="badge badge-page">0 ภาพผลงาน</span>
+          <span id="total-pages-badge" class="badge badge-page">2 หน้า รวมปกหน้าและปกหลัง</span>
         </div>
       </div>
 
       <!-- Workspace Cards Container -->
-      <div class="workspace-grid" id="workspace-grid" role="list" aria-label="ลำดับหน้าเอกสาร">
+      <div class="workspace-grid" id="workspace-grid" role="list" aria-label="ลำดับหน้าของแฟ้มสะสมงาน">
         
-        <!-- Locked Front Cover Item (Page 1) -->
-        <article class="portfolio-card cover-card" id="front-cover-card" role="listitem">
+        <!-- Locked Front Cover Card (Page 1) -->
+        <article class="portfolio-card cover-card locked-cover" id="front-cover-card" role="listitem">
           <!-- Rendered dynamically by workspace.js -->
         </article>
 
-        <!-- Dynamic Student Images Container -->
+        <!-- Dynamic Middle Student Images Container -->
         <div id="student-images-container" style="display: contents;"></div>
 
-        <!-- Add Images Action Card -->
-        <div class="add-images-card" id="btn-add-images" role="button" tabindex="0" aria-label="เพิ่มรูปภาพผลงานหรือกิจกรรมนักเรียน">
+        <!-- Empty Student Image Area (Between Front Cover and Back Cover) -->
+        <div
+          class="empty-images-card"
+          id="images-empty-placeholder"
+          role="region"
+          tabindex="0"
+          aria-label="พื้นที่เพิ่มรูปภาพผลงานนักเรียน"
+        >
+          <div class="empty-icon-wrap" aria-hidden="true">🖼️</div>
+          <h3 class="empty-title">เพิ่มภาพผลงานนักเรียน</h3>
+          <p class="empty-subtitle">ลากรูปภาพมาวาง หรือเลือกหลายภาพพร้อมกัน</p>
+          <button type="button" class="btn btn-primary" id="btn-empty-add-images">
+            <span aria-hidden="true">➕</span> เพิ่มรูปภาพ
+          </button>
+          <span class="empty-first-page-hint">ภาพแรกที่เพิ่มจะเป็นหน้า 2</span>
+          <span class="empty-helper-types">รองรับ JPG, PNG, WebP, BMP และ HEIC</span>
+
+          <!-- Hidden File Upload Input -->
           <input
             type="file"
             id="file-upload-input"
             multiple
-            accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+            accept="image/jpeg,image/png,image/webp,image/bmp,image/heic,image/heif"
             class="sr-only"
             aria-hidden="true"
           />
-          <div class="add-images-icon" aria-hidden="true">➕</div>
-          <div class="add-images-text">เพิ่มรูปผลงาน / กิจกรรม</div>
-          <div class="add-images-sub">คลิกหรือลากไฟล์ภาพมาวางที่นี่<br />(รองรับ JPG, PNG, WEBP, HEIC)</div>
         </div>
 
-        <!-- Locked Back Cover Item (Last Page) -->
-        <article class="portfolio-card cover-card" id="back-cover-card" role="listitem">
+        <!-- Locked Back Cover Card (Last Page) -->
+        <article class="portfolio-card cover-card locked-cover" id="back-cover-card" role="listitem">
           <!-- Rendered dynamically by workspace.js -->
         </article>
 
       </div>
     </section>
 
-    <!-- Section 3: PDF Settings & Watermark (Placeholder for Phase 2/3) -->
+    <!-- Section 3: Settings Panel Shell ("ตั้งค่า Portfolio") -->
     <section class="app-section" id="settings-panel" aria-labelledby="heading-settings">
       <div class="section-header">
         <div>
           <h2 class="section-title" id="heading-settings">
-            <span aria-hidden="true">⚙️</span> การตั้งค่าเอกสารและลายน้ำ
+            <span aria-hidden="true">⚙️</span> ตั้งค่า Portfolio
           </h2>
-          <p class="section-subtitle">ปรับแต่งขนาดกระดาษ การจัดวางภาพ และลายน้ำโรงเรียน</p>
+          <p class="section-subtitle">ปรับแต่งขนาดกระดาษ การจัดวางรูปภาพ คุณภาพเอกสาร และลายน้ำ</p>
         </div>
       </div>
 
       <div class="form-grid">
+        <!-- Group 1: กระดาษ -->
         <div class="form-group">
-          <label for="setting-orientation" class="form-label">ทิศทางกระดาษ</label>
+          <label for="setting-orientation" class="form-label">กระดาษ</label>
           <select id="setting-orientation" class="form-select">
-            <option value="portrait" selected>แนวตั้ง (Portrait - A4)</option>
-            <option value="landscape">แนวนอน (Landscape - A4)</option>
+            <option value="portrait" selected>A4 แนวตั้ง (Portrait)</option>
+            <option value="landscape">A4 แนวนอน (Landscape)</option>
           </select>
+          <span class="form-helper">ขนาดมาตรฐาน A4 (210 × 297 มม.)</span>
         </div>
 
+        <!-- Group 2: การวางภาพ -->
         <div class="form-group">
-          <label for="setting-placement" class="form-label">การจัดวางรูปภาพ</label>
-          <select id="setting-placement" class="form-select">
-            <option value="fit" selected>พอดีหน้ากระดาษ (Fit - ไม่ตัดรูป)</option>
-            <option value="fill">เต็มหน้ากระดาษ (Fill - เติมเต็มพื้นที่)</option>
-          </select>
+          <label class="form-label">การวางภาพ</label>
+          <div class="segmented-control" role="radiogroup" aria-label="การวางภาพ">
+            <button
+              type="button"
+              class="segmented-option is-active"
+              role="radio"
+              aria-checked="true"
+              data-setting="placement"
+              data-value="fit"
+            >
+              Fit (พอดีหน้า)
+            </button>
+            <button
+              type="button"
+              class="segmented-option"
+              role="radio"
+              aria-checked="false"
+              data-setting="placement"
+              data-value="fill"
+            >
+              Fill (เต็มหน้า)
+            </button>
+          </div>
+          <span class="form-helper">Fit: แสดงรูปครบไม่ตัดขอบ | Fill: ขยายเต็มแผ่น</span>
         </div>
 
+        <!-- Group 3: คุณภาพ (small, balanced [default], high) -->
         <div class="form-group">
           <label for="setting-quality" class="form-label">คุณภาพเอกสาร PDF</label>
           <select id="setting-quality" class="form-select">
-            <option value="small">ไฟล์ขนาดเล็ก (Small - เหมาะสำหรับแชร์ทางไลน์)</option>
-            <option value="balanced" selected>สมดุล (Balanced - คมชัดพอดี ขนาดไฟล์เหมาะสม)</option>
-            <option value="high">คุณภาพสูง (High - คมชัดสูงสำหรับพิมพ์ลงกระดาษ)</option>
+            <option value="small">ไฟล์เล็ก (Small - ขนาดเล็ก ส่งไลน์สะดวก)</option>
+            <option value="balanced" selected>สมดุล (Balanced - คมชัดพอดี ขนาดเหมาะสม)</option>
+            <option value="high">คุณภาพสูง (High - คมชัดสูงสุดสำหรับพิมพ์ภาพ)</option>
           </select>
+          <span class="form-helper">แนะนำ "สมดุล" เพื่อความคมชัดและขนาดไฟล์ที่พอดี</span>
         </div>
 
+        <!-- Group 4: ลายน้ำ -->
         <div class="form-group">
-          <label class="form-label" for="setting-watermark-enabled">ลายน้ำโรงเรียน</label>
-          <div style="display: flex; align-items: center; gap: 8px; height: 38px;">
-            <input type="checkbox" id="setting-watermark-enabled" style="width: 18px; height: 18px;" />
-            <label for="setting-watermark-enabled" style="font-size: var(--font-size-sm); color: var(--color-text-sub);">
-              ใส่ลายน้ำชื่อโรงเรียนในหน้าผลงาน
-            </label>
-          </div>
+          <label class="form-label" for="setting-watermark-enabled">ลายน้ำ</label>
+          <label class="custom-checkbox-label">
+            <input type="checkbox" id="setting-watermark-enabled" class="custom-checkbox-input" />
+            <span>ใส่ลายน้ำชื่อโรงเรียนบ้านวังวน</span>
+          </label>
+          <span class="form-helper">แสดงลายน้ำจางๆ บนรูปผลงานเพื่อความเป็นทางการ</span>
+        </div>
+
+        <!-- Group 5: ชื่อไฟล์ -->
+        <div class="form-group col-span-2">
+          <label class="form-label">ชื่อไฟล์ที่จะสร้าง</label>
+          <input
+            type="text"
+            class="form-input"
+            value="ชื่อนักเรียนอัตโนมัติ (เช่น ด.ช.กิตติพัฒน์_วัฒนากุลชัย.pdf)"
+            disabled
+            readonly
+          />
+          <span class="form-helper">ระบบจะตั้งชื่อไฟล์ตามชื่อและนามสกุลที่กรอกไว้ด้านบนโดยอัตโนมัติ</span>
         </div>
       </div>
     </section>
 
   </main>
 
-  <!-- Sticky Bottom Toolbar for Primary Actions -->
+  <!-- Sticky Bottom Primary Action Area -->
   <aside class="action-toolbar" id="action-toolbar" aria-label="แถบการกระทำหลัก">
     <div class="toolbar-inner">
       <div class="toolbar-info">
-        <span style="font-size: var(--font-size-sm); color: var(--color-text-muted);">
-          โรงเรียนบ้านวังวน • ตรวจสอบความถูกต้องก่อนสร้างเอกสาร
-        </span>
+        <span aria-hidden="true">🏫</span>
+        <span>โรงเรียนบ้านวังวน • ตรวจสอบความถูกต้องก่อนสร้างเอกสาร</span>
       </div>
-      <div class="toolbar-actions" style="display: flex; gap: var(--space-3); flex-wrap: wrap;">
+      <div class="toolbar-actions">
         <button type="button" class="btn btn-secondary" id="btn-preview-portfolio">
-          <span aria-hidden="true">👁️</span> ดูตัวอย่าง (Preview)
+          <span aria-hidden="true">👁️</span> ดูตัวอย่าง
         </button>
-        <button type="button" class="btn btn-primary" id="btn-export-pdf">
-          <span aria-hidden="true">📥</span> สร้างไฟล์ PDF (Export PDF)
+        <button type="button" class="btn btn-primary btn-lg" id="btn-export-pdf">
+          <span aria-hidden="true">📥</span> สร้าง Portfolio PDF
         </button>
         <button type="button" class="btn btn-secondary" id="btn-export-zip">
           <span aria-hidden="true">📦</span> ส่งออก ZIP Package
@@ -253,6 +337,75 @@
   <footer class="app-footer">
     <p>Wangwon Portfolio • โรงเรียนบ้านวังวน • รูปภาพนักเรียนประมวลผลในเบราว์เซอร์ของคุณ และไม่ถูกอัปโหลดเพื่อประมวลผล</p>
   </footer>
+
+  <!-- ========================================================================
+       Accessible Dialog Modals (Help Modal & Reset Confirmation Modal)
+       ======================================================================== -->
+
+  <!-- Help Modal -->
+  <div
+    class="modal-backdrop"
+    id="help-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-hidden="true"
+    aria-labelledby="help-modal-title"
+    aria-describedby="help-modal-desc"
+  >
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title" id="help-modal-title">
+          <span aria-hidden="true">📖</span> คู่มือการใช้งาน Wangwon Portfolio
+        </h3>
+        <button type="button" class="btn-icon" data-dismiss="modal" aria-label="ปิดหน้าต่างช่วยเหลือ">✕</button>
+      </div>
+      <div class="modal-body" id="help-modal-desc">
+        <p><strong>ขั้นตอนง่ายๆ ในการจัดทำแฟ้มสะสมงาน:</strong></p>
+        <ol style="padding-left: 20px; margin-top: 8px; display: flex; flex-direction: column; gap: 8px;">
+          <li><strong>กรอกข้อมูลนักเรียน:</strong> ชื่อ นามสกุล และชั้นปี เพื่อใช้สร้างปกและตั้งชื่อไฟล์</li>
+          <li><strong>เพิ่มรูปผลงาน:</strong> คลิกปุ่ม <em>+ เพิ่มรูปภาพ</em> หรือลากรูปภาพมาวาง ระบบรองรับ JPG, PNG, WebP และ HEIC</li>
+          <li><strong>จัดเรียงและหมุนภาพ:</strong> ปรับทิศทางของรูปภาพให้ถูกต้องตามต้องการ</li>
+          <li><strong>สร้างไฟล์ PDF:</strong> กดปุ่ม <em>สร้าง Portfolio PDF</em> เพื่อดาวน์โหลดเอกสารทันที</li>
+        </ol>
+        <div style="margin-top: 16px; padding: 12px; background-color: var(--color-success-soft); border-radius: var(--radius-md); border: 1px solid var(--color-success-border);">
+          🔒 <strong>ความเป็นส่วนตัว:</strong> การทำงานทั้งหมดเกิดขึ้นภายในเบราว์เซอร์ในเครื่องของคุณครู ปลอดภัย ไม่มีการอัปโหลดรูปภาพออกภายนอก
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" data-dismiss="modal">เข้าใจแล้ว</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reset Confirmation Modal -->
+  <div
+    class="modal-backdrop"
+    id="reset-confirm-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-hidden="true"
+    aria-labelledby="reset-modal-title"
+    aria-describedby="reset-modal-desc"
+  >
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title" id="reset-modal-title">
+          <span aria-hidden="true">⚠️</span> ยืนยันการเริ่มทำแฟ้มใหม่
+        </h3>
+        <button type="button" class="btn-icon" data-dismiss="modal" aria-label="ปิดหน้าต่างยืนยัน">✕</button>
+      </div>
+      <div class="modal-body" id="reset-modal-desc">
+        <p>คุณต้องการล้างข้อมูลนักเรียนและรูปภาพทั้งหมดที่นำเข้าไว้ เพื่อเริ่มต้นจัดทำแฟ้มสะสมงานของนักเรียนคนใหม่ใช่หรือไม่?</p>
+        <p style="margin-top: 8px; color: var(--color-danger); font-size: var(--font-size-xs);">
+          หมายเหตุ: การกระทำนี้จะไม่ส่งผลต่อไฟล์ภาพต้นฉบับในเครื่องของคุณ
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">ยกเลิก</button>
+        <button type="button" class="btn btn-danger" id="btn-confirm-reset">ยืนยัน เริ่มใหม่</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Application Bootstrap (ES Modules) -->
   <script type="module" src="./src/app.js"></script>

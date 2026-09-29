@@ -42,14 +42,17 @@ Wangwon-Portfolio/
 ├── package.json                # ข้อมูลโปรเจกต์และชุดคำสั่งทดสอบ
 ├── playwright.config.js        # การตั้งค่าระบบทดสอบอัตโนมัติ Playwright
 │
-├── styles/                     # สไตล์ชีตแบบแยกส่วน (Modular CSS)
-│   ├── base.css                # ตัวแปรสี, ตัวพิมพ์ภาษาไทย (Sarabun/Prompt), ค่าเริ่มต้น
-│   ├── layout.css              # ส่วนหัว, คอนเทนเนอร์หลัก, ทูลบาร์ด้านล่าง
-│   ├── components.css          # การ์ดหน้าเอกสาร, ฟอร์ม, ป้ายสถานะ, การ์ดปก
-│   └── responsive.css          # การปรับแต่งหน้าจอมือถือ (375px/390px), แท็บเล็ต, เดสก์ท็อป
+├── styles/                     # สไตล์ชีตแบบแยกส่วน (Modular CSS & Design System)
+│   ├── tokens.css              # Design Tokens: สี, ตัวพิมพ์, ระยะห่าง, รัศมี, เงา, แอนิเมชัน
+│   ├── base.css                # CSS Reset, ตัวพิมพ์ภาษาไทย (Prompt/Noto Sans Thai/Sarabun), Reduced Motion
+│   ├── layout.css              # ส่วนหัว (Header), Hero Intro ขนาดกะทัดรัด, Main Container, Toolbar ด้านล่าง
+│   ├── forms.css               # ฟอร์มคอนโทรล: Input, Select, Segmented Control, Custom Checkbox
+│   ├── workspace.css           # พื้นที่ทำงาน: ปกหน้า (ล็อค), ปกหลัง (ล็อค), พื้นที่รูปภาพว่าง, สเปกการ์ดภาพ
+│   ├── components.css          # ระบบปุ่ม (Buttons), ป้ายสถานะ (Badges), Modal Dialogs, Toast Notifications
+│   └── responsive.css          # Responsive Breakpoints: Desktop (1440/1280), Tablet (1024/768), Mobile (390/375)
 │
 ├── src/                        # ซอร์สโค้ด JavaScript (ES Modules)
-│   ├── app.js                  # ตัวเริ่มการทำงานของแอปพลิเคชัน (Bootstrap)
+│   ├── app.js                  # ตัวเริ่มการทำงานของแอปพลิเคชัน (Bootstrap & Modal Bindings)
 │   │
 │   ├── core/                   # ระบบแกนกลางทั่วไป
 │   │   ├── state.js            # Reactive Pub/Sub State Store
@@ -70,9 +73,10 @@ Wangwon-Portfolio/
 │       ├── student-form.js     # ฟอร์มข้อมูลนักเรียนพร้อม Live Filename Preview
 │       ├── workspace.js        # พื้นที่ทำงานจัดลำดับหน้าเอกสาร
 │       ├── image-card.js       # การ์ดแสดงผลรูปภาพและปุ่มคำสั่งหมุน/ลบ
-│       ├── settings-panel.js   # แผงตั้งค่าขนาดกระดาษและลายน้ำ
+│       ├── settings-panel.js   # แผงตั้งค่าขนาดกระดาษและลายน้ำแบบ Segmented Control
 │       ├── preview.js          # ระบบแสดงตัวอย่างและปุ่มสร้างเอกสาร
-│       └── notifications.js    # ระบบแจ้งเตือนแบบเข้าถึงได้ (Accessible Toast)
+│       ├── modal.js            # รากฐาน Accessible Modal Dialog (Focus Trap, ESC key, ARIA)
+│       └── notifications.js    # ระบบแจ้งเตือนแบบเข้าถึงได้ (Accessible Toast: Success, Info, Warning, Error)
 │
 ├── assets/                     # ทรัพยากรภาพและไอคอน
 │   ├── logo/
@@ -84,7 +88,8 @@ Wangwon-Portfolio/
 │
 └── tests/                      # ชุดการทดสอบอัตโนมัติ (Automated Browser Tests)
     ├── fixtures/
-    └── portfolio.spec.js       # Smoke Tests ผ่าน Playwright
+    ├── screenshots/            # ภาพถ่ายหน้าจอทดสอบความเข้ากันได้ของอุปกรณ์ (Visual QA)
+    └── portfolio.spec.js       # Playwright Test Suite (34 automated tests)
 ```
 
 ---
@@ -109,15 +114,25 @@ npm test
 
 ## 🧪 การทดสอบคุณภาพ (QA & Verification)
 
-ในระยะที่ 1 (Phase 1) ระบบมีชุดทดสอบ Smoke Tests อัตโนมัติด้วย Playwright ครอบคลุม:
-1. การโหลดหน้าเว็บสำเร็จ (HTTP 200)
-2. ปราศจากข้อผิดพลาด JavaScript (No uncaught page errors)
-3. ส่วนหัว (Header) พร้อมเครื่องหมายความเป็นส่วนตัวแสดงผลถูกต้อง
-4. ฟอร์มข้อมูลนักเรียนพร้อมระบบเปลี่ยนชื่อไฟล์สด (Live Filename) ทำงานถูกต้อง
-5. ปกหน้าถูกล็อคให้อยู่ในหน้า 1 เสมอ
-6. ปกหลังถูกล็อคให้อยู่ในหน้าสุดท้ายเสมอ
-7. ปุ่มเพิ่มรูปภาพพร้อมใช้งานและรองรับการเข้าถึง
-8. หน้าจอแสดงผลพอดี ไม่ล้นออกด้านข้าง (No horizontal overflow) บนอุปกรณ์มือถือ (375x667, 390x844) และแท็บเล็ต
+ในระยะที่ 2 (Phase 2: Design System + App Shell) ระบบมีชุดทดสอบอัตโนมัติ 34 รายการผ่าน Playwright ครอบคลุม:
+1. การโหลดหน้าเว็บสมบูรณ์ ปราศจากข้อผิดพลาด JavaScript
+2. ส่วนหัว (Header), ชื่อระบบ, และเครื่องหมายความเป็นส่วนตัวแสดงผลตามข้อกำหนด
+3. ฟอร์มข้อมูลนักเรียนพร้อมระบบเปลี่ยนชื่อไฟล์สด (Live Filename) แบบเรียลไทม์
+4. ปกหน้า (Front Cover) ล็อคอยู่ที่หน้า 1 พร้อมตัวเลือกรูปแบบปก
+5. ปกหลัง (Back Cover) ล็อคอยู่ที่หน้าสุดท้าย
+6. พื้นที่เพิ่มรูปภาพผลงานนักเรียน (Empty State) อยู่กึ่งกลางระหว่างปกหน้าและปกหลัง
+7. แผงตั้งค่าเอกสารและลายน้ำ (กระดาษ, Fit/Fill, คุณภาพเอกสาร, ลายน้ำโรงเรียน)
+8. ปุ่มคำสั่งหลัก (สร้าง Portfolio PDF) เด่นชัด พร้อมปุ่มดูตัวอย่างและส่งออก ZIP
+9. การควบคุมด้วยคีย์บอร์ด (Focus States) ทำงานชัดเจนและรองรับการเข้าถึง
+10. หน้าจอไร้การล้นออกด้านข้าง (No horizontal overflow) บนทุกขนาดหน้าจอ:
+    - Mobile: 375 × 667 (iPhone SE)
+    - Mobile: 390 × 844 (iPhone 12/13/14)
+    - Tablet: 768 × 1024 (iPad Portrait)
+    - Desktop: 1440 × 900
+11. รากฐาน Accessible Modal Dialog (Trap Focus, ปุ่ม ESC, คืน Focus หลังปิด)
+12. ระบบ Toast Notifications ทำงานสมบูรณ์ทั้ง 4 สถานะ (Success, Info, Warning, Error)
+13. ทดสอบการรองรับชื่อนักเรียนไทยขนาดยาว (เช่น *เด็กชายกิตติพัฒน์ วัฒนากุลชัย*) โดยไม่เกิดการแตกหักของเลย์เอาต์
+14. ภาพถ่ายหน้าจอ Visual QA บันทึกไว้ใน `tests/screenshots/` สำหรับการตรวจสอบความสม่ำเสมอของ UI
 
 ---
 
