@@ -2,7 +2,7 @@
  * Settings Panel Component (Phase 4.5 Soft Workspace)
  * Configures paper size, placement, quality presets, and watermark options.
  */
-import { projectStore, updateWatermark } from '../portfolio/portfolio-state.js';
+import { projectStore, updateWatermark, setCoverTemplate } from '../portfolio/portfolio-state.js';
 import { isSupportedImage } from '../core/file-utils.js';
 import { decodeHeicIfNeeded, createPreviewUrl } from '../core/image-utils.js';
 import { showToast } from './notifications.js';
@@ -14,6 +14,43 @@ export function initSettingsPanel(panelElement) {
   const placementButtons = panelElement.querySelectorAll('[data-setting="placement"]');
   const qualitySelect = panelElement.querySelector('#setting-quality');
   const qualityButtons = panelElement.querySelectorAll('[data-setting="quality"]');
+  const templateCards = panelElement.querySelectorAll('.template-card');
+
+  function updateTemplateUI(activeId) {
+    templateCards.forEach((card) => {
+      const isMatch = card.dataset.templateId === activeId;
+      card.classList.toggle('is-active', isMatch);
+      card.setAttribute('aria-checked', isMatch ? 'true' : 'false');
+    });
+  }
+
+  // Cover Template Bento selector events (Click + Keyboard ArrowLeft/Right/Space/Enter)
+  templateCards.forEach((card, idx) => {
+    card.addEventListener('click', () => {
+      const templateId = card.dataset.templateId;
+      if (!templateId) return;
+      updateTemplateUI(templateId);
+      setCoverTemplate(templateId);
+      showToast(`เปลี่ยนรูปแบบปกเป็น ${card.querySelector('.template-name')?.textContent || templateId} เรียบร้อยแล้ว`, 'info');
+    });
+
+    card.addEventListener('keydown', (e) => {
+      if (e.key === ' ' || e.key === 'Enter') {
+        e.preventDefault();
+        card.click();
+      } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+        e.preventDefault();
+        const nextIdx = (idx + 1) % templateCards.length;
+        templateCards[nextIdx].focus();
+        templateCards[nextIdx].click();
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        const prevIdx = (idx - 1 + templateCards.length) % templateCards.length;
+        templateCards[prevIdx].focus();
+        templateCards[prevIdx].click();
+      }
+    });
+  });
 
   // Watermark Elements
   const watermarkToggle = panelElement.querySelector('#setting-watermark-enabled');
@@ -241,6 +278,10 @@ export function initSettingsPanel(panelElement) {
     }
     updateSegmentedUI(placementButtons, pdf.placement || 'fit');
     updateSegmentedUI(qualityButtons, pdf.quality || 'balanced');
+
+    // Cover template sync
+    const currentTemplate = state.frontCover?.templateId || 'minimal-school';
+    updateTemplateUI(currentTemplate);
   });
 
   // Initial Sync
@@ -256,6 +297,9 @@ export function initSettingsPanel(panelElement) {
   }
   updateSegmentedUI(placementButtons, initPdf.placement || 'fit');
   updateSegmentedUI(qualityButtons, initPdf.quality || 'balanced');
+
+  const initTemplate = initialState.frontCover?.templateId || 'minimal-school';
+  updateTemplateUI(initTemplate);
 
   if (watermarkToggle) {
     watermarkToggle.checked = !!initWm.enabled;
