@@ -102,10 +102,22 @@ export function getExportImageFilename({ student = {}, sequence = 1, extension =
 }
 
 /**
- * Legacy/convenience wrapper matching earlier signature:
- * generateImageExportFilename(student, index, extension)
+ * Generates the portfolio package ZIP filename based on student information.
+ * Example: "ด.ช.สมชาย_ใจดี_Portfolio.zip"
+ * Fallback: "Portfolio_นักเรียน.zip"
+ *
+ * @param {object} student - Student state object
+ * @returns {string} Sanitized ZIP filename
  */
-export function generateImageExportFilename(student = {}, index = 1, extension = 'jpg') {
-  return getExportImageFilename({ student, sequence: index, extension });
+export function getExportPackageFilename(student = {}) {
+  const firstName = (student?.firstName || '').trim();
+  if (!firstName) {
+    return 'Portfolio_นักเรียน.zip';
+  }
+
+  const baseName = getStudentExportBaseName(student);
+  const safe = sanitizeFilename(baseName, 'Portfolio_นักเรียน');
+  return `${safe}_Portfolio.zip`;
 }
+
 

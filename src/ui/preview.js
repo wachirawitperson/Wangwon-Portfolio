@@ -1,12 +1,8 @@
-/**
- * Preview Modal & Action Controls Component
- * Provides preview modal trigger and export placeholder handlers
- * gated with accessible student information validation.
- */
 import { showToast } from './notifications.js';
 import { projectStore } from '../portfolio/portfolio-state.js';
 import { validateAndHighlightStudentForm } from './student-form.js';
 import { generatePortfolioPdf, downloadGeneratedPdf } from '../portfolio/pdf-generator.js';
+import { generatePortfolioPackage, downloadPortfolioPackage } from '../portfolio/package-exporter.js';
 
 export function initPreviewActions(container) {
   if (!container) return;
@@ -15,7 +11,8 @@ export function initPreviewActions(container) {
   const btnExportPdf = container.querySelector('#btn-export-pdf');
   const btnExportZip = container.querySelector('#btn-export-zip');
 
-  let isGeneratingPdf = false;
+  // Shared transient export lock to prevent concurrent heavy operations
+  let currentExportTask = null; // null | 'pdf' | 'package'
   let activeAbortController = null;
 
   function checkValidation() {
@@ -26,6 +23,10 @@ export function initPreviewActions(container) {
     }
     return true;
   }
+
+  const spinnerSvg = `
+    <svg class="icon-inline spinner-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation: spin 1s linear infinite;"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+  `;
 
   if (btnPreview) {
     btnPreview.addEventListener('click', () => {
@@ -44,21 +45,18 @@ export function initPreviewActions(container) {
     const defaultHtml = btnExportPdf.innerHTML;
 
     btnExportPdf.addEventListener('click', async () => {
-      if (isGeneratingPdf) return;
+      if (currentExportTask !== null) return;
       if (!checkValidation()) return;
 
       const state = projectStore.getState();
-      isGeneratingPdf = true;
+      currentExportTask = 'pdf';
       activeAbortController = new AbortController();
 
-      // UI visual feedback
+      // UI visual feedback & lock both export buttons
       btnExportPdf.disabled = true;
       btnExportPdf.classList.add('is-loading');
       btnExportPdf.setAttribute('aria-busy', 'true');
-
-      const spinnerHtml = `
-        <svg class="icon-inline spinner-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation: spin 1s linear infinite;"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
-      `;
+      if (btnExportZip) btnExportZip.disabled = true;
 
       showToast('กำลังเตรียมสร้าง Portfolio PDF...', 'info');
 
@@ -66,7 +64,7 @@ export function initPreviewActions(container) {
         const result = await generatePortfolioPdf(state, {
           signal: activeAbortController.signal,
           onProgress: ({ phase, percent, current, total, message }) => {
-            btnExportPdf.innerHTML = `${spinnerHtml} กำลังสร้าง (${percent}%)`;
+            btnExportPdf.innerHTML = `${spinnerSvg} กำลังสร้าง (${percent}%)`;
           }
         });
 
@@ -85,24 +83,76 @@ export function initPreviewActions(container) {
           showToast(`เกิดข้อผิดพลาดในการสร้าง PDF: ${err.message || err}`, 'error');
         }
       } finally {
-        isGeneratingPdf = false;
+        currentExportTask = null;
         activeAbortController = null;
         btnExportPdf.disabled = false;
         btnExportPdf.classList.remove('is-loading');
         btnExportPdf.removeAttribute('aria-busy');
         btnExportPdf.innerHTML = defaultHtml;
+        if (btnExportZip) btnExportZip.disabled = false;
       }
     });
   }
 
   if (btnExportZip) {
-    btnExportZip.addEventListener('click', () => {
+    const defaultHtml = btnExportZip.innerHTML;
+
+    btnExportZip.addEventListener('click', async () => {
+      if (currentExportTask !== null) return;
       if (!checkValidation()) return;
 
-      showToast(
-        'เตรียมส่งออก ZIP Package (PDF + รูปภาพเปลี่ยนชื่อ) จะพร้อมใช้งานใน Phase 11',
-        'info'
-      );
+      const state = projectStore.getState();
+      const imageCount = (state.images || []).length;
+      if (imageCount >= 25) {
+        showToast('แฟ้มนี้มีรูปจำนวนมาก การส่งออกอาจใช้เวลาสักครู่', 'info');
+      }
+
+      currentExportTask = 'package';
+      activeAbortController = new AbortController();
+
+      // UI visual feedback & lock both export buttons
+      btnExportZip.disabled = true;
+      btnExportZip.classList.add('is-loading');
+      btnExportZip.setAttribute('aria-busy', 'true');
+      if (btnExportPdf) btnExportPdf.disabled = true;
+
+      btnExportZip.innerHTML = `${spinnerSvg} กำลังเตรียมไฟล์ (0%)`;
+      showToast('กำลังเตรียมส่งออก PDF + รูปภาพ...', 'info');
+
+      try {
+        const result = await generatePortfolioPackage(state, {
+          signal: activeAbortController.signal,
+          onProgress: ({ percent, stage, message }) => {
+            btnExportZip.innerHTML = `${spinnerSvg} กำลังส่งออก (${percent}%)`;
+          }
+        });
+
+        // Trigger local file download
+        downloadPortfolioPackage({ blob: result.blob, filename: result.filename });
+
+        // Optional friendly file size display
+        const sizeMb = (result.blob.size / (1024 * 1024)).toFixed(1);
+        showToast(
+          `ส่งออก PDF + รูปภาพเรียบร้อยแล้ว (${result.filename}, ${result.fileCount} ไฟล์, ${sizeMb} MB)`,
+          'success'
+        );
+      } catch (err) {
+        if (err.name === 'AbortError') {
+          showToast('ยกเลิกการส่งออกแล้ว', 'info');
+        } else {
+          console.error('[Wangwon Package] Export failed:', err);
+          showToast(`เกิดข้อผิดพลาดในการส่งออก: ${err.message || err}`, 'error');
+        }
+      } finally {
+        currentExportTask = null;
+        activeAbortController = null;
+        btnExportZip.disabled = false;
+        btnExportZip.classList.remove('is-loading');
+        btnExportZip.removeAttribute('aria-busy');
+        btnExportZip.innerHTML = defaultHtml;
+        if (btnExportPdf) btnExportPdf.disabled = false;
+      }
     });
   }
 }
+

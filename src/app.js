@@ -29,7 +29,8 @@ import {
   generatePdfFilename,
   sanitizeFilename,
   getStudentExportBaseName,
-  getExportImageFilename
+  getExportImageFilename,
+  getExportPackageFilename
 } from './core/filename-utils.js';
 import {
   createPreviewUrl,
@@ -111,7 +112,8 @@ document.addEventListener('DOMContentLoaded', () => {
     generatePdfFilename,
     sanitizeFilename,
     getStudentExportBaseName,
-    getExportImageFilename
+    getExportImageFilename,
+    getExportPackageFilename
   };
   window.__WANGWON_STUDENT_UTILS__ = {
     validateStudentInformation,
@@ -200,5 +202,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   import('./portfolio/image-exporter.js').then((imgExp) => {
     window.__WANGWON_IMAGE_EXPORTER__ = imgExp;
+  });
+
+  import('./portfolio/package-exporter.js').then((pkgExp) => {
+    window.__WANGWON_PACKAGE_EXPORTER__ = pkgExp;
   });
 });

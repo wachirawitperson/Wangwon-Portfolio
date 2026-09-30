@@ -5126,7 +5126,495 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
     expect(fs.existsSync('tests/artifacts/phase10-transparent.png')).toBe(true);
     expect(fs.existsSync('tests/artifacts/phase10-bmp-converted.jpg')).toBe(true);
   });
+
+  // =========================================================================
+  // PHASE 11: PDF + รูปภาพ Package Export Engine Tests (Tests 139–160)
+  // =========================================================================
+
+  test('139. Phase 11: Package generator API exists and generates valid ZIP with student folder structure', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+
+    const result = await page.evaluate(async () => {
+      const student = { prefix: 'ด.ช.', firstName: 'สมชาย', lastName: 'ใจดี' };
+      const pkgExp = window.__WANGWON_PACKAGE_EXPORTER__;
+
+      // 0 images project
+      const state = {
+        ...window.__WANGWON_STORE__.getState(),
+        student,
+        images: []
+      };
+
+      const pkg = await pkgExp.generatePortfolioPackage(state);
+
+      return {
+        hasBlob: pkg.blob instanceof Blob,
+        blobType: pkg.blob.type,
+        blobSize: pkg.blob.size,
+        filename: pkg.filename,
+        fileCount: pkg.fileCount,
+        pdfFilename: pkg.pdf.filename,
+        imagesCount: pkg.images.length
+      };
+    });
+
+    expect(result.hasBlob).toBe(true);
+    expect(result.blobType).toBe('application/zip');
+    expect(result.blobSize).toBeGreaterThan(1000);
+    expect(result.filename).toBe('ด.ช.สมชาย_ใจดี_Portfolio.zip');
+    expect(result.fileCount).toBe(1);
+    expect(result.pdfFilename).toBe('ด.ช.สมชาย_ใจดี.pdf');
+    expect(result.imagesCount).toBe(0);
+  });
+
+  test('140. Phase 11: ZIP contents validation - PDF validity and entry hierarchy inside ZIP', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+
+    const zipAnalysis = await page.evaluate(async () => {
+      const student = { prefix: 'ด.ช.', firstName: 'สมชาย', lastName: 'ใจดี' };
+      const pkgExp = window.__WANGWON_PACKAGE_EXPORTER__;
+
+      // Create 1 synthetic activity image
+      const c = document.createElement('canvas');
+      c.width = 100; c.height = 80;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#0284c7';
+      ctx.fillRect(0, 0, 100, 80);
+      const b = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.9));
+      const file = new File([b], 'act1.jpg', { type: 'image/jpeg' });
+
+      const state = {
+        ...window.__WANGWON_STORE__.getState(),
+        student,
+        images: [{ id: 'a1', file, name: 'act1.jpg', rotation: 0, width: 100, height: 80 }]
+      };
+
+      const pkg = await pkgExp.generatePortfolioPackage(state);
+
+      // Inspect using JSZip
+      const JSZipClass = pkgExp.getJSZip();
+      const zip = await JSZipClass.loadAsync(pkg.blob);
+      const entries = Object.keys(zip.files);
+
+      // Read PDF bytes from ZIP and test loading via PDFLib
+      const pdfZipEntry = zip.file('ด.ช.สมชาย_ใจดี/ด.ช.สมชาย_ใจดี.pdf');
+      const pdfBytes = await pdfZipEntry.async('uint8array');
+      const pdfDoc = await window.PDFLib.PDFDocument.load(pdfBytes);
+      const pageCount = pdfDoc.getPageCount();
+
+      // Read image entry from ZIP
+      const imgZipEntry = zip.file('ด.ช.สมชาย_ใจดี/ด.ช.สมชาย_ใจดี_01.jpg');
+      const imgBytes = await imgZipEntry.async('uint8array');
+
+      return {
+        entries,
+        hasFolder: entries.some(e => e.startsWith('ด.ช.สมชาย_ใจดี/')),
+        pdfFound: !!pdfZipEntry,
+        pageCount,
+        imageFound: !!imgZipEntry,
+        imageByteLength: imgBytes.length
+      };
+    });
+
+    expect(zipAnalysis.hasFolder).toBe(true);
+    expect(zipAnalysis.pdfFound).toBe(true);
+    expect(zipAnalysis.pageCount).toBe(3); // Front + 1 Activity + Back
+    expect(zipAnalysis.imageFound).toBe(true);
+    expect(zipAnalysis.imageByteLength).toBeGreaterThan(100);
+  });
+
+  test('141. Phase 11: 5 activity images package preserves logical order, Phase 10 filenames, and fileCount', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+
+    const result = await page.evaluate(async () => {
+      const student = { prefix: 'ด.ช.', firstName: 'สมชาย', lastName: 'ใจดี' };
+      const pkgExp = window.__WANGWON_PACKAGE_EXPORTER__;
+
+      const c = document.createElement('canvas');
+      c.width = 60; c.height = 40;
+      const b = await new Promise(r => c.toBlob(r, 'image/jpeg'));
+
+      const images = [1, 2, 3, 4, 5].map(i => ({
+        id: `img-${i}`,
+        file: new File([b], `raw_${i}.jpg`, { type: 'image/jpeg' }),
+        rotation: 0,
+        width: 60,
+        height: 40
+      }));
+
+      const state = {
+        ...window.__WANGWON_STORE__.getState(),
+        student,
+        images
+      };
+
+      const pkg = await pkgExp.generatePortfolioPackage(state);
+      const JSZipClass = pkgExp.getJSZip();
+      const zip = await JSZipClass.loadAsync(pkg.blob);
+      const entries = Object.keys(zip.files).filter(k => !zip.files[k].dir);
+
+      return {
+        fileCount: pkg.fileCount,
+        entries,
+        expectedFilenames: [
+          'ด.ช.สมชาย_ใจดี/ด.ช.สมชาย_ใจดี.pdf',
+          'ด.ช.สมชาย_ใจดี/ด.ช.สมชาย_ใจดี_01.jpg',
+          'ด.ช.สมชาย_ใจดี/ด.ช.สมชาย_ใจดี_02.jpg',
+          'ด.ช.สมชาย_ใจดี/ด.ช.สมชาย_ใจดี_03.jpg',
+          'ด.ช.สมชาย_ใจดี/ด.ช.สมชาย_ใจดี_04.jpg',
+          'ด.ช.สมชาย_ใจดี/ด.ช.สมชาย_ใจดี_05.jpg'
+        ]
+      };
+    });
+
+    expect(result.fileCount).toBe(6); // 1 PDF + 5 images
+    expect(result.entries).toEqual(result.expectedFilenames);
+  });
+
+  test('142. Phase 11: Exclusion of student photo, front cover, and back cover as loose files', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+
+    const result = await page.evaluate(async () => {
+      const student = { prefix: 'ด.ช.', firstName: 'สมชาย', lastName: 'ใจดี' };
+      const pkgExp = window.__WANGWON_PACKAGE_EXPORTER__;
+
+      const c = document.createElement('canvas');
+      c.width = 80; c.height = 80;
+      const b = await new Promise(r => c.toBlob(r, 'image/jpeg'));
+
+      const state = {
+        ...window.__WANGWON_STORE__.getState(),
+        student,
+        studentPhoto: { file: new File([b], 'student_headshot.jpg', { type: 'image/jpeg' }) },
+        frontCover: { mode: 'custom', customFile: new File([b], 'custom_front.jpg', { type: 'image/jpeg' }) },
+        backCover: { mode: 'custom', customFile: new File([b], 'custom_back.jpg', { type: 'image/jpeg' }) },
+        images: [{ id: 'a1', file: new File([b], 'activity.jpg', { type: 'image/jpeg' }), rotation: 0, width: 80, height: 80 }]
+      };
+
+      const pkg = await pkgExp.generatePortfolioPackage(state);
+      const JSZipClass = pkgExp.getJSZip();
+      const zip = await JSZipClass.loadAsync(pkg.blob);
+      const entries = Object.keys(zip.files);
+
+      return {
+        entries,
+        hasHeadshot: entries.some(e => e.includes('headshot') || e.includes('studentPhoto')),
+        hasFront: entries.some(e => e.includes('custom_front') || e.includes('frontCover')),
+        hasBack: entries.some(e => e.includes('custom_back') || e.includes('backCover')),
+        totalLooseFiles: entries.filter(e => !zip.files[e].dir).length
+      };
+    });
+
+    expect(result.hasHeadshot).toBe(false);
+    expect(result.hasFront).toBe(false);
+    expect(result.hasBack).toBe(false);
+    expect(result.totalLooseFiles).toBe(2); // PDF + 1 activity image
+  });
+
+  test('143. Phase 11: Watermark isolation - Watermark stamped into PDF but NOT baked into loose activity images', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+
+    const result = await page.evaluate(async () => {
+      const student = { prefix: 'ด.ช.', firstName: 'สมชาย', lastName: 'ใจดี' };
+      const pkgExp = window.__WANGWON_PACKAGE_EXPORTER__;
+
+      // Blue canvas
+      const c = document.createElement('canvas');
+      c.width = 100; c.height = 100;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#0284c7';
+      ctx.fillRect(0, 0, 100, 100);
+      const b = await new Promise(r => c.toBlob(r, 'image/jpeg'));
+
+      const state = {
+        ...window.__WANGWON_STORE__.getState(),
+        student,
+        watermark: {
+          enabled: true,
+          sourceType: 'school-logo',
+          opacity: 0.8,
+          scale: 0.3,
+          position: 'center',
+          applyTo: 'all-pages'
+        },
+        images: [{ id: 'blue-act', file: new File([b], 'blue.jpg', { type: 'image/jpeg' }), rotation: 180, width: 100, height: 100 }]
+      };
+
+      const pkg = await pkgExp.generatePortfolioPackage(state);
+      const JSZipClass = pkgExp.getJSZip();
+      const zip = await JSZipClass.loadAsync(pkg.blob);
+
+      // Extract image and inspect center pixel
+      const imgEntry = zip.file('ด.ช.สมชาย_ใจดี/ด.ช.สมชาย_ใจดี_01.jpg');
+      const imgBlob = await imgEntry.async('blob');
+
+      const img = new Image();
+      const url = URL.createObjectURL(imgBlob);
+      await new Promise(r => { img.onload = r; img.src = url; });
+
+      const checkCanvas = document.createElement('canvas');
+      checkCanvas.width = 100; checkCanvas.height = 100;
+      const checkCtx = checkCanvas.getContext('2d');
+      checkCtx.drawImage(img, 0, 0);
+      URL.revokeObjectURL(url);
+
+      const pixel = checkCtx.getImageData(50, 50, 1, 1).data;
+      return {
+        r: pixel[0],
+        g: pixel[1],
+        b: pixel[2],
+        isBlueRange: pixel[2] > 180 && pixel[0] < 20
+      };
+    });
+
+    expect(result.isBlueRange).toBe(true);
+  });
+
+  test('144. Phase 11: Rotated images inside package retain swapped dimensions and valid encoding', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+
+    const result = await page.evaluate(async () => {
+      const student = { prefix: 'ด.ช.', firstName: 'สมชาย', lastName: 'ใจดี' };
+      const pkgExp = window.__WANGWON_PACKAGE_EXPORTER__;
+
+      // 120x80 canvas
+      const c = document.createElement('canvas');
+      c.width = 120; c.height = 80;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#f59e0b';
+      ctx.fillRect(0, 0, 120, 80);
+      const b = await new Promise(r => c.toBlob(r, 'image/jpeg'));
+
+      const state = {
+        ...window.__WANGWON_STORE__.getState(),
+        student,
+        images: [{ id: 'rot-act', file: new File([b], 'landscape.jpg', { type: 'image/jpeg' }), rotation: 90, width: 120, height: 80 }]
+      };
+
+      const pkg = await pkgExp.generatePortfolioPackage(state);
+      const JSZipClass = pkgExp.getJSZip();
+      const zip = await JSZipClass.loadAsync(pkg.blob);
+
+      const imgEntry = zip.file('ด.ช.สมชาย_ใจดี/ด.ช.สมชาย_ใจดี_01.jpg');
+      const imgBlob = await imgEntry.async('blob');
+
+      const img = new Image();
+      const url = URL.createObjectURL(imgBlob);
+      await new Promise(r => { img.onload = r; img.src = url; });
+      const w = img.naturalWidth;
+      const h = img.naturalHeight;
+      URL.revokeObjectURL(url);
+
+      return { width: w, height: h };
+    });
+
+    expect(result.width).toBe(80);
+    expect(result.height).toBe(120);
+  });
+
+  test('145. Phase 11: Concurrent export lock protects PDF and Package buttons from dual heavy execution', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+
+    // Fill form so validation passes
+    await page.selectOption('#student-prefix', 'ด.ช.');
+    await page.fill('#student-firstname', 'สมชาย');
+    await page.fill('#student-lastname', 'ใจดี');
+    await page.selectOption('#student-grade', 'ประถมศึกษาปีที่ 4');
+    await page.fill('#student-number', '15');
+
+    const btnPdf = page.locator('#btn-export-pdf');
+    const btnZip = page.locator('#btn-export-zip');
+
+    expect(await btnPdf.isEnabled()).toBe(true);
+    expect(await btnZip.isEnabled()).toBe(true);
+
+    // Click export package button and verify mutual disablement
+    await btnZip.click();
+
+    // Verify both buttons become disabled while job runs
+    await expect(btnZip).toHaveClass(/is-loading/);
+    expect(await btnPdf.isDisabled()).toBe(true);
+
+    // Wait for export to finish
+    await page.waitForSelector('.toast.toast-success', { timeout: 15000 });
+
+    // Verify both buttons re-enabled
+    expect(await btnZip.isEnabled()).toBe(true);
+    expect(await btnPdf.isEnabled()).toBe(true);
+    expect(await btnZip.textContent()).toContain('ส่งออก PDF + รูปภาพ');
+  });
+
+  test('146. Phase 11: Monotonic progress callback reports accurately throughout all stages', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+
+    const progressLog = await page.evaluate(async () => {
+      const student = { prefix: 'ด.ช.', firstName: 'สมชาย', lastName: 'ใจดี' };
+      const pkgExp = window.__WANGWON_PACKAGE_EXPORTER__;
+
+      const c = document.createElement('canvas');
+      c.width = 60; c.height = 40;
+      const b = await new Promise(r => c.toBlob(r, 'image/jpeg'));
+
+      const state = {
+        ...window.__WANGWON_STORE__.getState(),
+        student,
+        images: [{ id: 'p1', file: new File([b], 'img.jpg', { type: 'image/jpeg' }), rotation: 0, width: 60, height: 40 }]
+      };
+
+      const log = [];
+      await pkgExp.generatePortfolioPackage(state, {
+        onProgress: (p) => {
+          log.push({ ...p });
+        }
+      });
+      return log;
+    });
+
+    expect(progressLog.length).toBeGreaterThanOrEqual(4);
+    // Verify monotonic
+    for (let i = 1; i < progressLog.length; i++) {
+      expect(progressLog[i].percent).toBeGreaterThanOrEqual(progressLog[i - 1].percent);
+    }
+    expect(progressLog[progressLog.length - 1].percent).toBe(100);
+    expect(progressLog[progressLog.length - 1].stage).toBe('done');
+  });
+
+  test('147. Phase 11: Error handling and atomic packaging rule - No partial download on image corruption', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+
+    const result = await page.evaluate(async () => {
+      const student = { prefix: 'ด.ช.', firstName: 'สมชาย', lastName: 'ใจดี' };
+      const pkgExp = window.__WANGWON_PACKAGE_EXPORTER__;
+
+      const state = {
+        ...window.__WANGWON_STORE__.getState(),
+        student,
+        images: [{ id: 'corrupt-act', file: null, rotation: 0 }]
+      };
+
+      try {
+        await pkgExp.generatePortfolioPackage(state);
+        return { caught: false };
+      } catch (err) {
+        return {
+          caught: true,
+          message: err.message,
+          hasLocalPath: /([A-Z]:\\|\/Users\/|\/home\/)/i.test(err.message)
+        };
+      }
+    });
+
+    expect(result.caught).toBe(true);
+    expect(result.message).toContain('ไม่สามารถเตรียมรูปภาพสำหรับแพ็กเกจได้');
+    expect(result.hasLocalPath).toBe(false);
+  });
+
+  test('148. Phase 11: Generate and save 8 required synthetic test ZIP packages to tests/artifacts/', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+
+    async function generateAndSaveZip(zipFilename, overrides = {}) {
+      const zipBase64 = await page.evaluate(async (ov) => {
+        const student = ov.student || { prefix: 'ด.ช.', firstName: 'สมชาย', lastName: 'ใจดี' };
+        const store = window.__WANGWON_STORE__;
+        let s = JSON.parse(JSON.stringify(store.getState()));
+        s.student = student;
+
+        if (ov.orientation) s.pdfSettings.orientation = ov.orientation;
+        if (ov.quality) s.pdfSettings.quality = ov.quality;
+        if (ov.watermark) s.watermark = { ...s.watermark, ...ov.watermark };
+
+        // Synthetic image creator
+        const c = document.createElement('canvas');
+        c.width = 100; c.height = 80;
+        const ctx = c.getContext('2d');
+        ctx.fillStyle = '#0284c7';
+        ctx.fillRect(0, 0, 100, 80);
+        const b = await new Promise(r => c.toBlob(r, 'image/jpeg'));
+
+        if (ov.imageCount !== undefined) {
+          s.images = [];
+          for (let i = 1; i <= ov.imageCount; i++) {
+            s.images.push({
+              id: `img-${i}`,
+              file: new File([b], `photo_${i}.jpg`, { type: 'image/jpeg' }),
+              rotation: (ov.rotations && ov.rotations[i - 1]) || 0,
+              width: 100,
+              height: 80
+            });
+          }
+        }
+
+        const res = await window.__WANGWON_PACKAGE_EXPORTER__.generatePortfolioPackage(s);
+        const buf = await res.blob.arrayBuffer();
+        let bin = '';
+        const bytes = new Uint8Array(buf);
+        for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+        return btoa(bin);
+      }, overrides);
+
+      fs.writeFileSync('tests/artifacts/' + zipFilename, Buffer.from(zipBase64, 'base64'));
+    }
+
+    // 1. phase11-pdf-only.zip
+    await generateAndSaveZip('phase11-pdf-only.zip', { imageCount: 0 });
+
+    // 2. phase11-1-image.zip
+    await generateAndSaveZip('phase11-1-image.zip', { imageCount: 1 });
+
+    // 3. phase11-5-images.zip
+    await generateAndSaveZip('phase11-5-images.zip', { imageCount: 5 });
+
+    // 4. phase11-watermarked-pdf.zip
+    await generateAndSaveZip('phase11-watermarked-pdf.zip', {
+      imageCount: 2,
+      watermark: { enabled: true, sourceType: 'school-logo', opacity: 0.3, scale: 0.2, position: 'bottom-right', applyTo: 'all-pages' }
+    });
+
+    // 5. phase11-rotated-images.zip
+    await generateAndSaveZip('phase11-rotated-images.zip', {
+      imageCount: 3,
+      rotations: [90, 180, 270]
+    });
+
+    // 6. phase11-thai-filenames.zip
+    await generateAndSaveZip('phase11-thai-filenames.zip', {
+      student: { prefix: 'ด.หญิง', firstName: 'กานดา', lastName: 'มีสุข' },
+      imageCount: 2
+    });
+
+    // 7. phase11-landscape.zip
+    await generateAndSaveZip('phase11-landscape.zip', {
+      orientation: 'landscape',
+      imageCount: 1
+    });
+
+    // 8. phase11-high-quality.zip
+    await generateAndSaveZip('phase11-high-quality.zip', {
+      quality: 'high',
+      imageCount: 2
+    });
+
+    expect(fs.existsSync('tests/artifacts/phase11-pdf-only.zip')).toBe(true);
+    expect(fs.existsSync('tests/artifacts/phase11-1-image.zip')).toBe(true);
+    expect(fs.existsSync('tests/artifacts/phase11-5-images.zip')).toBe(true);
+    expect(fs.existsSync('tests/artifacts/phase11-watermarked-pdf.zip')).toBe(true);
+    expect(fs.existsSync('tests/artifacts/phase11-rotated-images.zip')).toBe(true);
+    expect(fs.existsSync('tests/artifacts/phase11-thai-filenames.zip')).toBe(true);
+    expect(fs.existsSync('tests/artifacts/phase11-landscape.zip')).toBe(true);
+    expect(fs.existsSync('tests/artifacts/phase11-high-quality.zip')).toBe(true);
+  });
 });
+
 
 
 
