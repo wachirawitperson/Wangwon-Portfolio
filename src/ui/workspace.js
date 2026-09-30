@@ -4,7 +4,7 @@
  * [Locked Front Cover (Page 1)] -> [Empty Image State / Student Images] -> [Locked Back Cover (Last Page)]
  */
 import { projectStore } from '../portfolio/portfolio-state.js';
-import { importStudentImages } from '../portfolio/image-manager.js';
+import { importStudentImages, removeStudentImage } from '../portfolio/image-manager.js';
 import { createImageCard } from './image-card.js';
 import { COVER_TEMPLATES, getCoverTemplate } from '../portfolio/cover-manager.js';
 import { showToast } from './notifications.js';
@@ -142,22 +142,25 @@ export function initWorkspace(workspaceElement) {
     });
   }
 
-  // Drag and drop onto workspaceElement and emptyPlaceholder
+  // Drag and drop onto workspaceElement and emptyPlaceholder (external files only)
   const dropTargets = [workspaceElement, emptyPlaceholder].filter(Boolean);
   dropTargets.forEach((target) => {
     target.addEventListener('dragover', (e) => {
+      if (window.__WANGWON_DRAGGING_ID__) return;
       e.preventDefault();
       e.stopPropagation();
       target.classList.add('is-dragover');
     });
 
     target.addEventListener('dragleave', (e) => {
+      if (window.__WANGWON_DRAGGING_ID__) return;
       e.preventDefault();
       e.stopPropagation();
       target.classList.remove('is-dragover');
     });
 
     target.addEventListener('drop', (e) => {
+      if (window.__WANGWON_DRAGGING_ID__) return;
       e.preventDefault();
       e.stopPropagation();
       target.classList.remove('is-dragover');
@@ -307,6 +310,280 @@ export function initWorkspace(workspaceElement) {
     }
   }
 
+  // Wire up Phase 5 Interactive Modals and Actions
+  const deleteImageModal = document.querySelector('#delete-image-modal');
+  const btnConfirmDeleteImage = document.querySelector('#btn-confirm-delete-image');
+  const deleteImageModalFilename = document.querySelector('#delete-image-modal-filename');
+
+  const imagePreviewModal = document.querySelector('#image-preview-modal');
+  const imagePreviewTitle = document.querySelector('#image-preview-modal-title');
+  const imagePreviewPageBadge = document.querySelector('#image-preview-page-badge');
+  const imagePreviewImg = document.querySelector('#image-preview-img');
+  const btnPreviewPrev = document.querySelector('#btn-preview-prev');
+  const btnPreviewNext = document.querySelector('#btn-preview-next');
+  const imagePreviewDims = document.querySelector('#image-preview-dims');
+  const imagePreviewFilesize = document.querySelector('#image-preview-filesize');
+  const imagePreviewLowresBadge = document.querySelector('#image-preview-lowres-badge');
+
+  const imageDetailsModal = document.querySelector('#image-details-modal');
+  const detailsFilename = document.querySelector('#details-filename');
+  const detailsMimetype = document.querySelector('#details-mimetype');
+  const detailsDimensions = document.querySelector('#details-dimensions');
+  const detailsFilesize = document.querySelector('#details-filesize');
+  const detailsRotation = document.querySelector('#details-rotation');
+  const detailsQuality = document.querySelector('#details-quality');
+
+  const replaceImageInput = document.querySelector('#replace-image-input');
+
+  let pendingDeleteId = null;
+  let pendingDeleteTrigger = null;
+  let pendingReplaceId = null;
+  let activePreviewIndex = -1;
+
+  // 1. Delete Confirmation Modal Wiring
+  document.addEventListener('wangwon:delete-image', (e) => {
+    const { image, triggerButton } = e.detail;
+    pendingDeleteId = image.id;
+    pendingDeleteTrigger = triggerButton;
+    if (deleteImageModal) {
+      deleteImageModal.dataset.pendingId = image.id;
+    }
+    if (deleteImageModalFilename) {
+      deleteImageModalFilename.textContent = `ไฟล์: ${image.originalFilename}`;
+    }
+    if (deleteImageModal) {
+      openModal(deleteImageModal, triggerButton);
+    }
+  });
+
+  if (btnConfirmDeleteImage && deleteImageModal) {
+    btnConfirmDeleteImage.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const idToDelete = pendingDeleteId || deleteImageModal.dataset.pendingId;
+      pendingDeleteId = null;
+      pendingDeleteTrigger = null;
+      delete deleteImageModal.dataset.pendingId;
+
+      closeModal(deleteImageModal);
+
+      if (idToDelete) {
+        const removed = removeStudentImage(idToDelete);
+        if (removed) {
+          showToast('ลบรูปภาพเรียบร้อยแล้ว', 'info');
+        }
+      }
+    });
+  }
+
+  // 2. Lightbox Preview Modal Wiring
+  function updateLightboxContent(index) {
+    const state = projectStore.getState();
+    const images = state.images || [];
+    if (index < 0 || index >= images.length) return;
+
+    activePreviewIndex = index;
+    const img = images[index];
+    const pageNum = index + 2;
+
+    if (imagePreviewTitle) imagePreviewTitle.textContent = img.originalFilename;
+    if (imagePreviewPageBadge) imagePreviewPageBadge.textContent = `หน้า ${pageNum}`;
+    if (imagePreviewImg) {
+      imagePreviewImg.src = img.previewUrl;
+      imagePreviewImg.alt = `หน้า ${pageNum} - ${img.originalFilename}`;
+      imagePreviewImg.style.transform = `rotate(${img.rotation || 0}deg)`;
+    }
+
+    if (imagePreviewDims) {
+      imagePreviewDims.textContent = `${img.width} × ${img.height} px`;
+    }
+    if (imagePreviewFilesize) {
+      const kb = (img.sizeBytes / 1024).toFixed(1);
+      const mb = (img.sizeBytes / (1024 * 1024)).toFixed(2);
+      imagePreviewFilesize.textContent = img.sizeBytes >= 1024 * 1024 ? `${mb} MB` : `${kb} KB`;
+    }
+    if (imagePreviewLowresBadge) {
+      imagePreviewLowresBadge.style.display = img.qualityStatus === 'low' ? 'inline-flex' : 'none';
+    }
+
+    if (btnPreviewPrev) {
+      btnPreviewPrev.disabled = index === 0;
+      btnPreviewPrev.style.opacity = index === 0 ? '0.4' : '1';
+    }
+    if (btnPreviewNext) {
+      btnPreviewNext.disabled = index === images.length - 1;
+      btnPreviewNext.style.opacity = index === images.length - 1 ? '0.4' : '1';
+    }
+  }
+
+  workspaceElement.addEventListener('wangwon:view-large', (e) => {
+    const { index, triggerButton } = e.detail;
+    updateLightboxContent(index);
+    if (imagePreviewModal) {
+      openModal(imagePreviewModal, triggerButton);
+    }
+  });
+
+  if (btnPreviewPrev) {
+    btnPreviewPrev.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (activePreviewIndex > 0) {
+        updateLightboxContent(activePreviewIndex - 1);
+      }
+    });
+  }
+
+  if (btnPreviewNext) {
+    btnPreviewNext.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const state = projectStore.getState();
+      if (activePreviewIndex < (state.images?.length || 0) - 1) {
+        updateLightboxContent(activePreviewIndex + 1);
+      }
+    });
+  }
+
+  // Keyboard navigation for Lightbox (ArrowLeft / ArrowRight)
+  window.addEventListener('keydown', (e) => {
+    if (!imagePreviewModal || !imagePreviewModal.classList.contains('is-open')) return;
+    if (e.key === 'ArrowLeft' && activePreviewIndex > 0) {
+      e.preventDefault();
+      updateLightboxContent(activePreviewIndex - 1);
+    } else if (e.key === 'ArrowRight') {
+      const state = projectStore.getState();
+      if (activePreviewIndex < (state.images?.length || 0) - 1) {
+        e.preventDefault();
+        updateLightboxContent(activePreviewIndex + 1);
+      }
+    }
+  });
+
+  // 3. Image Details Modal Wiring
+  workspaceElement.addEventListener('wangwon:show-details', (e) => {
+    const { image, triggerButton } = e.detail;
+    if (detailsFilename) detailsFilename.textContent = image.originalFilename;
+    if (detailsMimetype) detailsMimetype.textContent = image.mimeType || 'image/jpeg';
+    if (detailsDimensions) detailsDimensions.textContent = `${image.width} × ${image.height} พิกเซล`;
+    if (detailsFilesize) {
+      const kb = (image.sizeBytes / 1024).toFixed(1);
+      const mb = (image.sizeBytes / (1024 * 1024)).toFixed(2);
+      detailsFilesize.textContent = image.sizeBytes >= 1024 * 1024 ? `${mb} MB` : `${kb} KB`;
+    }
+    if (detailsRotation) detailsRotation.textContent = `${image.rotation || 0}°`;
+    if (detailsQuality) {
+      if (image.qualityStatus === 'low') {
+        detailsQuality.innerHTML = '<span style="color: var(--color-warning);">⚠️ ความละเอียดต่ำกว่าเกณฑ์</span>';
+      } else {
+        detailsQuality.innerHTML = '<span style="color: var(--color-success);">✓ คมชัด เหมาะสมกับการพิมพ์</span>';
+      }
+    }
+    if (imageDetailsModal) {
+      openModal(imageDetailsModal, triggerButton);
+    }
+  });
+
+  // 4. Image Replacement Input Wiring
+  workspaceElement.addEventListener('wangwon:replace-image', (e) => {
+    const { image } = e.detail;
+    pendingReplaceId = image.id;
+    if (replaceImageInput) {
+      replaceImageInput.value = '';
+      replaceImageInput.click();
+    }
+  });
+
+  if (replaceImageInput) {
+    replaceImageInput.addEventListener('change', async (e) => {
+      const file = e.target.files?.[0];
+      if (!file || !pendingReplaceId) return;
+
+      const currentTargetId = pendingReplaceId;
+      pendingReplaceId = null;
+
+      try {
+        const { replaceStudentImage } = await import('../portfolio/image-manager.js');
+        const res = await replaceStudentImage(currentTargetId, file);
+        if (res.success) {
+          showToast('แทนที่รูปภาพเรียบร้อยแล้ว', 'success');
+        } else {
+          showToast(res.error || 'ไม่สามารถแทนที่รูปภาพได้', 'danger');
+        }
+      } catch (err) {
+        console.error('Failed to replace image:', err);
+        showToast('เกิดข้อผิดพลาดในการแทนที่รูปภาพ', 'danger');
+      }
+    });
+  }
+
+  // 5. Drag-and-drop Reordering on Student Image Cards Container
+  if (studentImagesContainer) {
+    studentImagesContainer.addEventListener('dragover', (e) => {
+      if (!window.__WANGWON_DRAGGING_ID__) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+
+      const targetCard = e.target.closest('.student-image-card');
+      if (!targetCard || targetCard.dataset.id === window.__WANGWON_DRAGGING_ID__) {
+        return;
+      }
+
+      const rect = targetCard.getBoundingClientRect();
+      const isAfterMid = (e.clientX - rect.left) > rect.width / 2;
+
+      document.querySelectorAll('.student-image-card').forEach((c) => {
+        c.classList.remove('is-dragover-left', 'is-dragover-right');
+      });
+
+      if (isAfterMid) {
+        targetCard.classList.add('is-dragover-right');
+      } else {
+        targetCard.classList.add('is-dragover-left');
+      }
+    });
+
+    studentImagesContainer.addEventListener('dragleave', (e) => {
+      if (!window.__WANGWON_DRAGGING_ID__) return;
+      const targetCard = e.target.closest('.student-image-card');
+      if (targetCard && !targetCard.contains(e.relatedTarget)) {
+        targetCard.classList.remove('is-dragover-left', 'is-dragover-right');
+      }
+    });
+
+    studentImagesContainer.addEventListener('drop', async (e) => {
+      const draggedId = window.__WANGWON_DRAGGING_ID__;
+      if (!draggedId) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      const targetCard = e.target.closest('.student-image-card');
+      document.querySelectorAll('.student-image-card').forEach((c) => {
+        c.classList.remove('is-dragover-left', 'is-dragover-right');
+      });
+
+      if (!targetCard || targetCard.dataset.id === draggedId) return;
+
+      const state = projectStore.getState();
+      const images = state.images || [];
+      const oldIndex = images.findIndex((img) => img.id === draggedId);
+      const targetIndex = images.findIndex((img) => img.id === targetCard.dataset.id);
+
+      if (oldIndex === -1 || targetIndex === -1) return;
+
+      const rect = targetCard.getBoundingClientRect();
+      const isAfterMid = (e.clientX - rect.left) > rect.width / 2;
+      let newIndex = isAfterMid ? targetIndex + 1 : targetIndex;
+      if (oldIndex < newIndex) {
+        newIndex -= 1;
+      }
+
+      if (oldIndex !== newIndex) {
+        const { reorderImageByIndex } = await import('../portfolio/image-manager.js');
+        reorderImageByIndex(oldIndex, newIndex);
+        showToast('จัดลำดับหน้าเรียบร้อยแล้ว', 'info');
+      }
+    });
+  }
+
   // Render Middle Student Images
   function renderStudentImages(images) {
     if (!studentImagesContainer) return;
@@ -322,7 +599,7 @@ export function initWorkspace(workspaceElement) {
 
     // Render individual image cards
     images.forEach((img, idx) => {
-      const card = createImageCard(img, idx + 1);
+      const card = createImageCard(img, idx + 1, images.length);
       studentImagesContainer.appendChild(card);
     });
 

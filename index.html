@@ -564,6 +564,117 @@
     </div>
   </div>
 
+  <!-- Delete Image Confirmation Modal -->
+  <div
+    class="modal-backdrop"
+    id="delete-image-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-hidden="true"
+    aria-labelledby="delete-image-modal-title"
+    aria-describedby="delete-image-modal-desc"
+  >
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title" id="delete-image-modal-title">
+          <span aria-hidden="true">🗑️</span> ลบรูปภาพนี้?
+        </h3>
+        <button type="button" class="btn-icon" data-dismiss="modal" aria-label="ปิดหน้าต่างยืนยัน">✕</button>
+      </div>
+      <div class="modal-body" id="delete-image-modal-desc">
+        <p>รูปภาพจะถูกนำออกจาก Portfolio</p>
+        <p id="delete-image-modal-filename" style="margin-top: 6px; font-weight: var(--font-weight-medium); color: var(--color-text); font-size: var(--font-size-sm);"></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">ยกเลิก</button>
+        <button type="button" class="btn btn-danger" id="btn-confirm-delete-image">ลบรูปภาพ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Large Image Lightbox Preview Modal -->
+  <div
+    class="modal-backdrop lightbox-backdrop"
+    id="image-preview-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-hidden="true"
+    aria-labelledby="image-preview-modal-title"
+  >
+    <div class="modal-dialog lightbox-dialog">
+      <div class="modal-header lightbox-header">
+        <div class="lightbox-title-wrap">
+          <span id="image-preview-page-badge" class="badge page-badge">หน้า 2</span>
+          <h3 class="modal-title lightbox-title" id="image-preview-modal-title">ชื่อรูปภาพ</h3>
+        </div>
+        <button type="button" class="btn-icon" data-dismiss="modal" aria-label="ปิดหน้าต่างดูรูป">✕</button>
+      </div>
+      <div class="modal-body lightbox-body">
+        <button type="button" class="lightbox-nav-btn lightbox-prev" id="btn-preview-prev" aria-label="ภาพก่อนหน้า">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+        </button>
+        <div class="lightbox-img-stage">
+          <img id="image-preview-img" class="lightbox-img" alt="ภาพขยายขนาดใหญ่" />
+        </div>
+        <button type="button" class="lightbox-nav-btn lightbox-next" id="btn-preview-next" aria-label="ภาพถัดไป">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+        </button>
+      </div>
+      <div class="modal-footer lightbox-footer">
+        <div class="lightbox-meta" id="image-preview-meta">
+          <span id="image-preview-dims">1920 × 1080 px</span>
+          <span class="meta-dot" aria-hidden="true">•</span>
+          <span id="image-preview-filesize">2.4 MB</span>
+          <span id="image-preview-lowres-badge" class="warning-badge-inline" style="display: none;">
+            ⚠️ ความละเอียดต่ำ
+          </span>
+        </div>
+        <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">ปิด</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Image Details Modal -->
+  <div
+    class="modal-backdrop"
+    id="image-details-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-hidden="true"
+    aria-labelledby="image-details-modal-title"
+  >
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title" id="image-details-modal-title">
+          <span aria-hidden="true">ℹ️</span> รายละเอียดรูปภาพ
+        </h3>
+        <button type="button" class="btn-icon" data-dismiss="modal" aria-label="ปิดหน้าต่างรายละเอียด">✕</button>
+      </div>
+      <div class="modal-body" id="image-details-modal-body">
+        <dl class="details-list" id="image-details-dl">
+          <div class="details-row"><dt>ชื่อไฟล์:</dt><dd id="details-filename">-</dd></div>
+          <div class="details-row"><dt>ประเภทไฟล์:</dt><dd id="details-mimetype">-</dd></div>
+          <div class="details-row"><dt>ความละเอียด:</dt><dd id="details-dimensions">-</dd></div>
+          <div class="details-row"><dt>ขนาดไฟล์:</dt><dd id="details-filesize">-</dd></div>
+          <div class="details-row"><dt>การหมุน:</dt><dd id="details-rotation">0°</dd></div>
+          <div class="details-row"><dt>สถานะคุณภาพ:</dt><dd id="details-quality">-</dd></div>
+        </dl>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" data-dismiss="modal">ปิด</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hidden File Input for Single Image Replacement -->
+  <input
+    type="file"
+    id="replace-image-input"
+    class="sr-only"
+    accept="image/jpeg,image/png,image/webp,image/bmp,image/heic,image/heif"
+    aria-hidden="true"
+  />
+
   <!-- Application Bootstrap (ES Modules) -->
   <script type="module" src="./src/app.js"></script>
 </body>

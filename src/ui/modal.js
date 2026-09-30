@@ -95,7 +95,11 @@ export function closeModal(modalElement = activeModal) {
 
   // Restore focus to triggering element
   if (lastFocusedElement && typeof lastFocusedElement.focus === 'function') {
-    lastFocusedElement.focus();
+    try {
+      lastFocusedElement.focus();
+    } catch (e) {
+      // Ignore if element is no longer in document
+    }
     lastFocusedElement = null;
   }
 

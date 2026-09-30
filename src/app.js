@@ -39,7 +39,12 @@ import {
   removeStudentImage,
   rotateStudentImage,
   reorderStudentImages,
-  clearAllStudentImages
+  clearAllStudentImages,
+  moveImageEarlier,
+  moveImageLater,
+  reorderImageByIndex,
+  replaceStudentImage,
+  duplicateStudentImage
 } from './portfolio/image-manager.js';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -125,6 +130,11 @@ document.addEventListener('DOMContentLoaded', () => {
     removeStudentImage,
     rotateStudentImage,
     reorderStudentImages,
-    clearAllStudentImages
+    clearAllStudentImages,
+    moveImageEarlier,
+    moveImageLater,
+    reorderImageByIndex,
+    replaceStudentImage,
+    duplicateStudentImage
   };
 });

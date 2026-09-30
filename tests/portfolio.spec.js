@@ -1391,6 +1391,495 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
     await page.screenshot({ path: 'tests/screenshots/phase4-5-duplicate-modal.png', fullPage: false });
   });
 
+  // =========================================================================
+  // Phase 5: Workspace Interactions — Reorder, Rotate, Delete, Replace, Duplicate, Preview
+  // =========================================================================
+
+  test('51. Rotate Image: Rotates clockwise in 90-degree steps and persists across rerenders', async ({ page }) => {
+    await page.goto('/');
+
+    // Import a single test image
+    await page.evaluate(async () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1600;
+      canvas.height = 1200;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#3b82f6';
+      ctx.fillRect(0, 0, 1600, 1200);
+      const blob = await new Promise((r) => canvas.toBlob(r, 'image/jpeg'));
+      const file = new File([blob], 'rotate_test.jpg', { type: 'image/jpeg', lastModified: 1000 });
+      await window.__WANGWON_IMAGE_MANAGER__.importStudentImages([file]);
+    });
+
+    const card = page.locator('.student-image-card').first();
+    await expect(card).toBeVisible();
+
+    const img = card.locator('.card-preview img');
+    await expect(img).toHaveAttribute('style', /rotate\(0deg\)/);
+
+    const btnRotate = card.locator('.btn-rotate');
+    // Rotate 1: 90deg
+    await btnRotate.click();
+    await expect(img).toHaveAttribute('style', /rotate\(90deg\)/);
+    let state = await page.evaluate(() => window.__WANGWON_STORE__.getState());
+    expect(state.images[0].rotation).toBe(90);
+
+    // Rotate 2: 180deg
+    await btnRotate.click();
+    await expect(img).toHaveAttribute('style', /rotate\(180deg\)/);
+    state = await page.evaluate(() => window.__WANGWON_STORE__.getState());
+    expect(state.images[0].rotation).toBe(180);
+
+    // Rotate 3: 270deg
+    await btnRotate.click();
+    await expect(img).toHaveAttribute('style', /rotate\(270deg\)/);
+    state = await page.evaluate(() => window.__WANGWON_STORE__.getState());
+    expect(state.images[0].rotation).toBe(270);
+
+    // Rotate 4: 0deg (wrap around)
+    await btnRotate.click();
+    await expect(img).toHaveAttribute('style', /rotate\(0deg\)/);
+    state = await page.evaluate(() => window.__WANGWON_STORE__.getState());
+    expect(state.images[0].rotation).toBe(0);
+  });
+
+  test('52. Delete Image Modal & Confirmation: Revokes preview URL, updates store, and updates page count', async ({ page }) => {
+    await page.goto('/');
+
+    await page.evaluate(async () => {
+      const makeFile = async (name) => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 1600;
+        canvas.height = 1200;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#10b981';
+        ctx.fillRect(0, 0, 1600, 1200);
+        const blob = await new Promise((r) => canvas.toBlob(r, 'image/jpeg'));
+        return new File([blob], name, { type: 'image/jpeg', lastModified: 1000 });
+      };
+      const f1 = await makeFile('delete_target.jpg');
+      const f2 = await makeFile('remain_item.jpg');
+      await window.__WANGWON_IMAGE_MANAGER__.importStudentImages([f1, f2]);
+    });
+
+    await expect(page.locator('.student-image-card')).toHaveCount(2);
+    await expect(page.locator('#image-count-badge')).toHaveText('2 ภาพผลงาน');
+    await expect(page.locator('#total-pages-badge')).toHaveText('4 หน้า รวมปกหน้าและปกหลัง');
+
+    const firstCard = page.locator('.student-image-card').first();
+    const btnDelete = firstCard.locator('.btn-delete');
+    await btnDelete.click();
+
+    // Confirm Modal is visible
+    const deleteModal = page.locator('#delete-image-modal');
+    await expect(deleteModal).toHaveClass(/is-open/);
+    await expect(page.locator('#delete-image-modal-filename')).toContainText('delete_target.jpg');
+
+    // Click confirm delete
+    await page.click('#btn-confirm-delete-image');
+    await expect(deleteModal).not.toHaveClass(/is-open/);
+
+    // Assert only 1 remains, renumbered
+    await expect(page.locator('.student-image-card')).toHaveCount(1);
+    await expect(page.locator('.student-image-card .image-name')).toHaveText('remain_item.jpg');
+    await expect(page.locator('.student-image-card .page-badge')).toHaveText('หน้า 2');
+    await expect(page.locator('#image-count-badge')).toHaveText('1 ภาพผลงาน');
+    await expect(page.locator('#total-pages-badge')).toHaveText('3 หน้า รวมปกหน้าและปกหลัง');
+  });
+
+  test('53. Contextual More Menu: Toggles popover menu and closes on Escape and outside click', async ({ page }) => {
+    await page.goto('/');
+
+    await page.evaluate(async () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1600;
+      canvas.height = 1200;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#6366f1';
+      ctx.fillRect(0, 0, 1600, 1200);
+      const blob = await new Promise((r) => canvas.toBlob(r, 'image/jpeg'));
+      const f1 = new File([blob], 'menu_test_1.jpg', { type: 'image/jpeg', lastModified: 1000 });
+      await window.__WANGWON_IMAGE_MANAGER__.importStudentImages([f1]);
+    });
+
+    const card = page.locator('.student-image-card').first();
+    const btnMore = card.locator('.btn-more');
+    const menu = card.locator('.card-context-menu');
+
+    await expect(menu).toBeHidden();
+    await expect(btnMore).toHaveAttribute('aria-expanded', 'false');
+
+    // Open menu
+    await btnMore.click();
+    await expect(menu).toBeVisible();
+    await expect(btnMore).toHaveAttribute('aria-expanded', 'true');
+
+    // Close on Escape
+    await page.keyboard.press('Escape');
+    await expect(menu).toBeHidden();
+    await expect(btnMore).toHaveAttribute('aria-expanded', 'false');
+
+    // Open and close on outside click
+    await btnMore.click();
+    await expect(menu).toBeVisible();
+    await page.click('body', { position: { x: 10, y: 10 } });
+    await expect(menu).toBeHidden();
+  });
+
+  test('54. Lightbox Preview Modal: Views large image with pagination and keyboard arrows', async ({ page }) => {
+    await page.goto('/');
+
+    await page.evaluate(async () => {
+      const makeFile = async (name, color) => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 1600;
+        canvas.height = 1200;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = color;
+        ctx.fillRect(0, 0, 1600, 1200);
+        const blob = await new Promise((r) => canvas.toBlob(r, 'image/jpeg'));
+        return new File([blob], name, { type: 'image/jpeg', lastModified: 1000 });
+      };
+      const f1 = await makeFile('lightbox_1.jpg', '#ef4444');
+      const f2 = await makeFile('lightbox_2.jpg', '#3b82f6');
+      await window.__WANGWON_IMAGE_MANAGER__.importStudentImages([f1, f2]);
+    });
+
+    const firstCard = page.locator('.student-image-card').first();
+    await firstCard.locator('.btn-more').click();
+    await firstCard.locator('.card-context-menu [data-action="view-large"]').click();
+
+    const lightbox = page.locator('#image-preview-modal');
+    await expect(lightbox).toHaveClass(/is-open/);
+    await expect(page.locator('#image-preview-modal-title')).toHaveText('lightbox_1.jpg');
+    await expect(page.locator('#image-preview-page-badge')).toHaveText('หน้า 2');
+    await expect(page.locator('#btn-preview-prev')).toBeDisabled();
+    await expect(page.locator('#btn-preview-next')).toBeEnabled();
+
+    // Click next
+    await page.click('#btn-preview-next');
+    await expect(page.locator('#image-preview-modal-title')).toHaveText('lightbox_2.jpg');
+    await expect(page.locator('#image-preview-page-badge')).toHaveText('หน้า 3');
+    await expect(page.locator('#btn-preview-next')).toBeDisabled();
+    await expect(page.locator('#btn-preview-prev')).toBeEnabled();
+
+    // Keyboard ArrowLeft
+    await page.keyboard.press('ArrowLeft');
+    await expect(page.locator('#image-preview-modal-title')).toHaveText('lightbox_1.jpg');
+    await expect(page.locator('#image-preview-page-badge')).toHaveText('หน้า 2');
+
+    // Close on Escape
+    await page.keyboard.press('Escape');
+    await expect(lightbox).not.toHaveClass(/is-open/);
+  });
+
+  test('55. Replace Image: Preserves slot and ID, resets rotation to 0, and updates preview', async ({ page }) => {
+    await page.goto('/');
+
+    await page.evaluate(async () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1600;
+      canvas.height = 1200;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#06b6d4';
+      ctx.fillRect(0, 0, 1600, 1200);
+      const blob = await new Promise((r) => canvas.toBlob(r, 'image/jpeg'));
+      const f1 = new File([blob], 'initial_file.jpg', { type: 'image/jpeg', lastModified: 1000 });
+      await window.__WANGWON_IMAGE_MANAGER__.importStudentImages([f1]);
+    });
+
+    const card = page.locator('.student-image-card').first();
+    const initialId = await card.getAttribute('data-id');
+
+    // Rotate first
+    await card.locator('.btn-rotate').click();
+    let state = await page.evaluate(() => window.__WANGWON_STORE__.getState());
+    expect(state.images[0].rotation).toBe(90);
+
+    // Call replace via image manager with replacement image
+    await page.evaluate(async (targetId) => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1800;
+      canvas.height = 1400;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#84cc16';
+      ctx.fillRect(0, 0, 1800, 1400);
+      const blob = await new Promise((r) => canvas.toBlob(r, 'image/png'));
+      const replacementFile = new File([blob], 'replacement_fresh.png', { type: 'image/png', lastModified: 2000 });
+      await window.__WANGWON_IMAGE_MANAGER__.replaceStudentImage(targetId, replacementFile);
+    }, initialId);
+
+    state = await page.evaluate(() => window.__WANGWON_STORE__.getState());
+    expect(state.images.length).toBe(1);
+    expect(state.images[0].id).toBe(initialId); // Preserves exact same ID and slot
+    expect(state.images[0].originalFilename).toBe('replacement_fresh.png');
+    expect(state.images[0].rotation).toBe(0); // Rotation reset to 0
+    expect(state.images[0].width).toBe(1800);
+    expect(state.images[0].height).toBe(1400);
+
+    await expect(page.locator('.student-image-card .image-name')).toHaveText('replacement_fresh.png');
+  });
+
+  test('56. Duplicate Image: Creates duplicate with unique ID and independent preview URL', async ({ page }) => {
+    await page.goto('/');
+
+    await page.evaluate(async () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1600;
+      canvas.height = 1200;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#a855f7';
+      ctx.fillRect(0, 0, 1600, 1200);
+      const blob = await new Promise((r) => canvas.toBlob(r, 'image/jpeg'));
+      const f1 = new File([blob], 'original_to_duplicate.jpg', { type: 'image/jpeg', lastModified: 1000 });
+      await window.__WANGWON_IMAGE_MANAGER__.importStudentImages([f1]);
+    });
+
+    const card = page.locator('.student-image-card').first();
+    await card.locator('.btn-more').click();
+    await card.locator('.card-context-menu [data-action="duplicate"]').click();
+
+    await expect(page.locator('.student-image-card')).toHaveCount(2);
+
+    const state = await page.evaluate(() => window.__WANGWON_STORE__.getState());
+    expect(state.images.length).toBe(2);
+    expect(state.images[0].id).not.toBe(state.images[1].id);
+    expect(state.images[1].originalFilename).toContain('original_to_duplicate');
+    expect(state.images[0].previewUrl).not.toBe(state.images[1].previewUrl);
+
+    // Deleting the original copy does not break the duplicate's preview
+    await page.evaluate((origId) => {
+      window.__WANGWON_IMAGE_MANAGER__.removeStudentImage(origId);
+    }, state.images[0].id);
+
+    await expect(page.locator('.student-image-card')).toHaveCount(1);
+    const remainingPreview = await page.locator('.student-image-card .card-preview img').getAttribute('src');
+    expect(remainingPreview).toBeTruthy();
+  });
+
+  test('57. Move Earlier & Move Later: Reorders items and respects boundary disables', async ({ page }) => {
+    await page.goto('/');
+
+    await page.evaluate(async () => {
+      const makeFile = async (name) => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 1600;
+        canvas.height = 1200;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#14b8a6';
+        ctx.fillRect(0, 0, 1600, 1200);
+        const blob = await new Promise((r) => canvas.toBlob(r, 'image/jpeg'));
+        return new File([blob], name, { type: 'image/jpeg', lastModified: 1000 });
+      };
+      const f1 = await makeFile('order_A.jpg');
+      const f2 = await makeFile('order_B.jpg');
+      const f3 = await makeFile('order_C.jpg');
+      await window.__WANGWON_IMAGE_MANAGER__.importStudentImages([f1, f2, f3]);
+    });
+
+    const cards = page.locator('.student-image-card');
+    await expect(cards).toHaveCount(3);
+
+    // First card: Move earlier is disabled
+    await cards.nth(0).locator('.btn-more').click();
+    const firstMenu = cards.nth(0).locator('.card-context-menu');
+    await expect(firstMenu.locator('[data-action="move-earlier"]')).toBeDisabled();
+    await expect(firstMenu.locator('[data-action="move-later"]')).toBeEnabled();
+    await page.keyboard.press('Escape');
+
+    // Last card: Move later is disabled
+    await cards.nth(2).locator('.btn-more').click();
+    const lastMenu = cards.nth(2).locator('.card-context-menu');
+    await expect(lastMenu.locator('[data-action="move-earlier"]')).toBeEnabled();
+    await expect(lastMenu.locator('[data-action="move-later"]')).toBeDisabled();
+    await page.keyboard.press('Escape');
+
+    // Middle card: Move earlier shifts B before A
+    await cards.nth(1).locator('.btn-more').click();
+    await cards.nth(1).locator('.card-context-menu [data-action="move-earlier"]').click();
+
+    let state = await page.evaluate(() => window.__WANGWON_STORE__.getState());
+    expect(state.images.map((i) => i.originalFilename)).toEqual(['order_B.jpg', 'order_A.jpg', 'order_C.jpg']);
+
+    // Now move B later shifts it back
+    await cards.nth(0).locator('.btn-more').click();
+    await cards.nth(0).locator('.card-context-menu [data-action="move-later"]').click();
+
+    state = await page.evaluate(() => window.__WANGWON_STORE__.getState());
+    expect(state.images.map((i) => i.originalFilename)).toEqual(['order_A.jpg', 'order_B.jpg', 'order_C.jpg']);
+  });
+
+  test('58. Reorder by Index: Arbitrary reorder updates state and derived page numbers', async ({ page }) => {
+    await page.goto('/');
+
+    await page.evaluate(async () => {
+      const makeFile = async (name) => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 1600;
+        canvas.height = 1200;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#f97316';
+        ctx.fillRect(0, 0, 1600, 1200);
+        const blob = await new Promise((r) => canvas.toBlob(r, 'image/jpeg'));
+        return new File([blob], name, { type: 'image/jpeg', lastModified: 1000 });
+      };
+      const f1 = await makeFile('item_1.jpg');
+      const f2 = await makeFile('item_2.jpg');
+      const f3 = await makeFile('item_3.jpg');
+      await window.__WANGWON_IMAGE_MANAGER__.importStudentImages([f1, f2, f3]);
+    });
+
+    // Reorder index 2 (item_3) to index 0
+    await page.evaluate(() => {
+      window.__WANGWON_IMAGE_MANAGER__.reorderImageByIndex(2, 0);
+    });
+
+    const state = await page.evaluate(() => window.__WANGWON_STORE__.getState());
+    expect(state.images.map((i) => i.originalFilename)).toEqual(['item_3.jpg', 'item_1.jpg', 'item_2.jpg']);
+
+    // Verify derived page numbering
+    const cards = page.locator('.student-image-card');
+    await expect(cards.nth(0).locator('.page-badge')).toHaveText('หน้า 2');
+    await expect(cards.nth(0).locator('.image-name')).toHaveText('item_3.jpg');
+    await expect(cards.nth(1).locator('.page-badge')).toHaveText('หน้า 3');
+    await expect(cards.nth(1).locator('.image-name')).toHaveText('item_1.jpg');
+    await expect(cards.nth(2).locator('.page-badge')).toHaveText('หน้า 4');
+    await expect(cards.nth(2).locator('.image-name')).toHaveText('item_2.jpg');
+  });
+
+  test('59. Image Details Modal: Shows file metadata, dimensions, rotation, and quality', async ({ page }) => {
+    await page.goto('/');
+
+    await page.evaluate(async () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1920;
+      canvas.height = 1080;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ec4899';
+      ctx.fillRect(0, 0, 1920, 1080);
+      const blob = await new Promise((r) => canvas.toBlob(r, 'image/jpeg'));
+      const f = new File([blob], 'details_meta_test.jpg', { type: 'image/jpeg', lastModified: 1000 });
+      await window.__WANGWON_IMAGE_MANAGER__.importStudentImages([f]);
+    });
+
+    const card = page.locator('.student-image-card').first();
+    await card.locator('.btn-more').click();
+    await card.locator('.card-context-menu [data-action="details"]').click();
+
+    const detailsModal = page.locator('#image-details-modal');
+    await expect(detailsModal).toHaveClass(/is-open/);
+    await expect(page.locator('#details-filename')).toHaveText('details_meta_test.jpg');
+    await expect(page.locator('#details-dimensions')).toContainText('1920 × 1080');
+    await expect(page.locator('#details-rotation')).toHaveText('0°');
+    await expect(page.locator('#details-quality')).toContainText('คมชัด');
+
+    // Close details
+    await page.click('#image-details-modal .btn-primary');
+    await expect(detailsModal).not.toHaveClass(/is-open/);
+  });
+
+  test('60. Visual QA: Capture 10 Phase 5 Screenshots', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/');
+
+    // Populate student info
+    await page.selectOption('#student-prefix', 'ด.ญ.');
+    await page.fill('#student-firstname', 'พิมพ์ชนก');
+    await page.fill('#student-lastname', 'อินทร์จันทร์');
+    await page.selectOption('#student-grade', 'ประถมศึกษาปีที่ 3');
+    await page.fill('#student-number', '12');
+
+    // Import 8 sample images
+    await page.evaluate(async () => {
+      const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#14b8a6'];
+      const files = [];
+      for (let i = 0; i < 8; i++) {
+        const canvas = document.createElement('canvas');
+        // Let image 6 be low-res (600x400)
+        if (i === 6) {
+          canvas.width = 600;
+          canvas.height = 400;
+        } else {
+          canvas.width = 1600;
+          canvas.height = 1200;
+        }
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = colors[i];
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '40px sans-serif';
+        ctx.fillText(`ภาพกิจกรรมที่ ${i + 1}`, 50, 100);
+        const blob = await new Promise((r) => canvas.toBlob(r, 'image/jpeg'));
+        files.push(new File([blob], `activity_${String(i + 1).padStart(2, '0')}.jpg`, { type: 'image/jpeg', lastModified: i * 1000 }));
+      }
+      await window.__WANGWON_IMAGE_MANAGER__.importStudentImages(files);
+    });
+
+    // 1. phase5-desktop-8-images.png
+    await page.locator('#portfolio-workspace').scrollIntoViewIfNeeded();
+    await page.screenshot({ path: 'tests/screenshots/phase5-desktop-8-images.png', fullPage: false });
+
+    // 2. phase5-image-menu.png (open context menu on card 2)
+    const card2 = page.locator('.student-image-card').nth(1);
+    await card2.locator('.btn-more').click();
+    await card2.scrollIntoViewIfNeeded();
+    await page.screenshot({ path: 'tests/screenshots/phase5-image-menu.png', fullPage: false });
+    await page.keyboard.press('Escape');
+
+    // 3. phase5-rotated-image.png (rotate card 1 90deg)
+    const card1 = page.locator('.student-image-card').nth(0);
+    await card1.locator('.btn-rotate').click();
+    await card1.scrollIntoViewIfNeeded();
+    await page.screenshot({ path: 'tests/screenshots/phase5-rotated-image.png', fullPage: false });
+
+    // 4. phase5-delete-confirmation.png (open delete modal on card 3)
+    const card3 = page.locator('.student-image-card').nth(2);
+    await card3.locator('.btn-delete').click();
+    await page.screenshot({ path: 'tests/screenshots/phase5-delete-confirmation.png', fullPage: false });
+    await page.click('#delete-image-modal .btn-secondary');
+
+    // 5. phase5-preview-modal.png (open lightbox on card 2)
+    await card2.locator('.btn-more').click();
+    await card2.locator('.card-context-menu [data-action="view-large"]').click();
+    await page.screenshot({ path: 'tests/screenshots/phase5-preview-modal.png', fullPage: false });
+    await page.keyboard.press('Escape');
+
+    // 6. phase5-lowres-warning.png (card 6 low resolution badge)
+    const cardLowRes = page.locator('.student-image-card.has-warning-lowres').first();
+    await cardLowRes.scrollIntoViewIfNeeded();
+    await page.screenshot({ path: 'tests/screenshots/phase5-lowres-warning.png', fullPage: false });
+
+    // 7. phase5-dragging-card.png (simulate dragging state visual)
+    await page.evaluate(() => {
+      const cards = document.querySelectorAll('.student-image-card');
+      if (cards.length > 2) {
+        cards[0].classList.add('is-dragging');
+        cards[1].classList.add('is-dragover-left');
+      }
+    });
+    await page.screenshot({ path: 'tests/screenshots/phase5-dragging-card.png', fullPage: false });
+    await page.evaluate(() => {
+      document.querySelectorAll('.student-image-card').forEach((c) => {
+        c.classList.remove('is-dragging', 'is-dragover-left', 'is-dragover-right');
+      });
+    });
+
+    // 8. phase5-tablet-workspace.png
+    await page.setViewportSize({ width: 768, height: 1024 });
+    await page.screenshot({ path: 'tests/screenshots/phase5-tablet-workspace.png', fullPage: false });
+
+    // 9. phase5-mobile-grid.png
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.locator('#portfolio-workspace').scrollIntoViewIfNeeded();
+    await page.screenshot({ path: 'tests/screenshots/phase5-mobile-grid.png', fullPage: false });
+
+    // 10. phase5-mobile-menu.png
+    const mobileCard = page.locator('.student-image-card').first();
+    await mobileCard.locator('.btn-more').click();
+    await mobileCard.scrollIntoViewIfNeeded();
+    await page.screenshot({ path: 'tests/screenshots/phase5-mobile-menu.png', fullPage: false });
+  });
+
 });
 
 

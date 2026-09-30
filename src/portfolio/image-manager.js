@@ -194,10 +194,15 @@ export function addStudentImages(files) {
  * @param {string} id
  */
 export function removeStudentImage(id) {
+  let wasRemoved = false;
   projectStore.setState((state) => {
     const target = state.images.find((img) => img.id === id);
     if (target?.previewUrl) {
       revokePreviewUrl(target.previewUrl);
+    }
+
+    if (target) {
+      wasRemoved = true;
     }
 
     const filtered = state.images
@@ -206,6 +211,7 @@ export function removeStudentImage(id) {
 
     return { images: filtered };
   });
+  return wasRemoved;
 }
 
 /**
@@ -252,6 +258,184 @@ export function reorderStudentImages(orderedIds) {
 
     return { images: reordered };
   });
+}
+
+/**
+ * Moves an image one position earlier (left/up).
+ * @param {string} id
+ */
+export function moveImageEarlier(id) {
+  projectStore.setState((state) => {
+    const images = [...(state.images || [])];
+    const idx = images.findIndex((img) => img.id === id);
+    if (idx > 0) {
+      const temp = images[idx];
+      images[idx] = images[idx - 1];
+      images[idx - 1] = temp;
+    }
+    return {
+      images: images.map((img, i) => ({ ...img, order: i + 1 }))
+    };
+  });
+}
+
+/**
+ * Moves an image one position later (right/down).
+ * @param {string} id
+ */
+export function moveImageLater(id) {
+  projectStore.setState((state) => {
+    const images = [...(state.images || [])];
+    const idx = images.findIndex((img) => img.id === id);
+    if (idx !== -1 && idx < images.length - 1) {
+      const temp = images[idx];
+      images[idx] = images[idx + 1];
+      images[idx + 1] = temp;
+    }
+    return {
+      images: images.map((img, i) => ({ ...img, order: i + 1 }))
+    };
+  });
+}
+
+/**
+ * Reorders an image from old index to new index.
+ * @param {number} oldIndex
+ * @param {number} newIndex
+ */
+export function reorderImageByIndex(oldIndex, newIndex) {
+  projectStore.setState((state) => {
+    const images = [...(state.images || [])];
+    if (
+      oldIndex < 0 ||
+      oldIndex >= images.length ||
+      newIndex < 0 ||
+      newIndex >= images.length ||
+      oldIndex === newIndex
+    ) {
+      return { images };
+    }
+    const [moved] = images.splice(oldIndex, 1);
+    images.splice(newIndex, 0, moved);
+    return {
+      images: images.map((img, i) => ({ ...img, order: i + 1 }))
+    };
+  });
+}
+
+/**
+ * Replaces an existing student image with a new file while keeping the same position/slot and ID.
+ * Resets rotation to 0. Revokes old preview URL only after successful decoding.
+ *
+ * @param {string} id - ID of image to replace
+ * @param {File} file - New image file
+ * @returns {Promise<object>} The updated image item
+ */
+export async function replaceStudentImage(id, file) {
+  if (!file) throw new Error('No file provided for replacement');
+
+  if (!isSupportedImage(file)) {
+    throw new Error('UNSUPPORTED_FORMAT');
+  }
+
+  let processableBlob = file;
+  let effectiveFilename = file.name || 'replaced_image';
+  let mimeType = file.type || 'image/jpeg';
+  let outputExtension = getNormalizedExtension(effectiveFilename, mimeType);
+
+  try {
+    const decoded = await decodeHeicIfNeeded(file);
+    processableBlob = decoded.blob;
+    effectiveFilename = decoded.filename;
+    mimeType = decoded.mimeType;
+    outputExtension = getNormalizedExtension(effectiveFilename, mimeType);
+  } catch (err) {
+    throw new Error('CORRUPTED_FILE');
+  }
+
+  let dimensions;
+  try {
+    dimensions = await getImageDimensions(processableBlob);
+  } catch (err) {
+    throw new Error('CORRUPTED_FILE');
+  }
+
+  const quality = assessImageQuality(dimensions.width, dimensions.height);
+  const newPreviewUrl = createPreviewUrl(processableBlob);
+  const duplicateKey = buildDuplicateKey(file, dimensions);
+
+  let updatedItem = null;
+
+  projectStore.setState((state) => {
+    const images = (state.images || []).map((img) => {
+      if (img.id === id) {
+        // Revoke old URL now that replacement is successful
+        if (img.previewUrl) {
+          revokePreviewUrl(img.previewUrl);
+        }
+
+        updatedItem = {
+          ...img,
+          originalFile: file,
+          originalFilename: effectiveFilename,
+          outputExtension,
+          mimeType,
+          rotation: 0,
+          width: dimensions.width,
+          height: dimensions.height,
+          aspectRatio: dimensions.aspectRatio,
+          fileSize: file.size || processableBlob.size || 0,
+          previewUrl: newPreviewUrl,
+          qualityStatus: quality.status,
+          qualityWarning: quality.warning,
+          duplicateKey
+        };
+        return updatedItem;
+      }
+      return img;
+    });
+
+    return { images };
+  });
+
+  return updatedItem;
+}
+
+/**
+ * Duplicates a student image and inserts it immediately after the original image.
+ * Uses an independent preview URL so deleting or modifying one duplicate never affects the other.
+ *
+ * @param {string} id - ID of image to duplicate
+ * @returns {object|null} Duplicated image item
+ */
+export function duplicateStudentImage(id) {
+  let duplicatedItem = null;
+
+  projectStore.setState((state) => {
+    const current = state.images || [];
+    const targetIdx = current.findIndex((img) => img.id === id);
+    if (targetIdx === -1) return { images: current };
+
+    const target = current[targetIdx];
+    const newId = `img_${Date.now()}_${nextImageId++}`;
+    // Create independent preview URL from originalFile
+    const previewUrl = target.originalFile ? createPreviewUrl(target.originalFile) : target.previewUrl;
+
+    duplicatedItem = {
+      ...target,
+      id: newId,
+      previewUrl
+    };
+
+    const newImages = [...current];
+    newImages.splice(targetIdx + 1, 0, duplicatedItem);
+
+    return {
+      images: newImages.map((img, idx) => ({ ...img, order: idx + 1 }))
+    };
+  });
+
+  return duplicatedItem;
 }
 
 /**
