@@ -6,6 +6,7 @@ import {
   projectStore,
   createDefaultProjectState,
   resetPortfolioProject,
+  hydrateProjectState,
   updateStudentField,
   updateStudent,
   updateStudentPhoto,
@@ -19,6 +20,18 @@ import { initSettingsPanel } from './ui/settings-panel.js';
 import { initPreviewActions } from './ui/preview.js';
 import { openModal, closeModal } from './ui/modal.js';
 import { showToast } from './ui/notifications.js';
+import {
+  openDraftDb,
+  saveDraft,
+  loadDraft,
+  deleteDraft,
+  hasDraft,
+  migrateDraftRecord,
+  rehydrateDraftState,
+  hasMeaningfulProjectData
+} from './core/draft-storage.js';
+import { autosaveManager } from './core/autosave-manager.js';
+import { initRecoveryModal } from './ui/recovery-modal.js';
 import {
   validateStudentInformation,
   getStudentDisplayName,
@@ -76,6 +89,40 @@ document.addEventListener('DOMContentLoaded', () => {
   const actionToolbar = document.querySelector('#action-toolbar');
   initPreviewActions(actionToolbar);
 
+  // Initialize Autosave Status Indicator (Phase 12)
+  const autosaveIndicator = document.querySelector('#autosave-status-indicator');
+  const autosaveText = document.querySelector('#autosave-status-text');
+
+  autosaveManager.subscribe(({ status, formattedTime }) => {
+    if (!autosaveIndicator) return;
+    autosaveIndicator.dataset.status = status;
+
+    if (autosaveText) {
+      if (status === 'saving') {
+        autosaveText.textContent = 'กำลังบันทึก...';
+      } else if (status === 'saved') {
+        autosaveText.textContent = formattedTime ? `บันทึกล่าสุด ${formattedTime}` : 'บันทึกแล้ว';
+      } else if (status === 'error') {
+        autosaveText.textContent = 'บันทึกร่างไม่สำเร็จ';
+      } else {
+        autosaveText.textContent = 'บันทึกอัตโนมัติ';
+      }
+    }
+  });
+
+  // Centralized Auto-Save Subscription (Phase 12)
+  projectStore.subscribe((state) => {
+    autosaveManager.scheduleSave(state);
+  });
+
+  // Listen for autosave error toast notifications
+  window.addEventListener('wangwon:autosave-error', (e) => {
+    const { message } = e.detail;
+    if (message) {
+      showToast(message, 'warning');
+    }
+  });
+
   // Header Modal Triggers: Help & Reset Project
   const btnHelp = document.querySelector('#btn-help');
   const helpModal = document.querySelector('#help-modal');
@@ -93,21 +140,46 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Confirm Reset Action
+  // Confirm Reset Action (Phase 12: Clears memory & deletes draft from IndexedDB)
   const btnConfirmReset = document.querySelector('#btn-confirm-reset');
   if (btnConfirmReset && resetModal) {
-    btnConfirmReset.addEventListener('click', () => {
+    btnConfirmReset.addEventListener('click', async () => {
+      autosaveManager.pause();
       resetPortfolioProject();
       clearAllFormValidationErrors();
       closeModal(resetModal);
+
+      try {
+        await deleteDraft();
+      } catch (err) {
+        console.warn('[DraftStorage] Failed to delete draft on project reset:', err);
+      }
+
+      autosaveManager.setStatus('idle');
+      autosaveManager.resume();
       showToast('เริ่มโครงการใหม่เรียบร้อยแล้ว', 'info');
     });
   }
+
+  // Startup Recovery Modal (Phase 12)
+  initRecoveryModal();
 
   // Expose store & helpers for testing & development
   window.__WANGWON_STORE__ = projectStore;
   window.__WANGWON_MODAL__ = { openModal, closeModal };
   window.__WANGWON_TOAST__ = { showToast };
+  window.__WANGWON_DRAFT_STORAGE__ = {
+    openDraftDb,
+    saveDraft,
+    loadDraft,
+    deleteDraft,
+    hasDraft,
+    migrateDraftRecord,
+    rehydrateDraftState,
+    hasMeaningfulProjectData,
+    autosaveManager,
+    hydrateProjectState
+  };
   window.__WANGWON_FILENAME_UTILS__ = {
     generatePdfFilename,
     sanitizeFilename,

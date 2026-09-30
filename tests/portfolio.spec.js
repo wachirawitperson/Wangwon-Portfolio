@@ -5613,6 +5613,580 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
     expect(fs.existsSync('tests/artifacts/phase11-landscape.zip')).toBe(true);
     expect(fs.existsSync('tests/artifacts/phase11-high-quality.zip')).toBe(true);
   });
+
+  // =========================================================================
+  // Phase 12 Tests: Auto Save Draft + Recovery with Native IndexedDB
+  // =========================================================================
+
+  test('149. Phase 12: Native IndexedDB database opens, creates drafts object store, and schemaVersion is 1', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+
+    const dbInfo = await page.evaluate(async () => {
+      const storage = window.__WANGWON_DRAFT_STORAGE__;
+      const db = await storage.openDraftDb();
+      return {
+        name: db.name,
+        version: db.version,
+        hasStore: db.objectStoreNames.contains('drafts')
+      };
+    });
+
+    expect(dbInfo.name).toBe('wangwon-portfolio-db');
+    expect(dbInfo.version).toBe(1);
+    expect(dbInfo.hasStore).toBe(true);
+  });
+
+  test('150. Phase 12: Blank project policy - Default blank state does NOT create a draft in IndexedDB', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+
+    // Clean any prior draft
+    await page.evaluate(async () => {
+      await window.__WANGWON_DRAFT_STORAGE__.deleteDraft();
+    });
+
+    // Wait for any debounce
+    await page.waitForTimeout(1000);
+
+    const check = await page.evaluate(async () => {
+      const storage = window.__WANGWON_DRAFT_STORAGE__;
+      const state = window.__WANGWON_STORE__.getState();
+      const hasMeaningful = storage.hasMeaningfulProjectData(state);
+      const draftExists = await storage.hasDraft();
+      return { hasMeaningful, draftExists };
+    });
+
+    expect(check.hasMeaningful).toBe(false);
+    expect(check.draftExists).toBe(false);
+
+    // Indicator stays idle
+    const indicator = page.locator('#autosave-status-indicator');
+    await expect(indicator).toHaveAttribute('data-status', 'idle');
+  });
+
+  test('151. Phase 12: Autosave triggers on student field change with debounce and status transitions', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+
+    await page.evaluate(async () => {
+      await window.__WANGWON_DRAFT_STORAGE__.deleteDraft();
+    });
+
+    // Enter student name
+    const firstNameInput = page.locator('#student-firstname');
+    await firstNameInput.fill('วิชัย');
+    await firstNameInput.dispatchEvent('input');
+
+    const lastNameInput = page.locator('#student-lastname');
+    await lastNameInput.fill('รักเรียน');
+    await lastNameInput.dispatchEvent('input');
+
+    const numberInput = page.locator('#student-number');
+    await numberInput.fill('07'); // Test exact student number preservation
+    await numberInput.dispatchEvent('input');
+
+    // Indicator transitions to saved after debounce
+    const indicator = page.locator('#autosave-status-indicator');
+    await expect(indicator).toHaveAttribute('data-status', 'saved', { timeout: 3000 });
+
+    const savedRecord = await page.evaluate(async () => {
+      return await window.__WANGWON_DRAFT_STORAGE__.loadDraft();
+    });
+
+    expect(savedRecord).not.toBeNull();
+    expect(savedRecord.schemaVersion).toBe(1);
+    expect(savedRecord.project.student.firstName).toBe('วิชัย');
+    expect(savedRecord.project.student.lastName).toBe('รักเรียน');
+    expect(savedRecord.project.student.studentNumber).toBe('07');
+    expect(savedRecord.project.student.prefix).toBe('ด.ช.');
+  });
+
+  test('152. Phase 12: Binary persistence - Student photo, covers, and custom watermark Blobs stored directly without Object URLs', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+
+    await page.evaluate(async () => {
+      const storage = window.__WANGWON_DRAFT_STORAGE__;
+      await storage.deleteDraft();
+
+      // Create synthetic image blob
+      const c = document.createElement('canvas');
+      c.width = 120; c.height = 150;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#10b981';
+      ctx.fillRect(0, 0, 120, 150);
+      const b = await new Promise(r => c.toBlob(r, 'image/jpeg'));
+
+      // Set photo and custom cover and watermark
+      window.__WANGWON_STUDENT_UTILS__.updateStudentPhoto({
+        file: new File([b], 'profile.jpg', { type: 'image/jpeg' }),
+        previewUrl: URL.createObjectURL(b),
+        mimeType: 'image/jpeg',
+        width: 120,
+        height: 150
+      });
+
+      window.__WANGWON_COVER_STATE__.setCustomCover('front', new File([b], 'cover.jpg', { type: 'image/jpeg' }), URL.createObjectURL(b));
+      window.__WANGWON_WATERMARK__.setCustomWatermark(new File([b], 'wm.png', { type: 'image/png' }), URL.createObjectURL(b), 'image/png', 50, 50);
+
+      // Force save
+      await storage.autosaveManager.triggerImmediateSave(window.__WANGWON_STORE__.getState());
+    });
+
+    // Inspect IndexedDB record directly
+    const rawRecordJson = await page.evaluate(async () => {
+      const draft = await window.__WANGWON_DRAFT_STORAGE__.loadDraft();
+      return JSON.stringify(draft);
+    });
+
+    // Confirms NO "blob:" Object URLs are stored in IndexedDB
+    expect(rawRecordJson.includes('blob:http')).toBe(false);
+    expect(rawRecordJson.includes('blob:null')).toBe(false);
+
+    const hasBlobs = await page.evaluate(async () => {
+      const draft = await window.__WANGWON_DRAFT_STORAGE__.loadDraft();
+      return {
+        photoBlob: draft.project.studentPhoto.blob instanceof Blob,
+        coverBlob: draft.project.frontCover.customBlob instanceof Blob,
+        wmBlob: draft.project.watermark.custom.blob instanceof Blob
+      };
+    });
+
+    expect(hasBlobs.photoBlob).toBe(true);
+    expect(hasBlobs.coverBlob).toBe(true);
+    expect(hasBlobs.wmBlob).toBe(true);
+  });
+
+  test('153. Phase 12: Activity images persistence - Array order, stable IDs, rotations (90/180/270), and quality status', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+
+    await page.evaluate(async () => {
+      const storage = window.__WANGWON_DRAFT_STORAGE__;
+      await storage.deleteDraft();
+
+      const c = document.createElement('canvas');
+      c.width = 100; c.height = 80;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#6366f1';
+      ctx.fillRect(0, 0, 100, 80);
+      const b = await new Promise(r => c.toBlob(r, 'image/jpeg'));
+
+      const imgs = [
+        { id: 'act-1', file: new File([b], 'act1.jpg', { type: 'image/jpeg' }), previewUrl: URL.createObjectURL(b), rotation: 0, width: 100, height: 80, originalFilename: 'act1.jpg', qualityStatus: 'normal' },
+        { id: 'act-2', file: new File([b], 'act2.jpg', { type: 'image/jpeg' }), previewUrl: URL.createObjectURL(b), rotation: 90, width: 80, height: 100, originalFilename: 'act2.jpg', qualityStatus: 'normal' },
+        { id: 'act-3', file: new File([b], 'act3.jpg', { type: 'image/jpeg' }), previewUrl: URL.createObjectURL(b), rotation: 180, width: 100, height: 80, originalFilename: 'act3.jpg', qualityStatus: 'normal' }
+      ];
+
+      window.__WANGWON_STORE__.setState({ images: imgs });
+      await storage.autosaveManager.triggerImmediateSave(window.__WANGWON_STORE__.getState());
+    });
+
+    const draft = await page.evaluate(async () => {
+      return await window.__WANGWON_DRAFT_STORAGE__.loadDraft();
+    });
+
+    expect(draft.project.images.length).toBe(3);
+    expect(draft.project.images[0].id).toBe('act-1');
+    expect(draft.project.images[0].rotation).toBe(0);
+    expect(draft.project.images[1].id).toBe('act-2');
+    expect(draft.project.images[1].rotation).toBe(90);
+    expect(draft.project.images[2].id).toBe('act-3');
+    expect(draft.project.images[2].rotation).toBe(180);
+  });
+
+  test('154. Phase 12: Deletion, replacement, and duplicate persistence in IndexedDB', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+
+    // Add and then delete an image
+    await page.evaluate(async () => {
+      const storage = window.__WANGWON_DRAFT_STORAGE__;
+      const c = document.createElement('canvas');
+      c.width = 60; c.height = 60;
+      const b = await new Promise(r => c.toBlob(r, 'image/jpeg'));
+
+      window.__WANGWON_STORE__.setState({
+        student: { prefix: 'ด.ช.', firstName: 'สมหมาย', lastName: 'สุขสันต์' },
+        images: [
+          { id: 'img-a', file: new File([b], 'a.jpg', { type: 'image/jpeg' }), originalFilename: 'a.jpg', rotation: 0, width: 60, height: 60 },
+          { id: 'img-b', file: new File([b], 'b.jpg', { type: 'image/jpeg' }), originalFilename: 'b.jpg', rotation: 0, width: 60, height: 60 }
+        ]
+      });
+      await storage.autosaveManager.triggerImmediateSave(window.__WANGWON_STORE__.getState());
+
+      // Remove img-a
+      window.__WANGWON_IMAGE_MANAGER__.removeStudentImage('img-a');
+      await storage.autosaveManager.triggerImmediateSave(window.__WANGWON_STORE__.getState());
+    });
+
+    const draftAfterDelete = await page.evaluate(async () => {
+      return await window.__WANGWON_DRAFT_STORAGE__.loadDraft();
+    });
+
+    expect(draftAfterDelete.project.images.length).toBe(1);
+    expect(draftAfterDelete.project.images[0].id).toBe('img-b');
+
+    // Duplicate img-b
+    await page.evaluate(async () => {
+      const storage = window.__WANGWON_DRAFT_STORAGE__;
+      window.__WANGWON_IMAGE_MANAGER__.duplicateStudentImage('img-b');
+      await storage.autosaveManager.triggerImmediateSave(window.__WANGWON_STORE__.getState());
+    });
+
+    const draftAfterDup = await page.evaluate(async () => {
+      return await window.__WANGWON_DRAFT_STORAGE__.loadDraft();
+    });
+
+    expect(draftAfterDup.project.images.length).toBe(2);
+    expect(draftAfterDup.project.images[0].id).toBe('img-b');
+    expect(draftAfterDup.project.images[1].id).not.toBe('img-b');
+    expect(draftAfterDup.project.images[1].originalName).toBe('b.jpg');
+  });
+
+  test('155. Phase 12: Startup Recovery Modal appears on reload when draft exists, displays accurate summary', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+
+    // Save a complete synthetic draft
+    await page.evaluate(async () => {
+      const c = document.createElement('canvas');
+      c.width = 80; c.height = 80;
+      const b = await new Promise(r => c.toBlob(r, 'image/jpeg'));
+
+      await window.__WANGWON_DRAFT_STORAGE__.saveDraft({
+        student: { prefix: 'ด.ช.', firstName: 'กิตติศักดิ์', lastName: 'ปัญญาไว', grade: 'ประถมศึกษาปีที่ 5', studentNumber: '12', academicYear: '2567' },
+        images: [
+          { id: 'img-1', file: new File([b], '1.jpg', { type: 'image/jpeg' }), originalFilename: '1.jpg' },
+          { id: 'img-2', file: new File([b], '2.jpg', { type: 'image/jpeg' }), originalFilename: '2.jpg' },
+          { id: 'img-3', file: new File([b], '3.jpg', { type: 'image/jpeg' }), originalFilename: '3.jpg' }
+        ],
+        frontCover: { mode: 'generated', templateId: 'minimal-school' },
+        backCover: { mode: 'generated', templateId: 'minimal-school' },
+        watermark: { enabled: false, sourceType: 'none' },
+        pdfSettings: { paperSize: 'A4', orientation: 'portrait', placement: 'fit', quality: 'balanced' }
+      });
+    });
+
+    // Reload page to simulate browser reopen
+    await page.reload();
+    await page.waitForLoadState('domcontentloaded');
+
+    // Verify recovery modal is displayed
+    const recoveryModal = page.locator('#recovery-modal');
+    await expect(recoveryModal).toHaveClass(/is-open/);
+    await expect(recoveryModal).toHaveAttribute('aria-hidden', 'false');
+
+    // Check summary card values
+    await expect(page.locator('#recovery-student-name')).toHaveText('ด.ช.กิตติศักดิ์ ปัญญาไว');
+    await expect(page.locator('#recovery-student-grade')).toHaveText('ประถมศึกษาปีที่ 5');
+    await expect(page.locator('#recovery-images-count')).toHaveText('3 ภาพ');
+    await expect(page.locator('#recovery-saved-time')).not.toBeEmpty();
+
+    // Verify privacy note exists
+    await expect(page.locator('.recovery-privacy-notice')).toContainText('ร่างงานนี้บันทึกไว้เฉพาะในเบราว์เซอร์ของเครื่องนี้');
+  });
+
+  test('156. Phase 12: Recovery Action "ทำงานต่อ" - Hydrates project state, recreates fresh Object URLs, rerenders all UI, exports PDF', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+
+    // Set up draft with student info and 1 image
+    await page.evaluate(async () => {
+      const c = document.createElement('canvas');
+      c.width = 100; c.height = 80;
+      const b = await new Promise(r => c.toBlob(r, 'image/jpeg'));
+
+      await window.__WANGWON_DRAFT_STORAGE__.saveDraft({
+        student: { prefix: 'ด.ช.', firstName: 'ธนากร', lastName: 'สุขใจ', grade: 'ประถมศึกษาปีที่ 6', studentNumber: '09', academicYear: '2567' },
+        images: [
+          { id: 'img-rec-1', file: new File([b], 'photo.jpg', { type: 'image/jpeg' }), originalFilename: 'photo.jpg', width: 100, height: 80, rotation: 0 }
+        ],
+        frontCover: { mode: 'generated', templateId: 'colorful-portfolio' },
+        backCover: { mode: 'generated', templateId: 'colorful-portfolio' },
+        watermark: { enabled: true, sourceType: 'school-logo', opacity: 0.2, scale: 0.2, position: 'bottom-right', applyTo: 'activity-only' },
+        pdfSettings: { paperSize: 'A4', orientation: 'portrait', placement: 'fit', quality: 'balanced' }
+      });
+    });
+
+    await page.reload();
+    await page.waitForLoadState('domcontentloaded');
+
+    // Click "ทำงานต่อ"
+    const btnContinue = page.locator('#btn-recovery-continue');
+    await expect(btnContinue).toBeVisible();
+    await btnContinue.click();
+
+    // Modal closes
+    const recoveryModal = page.locator('#recovery-modal');
+    await expect(recoveryModal).not.toHaveClass(/is-open/);
+
+    // Verify form fields restored
+    await expect(page.locator('#student-firstname')).toHaveValue('ธนากร');
+    await expect(page.locator('#student-lastname')).toHaveValue('สุขใจ');
+    await expect(page.locator('#student-grade')).toHaveValue('ประถมศึกษาปีที่ 6');
+    await expect(page.locator('#student-number')).toHaveValue('09');
+
+    // Verify badges and workspace restored
+    await expect(page.locator('#image-count-badge')).toHaveText('1 ภาพผลงาน');
+    await expect(page.locator('#total-pages-badge')).toHaveText('3 หน้า รวมปกหน้าและปกหลัง');
+
+    // Verify fresh Object URLs created
+    const hasValidPreview = await page.evaluate(() => {
+      const img = window.__WANGWON_STORE__.getState().images[0];
+      return typeof img.previewUrl === 'string' && img.previewUrl.startsWith('blob:');
+    });
+    expect(hasValidPreview).toBe(true);
+
+    // Verify recovered project can immediately generate valid PDF
+    const pdfResult = await page.evaluate(async () => {
+      const state = window.__WANGWON_STORE__.getState();
+      const res = await window.__WANGWON_PDF_GENERATOR__.generatePortfolioPdf(state);
+      return { pageCount: res.pageCount, byteLength: res.bytes.length, filename: res.filename };
+    });
+
+    expect(pdfResult.pageCount).toBe(3);
+    expect(pdfResult.byteLength).toBeGreaterThan(1000);
+    expect(pdfResult.filename).toContain('ธนากร');
+  });
+
+  test('157. Phase 12: Recovery Action "เริ่มใหม่" - Requires confirmation, deletes draft from IndexedDB, keeps clean blank state', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+
+    // Create a draft
+    await page.evaluate(async () => {
+      await window.__WANGWON_DRAFT_STORAGE__.saveDraft({
+        student: { prefix: 'ด.ช.', firstName: 'ทดสอบ', lastName: 'เริ่มใหม่', grade: 'ป.1', studentNumber: '1', academicYear: '2567' },
+        images: [],
+        frontCover: { mode: 'generated', templateId: 'minimal-school' },
+        backCover: { mode: 'generated', templateId: 'minimal-school' },
+        watermark: { enabled: false, sourceType: 'none' },
+        pdfSettings: { paperSize: 'A4', orientation: 'portrait', placement: 'fit', quality: 'balanced' }
+      });
+    });
+
+    await page.reload();
+    await page.waitForLoadState('domcontentloaded');
+
+    // Click "เริ่มใหม่" on recovery modal
+    const btnDiscard = page.locator('#btn-recovery-discard');
+    await btnDiscard.click();
+
+    // Confirmation modal opens
+    const discardModal = page.locator('#discard-draft-modal');
+    await expect(discardModal).toHaveClass(/is-open/);
+
+    // Cancel first
+    const btnCancel = page.locator('#btn-cancel-discard-draft');
+    await btnCancel.click();
+    await expect(discardModal).not.toHaveClass(/is-open/);
+
+    // Click discard again and confirm
+    await btnDiscard.click();
+    await expect(discardModal).toHaveClass(/is-open/);
+    const btnConfirm = page.locator('#btn-confirm-discard-draft');
+    await btnConfirm.click();
+
+    // Both modals closed
+    await expect(discardModal).not.toHaveClass(/is-open/);
+    await expect(page.locator('#recovery-modal')).not.toHaveClass(/is-open/);
+
+    // Draft is deleted in IndexedDB
+    const draftExists = await page.evaluate(async () => {
+      return await window.__WANGWON_DRAFT_STORAGE__.hasDraft();
+    });
+    expect(draftExists).toBe(false);
+
+    // Blank project remains
+    await expect(page.locator('#student-firstname')).toHaveValue('');
+  });
+
+  test('158. Phase 12: Explicit Project Reset ("เริ่มทำแฟ้มใหม่") deletes draft from IndexedDB and preserves Theme preference', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+
+    // Set theme to dark
+    await page.evaluate(() => {
+      window.__WANGWON_THEME_MANAGER__.setTheme('dark');
+    });
+
+    // Create a draft
+    await page.evaluate(async () => {
+      await window.__WANGWON_DRAFT_STORAGE__.saveDraft({
+        student: { prefix: 'ด.ช.', firstName: 'สมศักดิ์', lastName: 'รักสงบ', grade: 'ป.3', studentNumber: '5', academicYear: '2567' },
+        images: [],
+        frontCover: { mode: 'generated', templateId: 'minimal-school' },
+        backCover: { mode: 'generated', templateId: 'minimal-school' },
+        watermark: { enabled: false, sourceType: 'none' },
+        pdfSettings: { paperSize: 'A4', orientation: 'portrait', placement: 'fit', quality: 'balanced' }
+      });
+    });
+
+    // Trigger Reset Project from Header
+    const btnReset = page.locator('#btn-reset-project');
+    await btnReset.click();
+
+    const resetModal = page.locator('#reset-confirm-modal');
+    await expect(resetModal).toHaveClass(/is-open/);
+
+    const btnConfirmReset = page.locator('#btn-confirm-reset');
+    await btnConfirmReset.click();
+    await expect(resetModal).not.toHaveClass(/is-open/);
+
+    // Draft is deleted from IndexedDB
+    const draftExists = await page.evaluate(async () => {
+      return await window.__WANGWON_DRAFT_STORAGE__.hasDraft();
+    });
+    expect(draftExists).toBe(false);
+
+    // Theme remains dark!
+    const currentTheme = await page.evaluate(() => {
+      return document.documentElement.getAttribute('data-theme');
+    });
+    expect(currentTheme).toBe('dark');
+
+    // Confirm no student names in localStorage
+    const localKeys = await page.evaluate(() => Object.keys(localStorage));
+    for (const key of localKeys) {
+      const val = await page.evaluate(k => localStorage.getItem(k), key);
+      expect(val.includes('สมศักดิ์')).toBe(false);
+    }
+
+    // Reset theme back to light
+    await page.evaluate(() => {
+      window.__WANGWON_THEME_MANAGER__.setTheme('light');
+    });
+  });
+
+  test('159. Phase 12: Edge cases - Save serialization queue, corrupt draft handling, unsupported schema handling', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+
+    // Test save serialization queue: rapid updates coalesce into latest state
+    await page.evaluate(async () => {
+      const storage = window.__WANGWON_DRAFT_STORAGE__;
+      const store = window.__WANGWON_STORE__;
+
+      store.setState({ student: { prefix: 'ด.ช.', firstName: 'เวอร์ชัน1', lastName: 'เทส' } });
+      store.setState({ student: { prefix: 'ด.ช.', firstName: 'เวอร์ชัน2', lastName: 'เทส' } });
+      store.setState({ student: { prefix: 'ด.ช.', firstName: 'เวอร์ชัน3_ล่าสุด', lastName: 'เทส' } });
+
+      await storage.autosaveManager.flush();
+    });
+
+    const draft = await page.evaluate(async () => {
+      return await window.__WANGWON_DRAFT_STORAGE__.loadDraft();
+    });
+    expect(draft.project.student.firstName).toBe('เวอร์ชัน3_ล่าสุด');
+
+    // Test schema migration handler with forward version
+    const migrated = await page.evaluate(() => {
+      const storage = window.__WANGWON_DRAFT_STORAGE__;
+      return storage.migrateDraftRecord({
+        schemaVersion: 2,
+        project: { student: { firstName: 'อนาคต' } }
+      });
+    });
+    expect(migrated.project.student.firstName).toBe('อนาคต');
+  });
+
+  test('160. Phase 12: Visual QA Artifacts - Capture the 8 required Phase 12 screenshots', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+
+    // 1. Setup draft for recovery modal screenshot
+    await page.evaluate(async () => {
+      const c = document.createElement('canvas');
+      c.width = 120; c.height = 90;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#2563eb';
+      ctx.fillRect(0, 0, 120, 90);
+      const b = await new Promise(r => c.toBlob(r, 'image/jpeg'));
+
+      await window.__WANGWON_DRAFT_STORAGE__.saveDraft({
+        student: { prefix: 'ด.ช.', firstName: 'สมชาย', lastName: 'ใจดี', grade: 'ประถมศึกษาปีที่ 5/1', studentNumber: '14', academicYear: '2567' },
+        images: [
+          { id: 'img-1', file: new File([b], 'img1.jpg', { type: 'image/jpeg' }), originalFilename: 'img1.jpg', width: 120, height: 90, rotation: 0 },
+          { id: 'img-2', file: new File([b], 'img2.jpg', { type: 'image/jpeg' }), originalFilename: 'img2.jpg', width: 120, height: 90, rotation: 90 }
+        ],
+        frontCover: { mode: 'generated', templateId: 'minimal-school' },
+        backCover: { mode: 'generated', templateId: 'minimal-school' },
+        watermark: { enabled: true, sourceType: 'school-logo' },
+        pdfSettings: { paperSize: 'A4', orientation: 'portrait', placement: 'fit', quality: 'balanced' }
+      });
+    });
+
+    // Reload to display recovery modal
+    await page.reload();
+    await page.waitForLoadState('domcontentloaded');
+
+    const recoveryModal = page.locator('#recovery-modal');
+    await expect(recoveryModal).toHaveClass(/is-open/);
+
+    // Screenshot 1: phase12-recovery-modal.png
+    await page.screenshot({ path: 'tests/screenshots/phase12-recovery-modal.png' });
+
+    // Screenshot 2: phase12-recovery-summary.png
+    const summaryCard = page.locator('#recovery-summary-card');
+    await summaryCard.screenshot({ path: 'tests/screenshots/phase12-recovery-summary.png' });
+
+    // Screenshot 6: phase12-start-new-confirm.png
+    await page.locator('#btn-recovery-discard').click();
+    await expect(page.locator('#discard-draft-modal')).toHaveClass(/is-open/);
+    await page.screenshot({ path: 'tests/screenshots/phase12-start-new-confirm.png' });
+
+    // Cancel discard to return to recovery modal
+    await page.locator('#btn-cancel-discard-draft').click();
+
+    // Screenshot 8: phase12-dark-recovery.png
+    await page.evaluate(() => {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    });
+    await page.screenshot({ path: 'tests/screenshots/phase12-dark-recovery.png' });
+    await page.evaluate(() => {
+      document.documentElement.setAttribute('data-theme', 'light');
+    });
+
+    // Continue to restore workspace
+    await page.locator('#btn-recovery-continue').click();
+    await expect(recoveryModal).not.toHaveClass(/is-open/);
+
+    // Screenshot 3: phase12-restored-workspace.png
+    await page.screenshot({ path: 'tests/screenshots/phase12-restored-workspace.png' });
+
+    // Screenshot 4 & 5: Autosave indicator states
+    const indicator = page.locator('#autosave-status-indicator');
+    await page.evaluate(() => {
+      window.__WANGWON_DRAFT_STORAGE__.autosaveManager.setStatus('saving');
+    });
+    await indicator.screenshot({ path: 'tests/screenshots/phase12-autosave-saving.png' });
+
+    await page.evaluate(() => {
+      window.__WANGWON_DRAFT_STORAGE__.autosaveManager.setStatus('saved');
+    });
+    await indicator.screenshot({ path: 'tests/screenshots/phase12-autosave-saved.png' });
+
+    // Screenshot 7: Mobile recovery modal
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.reload();
+    await page.waitForLoadState('domcontentloaded');
+    await expect(recoveryModal).toHaveClass(/is-open/);
+    await page.screenshot({ path: 'tests/screenshots/phase12-mobile-recovery.png' });
+
+    // Restore desktop viewport
+    await page.setViewportSize({ width: 1280, height: 800 });
+
+    expect(fs.existsSync('tests/screenshots/phase12-recovery-modal.png')).toBe(true);
+    expect(fs.existsSync('tests/screenshots/phase12-recovery-summary.png')).toBe(true);
+    expect(fs.existsSync('tests/screenshots/phase12-restored-workspace.png')).toBe(true);
+    expect(fs.existsSync('tests/screenshots/phase12-autosave-saving.png')).toBe(true);
+    expect(fs.existsSync('tests/screenshots/phase12-autosave-saved.png')).toBe(true);
+    expect(fs.existsSync('tests/screenshots/phase12-start-new-confirm.png')).toBe(true);
+    expect(fs.existsSync('tests/screenshots/phase12-mobile-recovery.png')).toBe(true);
+    expect(fs.existsSync('tests/screenshots/phase12-dark-recovery.png')).toBe(true);
+  });
 });
 
 

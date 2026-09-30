@@ -50,6 +50,12 @@
           <span>ประมวลผลรูปในเครื่อง • ไม่อัปโหลดรูปนักเรียน</span>
         </div>
 
+        <!-- Auto-Save Status Indicator (Phase 12) -->
+        <div class="autosave-badge" id="autosave-status-indicator" role="status" aria-label="สถานะการบันทึกงาน" data-status="idle">
+          <span class="autosave-dot" aria-hidden="true"></span>
+          <span class="autosave-text" id="autosave-status-text">บันทึกอัตโนมัติ</span>
+        </div>
+
         <!-- Header Actions: Theme Toggle, Reset, Help -->
         <button
           type="button"
@@ -909,6 +915,86 @@
           <span id="cover-preview-res">A4 (1240 × 1754 px)</span>
         </div>
         <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">ปิด</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recovery Prompt Modal (Phase 12) -->
+  <div
+    class="modal-backdrop"
+    id="recovery-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-hidden="true"
+    aria-labelledby="recovery-modal-title"
+    aria-describedby="recovery-modal-desc"
+  >
+    <div class="modal-dialog recovery-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title" id="recovery-modal-title">
+          <span aria-hidden="true">📂</span> พบงานที่บันทึกไว้
+        </h3>
+      </div>
+      <div class="modal-body" id="recovery-modal-desc">
+        <p class="recovery-intro">พบ Portfolio ที่ยังทำไม่เสร็จจากครั้งก่อน คุณต้องการทำงานต่อหรือเริ่มใหม่?</p>
+        
+        <div class="recovery-summary-card" id="recovery-summary-card">
+          <div class="recovery-summary-row" id="recovery-row-student">
+            <span class="recovery-label">นักเรียน:</span>
+            <span class="recovery-value" id="recovery-student-name">-</span>
+          </div>
+          <div class="recovery-summary-row" id="recovery-row-grade">
+            <span class="recovery-label">ชั้นเรียน:</span>
+            <span class="recovery-value" id="recovery-student-grade">-</span>
+          </div>
+          <div class="recovery-summary-row" id="recovery-row-images">
+            <span class="recovery-label">รูปผลงาน:</span>
+            <span class="recovery-value" id="recovery-images-count">0 ภาพ</span>
+          </div>
+          <div class="recovery-summary-row" id="recovery-row-saved">
+            <span class="recovery-label">บันทึกล่าสุด:</span>
+            <span class="recovery-value" id="recovery-saved-time">-</span>
+          </div>
+        </div>
+
+        <p class="recovery-privacy-notice">
+          <svg class="icon-inline" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          ร่างงานนี้บันทึกไว้เฉพาะในเบราว์เซอร์ของเครื่องนี้
+        </p>
+      </div>
+      <div class="modal-footer recovery-footer">
+        <button type="button" class="btn btn-secondary" id="btn-recovery-discard">เริ่มใหม่</button>
+        <button type="button" class="btn btn-primary" id="btn-recovery-continue">ทำงานต่อ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Discard Draft Confirmation Modal (Phase 12) -->
+  <div
+    class="modal-backdrop"
+    id="discard-draft-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-hidden="true"
+    aria-labelledby="discard-draft-modal-title"
+    aria-describedby="discard-draft-modal-desc"
+  >
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title" id="discard-draft-modal-title">
+          <span aria-hidden="true">⚠️</span> ลบร่างงานเดิมและเริ่มใหม่?
+        </h3>
+        <button type="button" class="btn-icon" data-dismiss="modal" aria-label="ปิดหน้าต่าง">✕</button>
+      </div>
+      <div class="modal-body" id="discard-draft-modal-desc">
+        <p>คุณต้องการลบร่างงานที่บันทึกไว้ในเบราว์เซอร์ และเริ่มต้นจัดทำแฟ้มสะสมงานใหม่ใช่หรือไม่?</p>
+        <p style="margin-top: 8px; color: var(--color-danger); font-size: var(--font-size-xs);">
+          ข้อมูลที่บันทึกไว้ในเครื่องจะถูกลบและไม่สามารถกู้คืนได้
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="btn-cancel-discard-draft">ยกเลิก</button>
+        <button type="button" class="btn btn-danger" id="btn-confirm-discard-draft">ลบร่างและเริ่มใหม่</button>
       </div>
     </div>
   </div>

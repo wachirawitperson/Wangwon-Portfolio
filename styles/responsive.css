@@ -185,6 +185,11 @@ html, body {
     padding: 3px var(--space-2);
   }
 
+  .autosave-badge {
+    font-size: 0.7rem;
+    padding: 3px var(--space-2);
+  }
+
   .student-form-grid {
     grid-template-columns: 1fr;
   }

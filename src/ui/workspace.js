@@ -18,6 +18,7 @@ import {
 import { showToast } from './notifications.js';
 import { openModal, closeModal } from './modal.js';
 import { icons } from './icons.js';
+import { autosaveManager } from '../core/autosave-manager.js';
 
 export function initWorkspace(workspaceElement) {
   if (!workspaceElement) return;
@@ -70,6 +71,7 @@ export function initWorkspace(workspaceElement) {
 
       // Success feedback for imported files
       if (result.imported.length > 0) {
+        autosaveManager.triggerImmediateSave(projectStore.getState());
         showToast(`เพิ่มรูปภาพเรียบร้อย (${result.imported.length} ภาพ)`, 'success');
       }
 
@@ -320,6 +322,7 @@ export function initWorkspace(workspaceElement) {
       }
 
       setCustomCover(type, file, previewUrl);
+      autosaveManager.triggerImmediateSave(projectStore.getState());
       showToast(`อัปโหลด${type === 'front' ? 'ปกหน้า' : 'ปกหลัง'}เรียบร้อยแล้ว`, 'success');
     } catch (err) {
       console.error('Failed to load custom cover:', err);
@@ -429,6 +432,7 @@ export function initWorkspace(workspaceElement) {
     if (btnReset) {
       btnReset.addEventListener('click', () => {
         resetCoverToGenerated('front');
+        autosaveManager.triggerImmediateSave(projectStore.getState());
         showToast('เปลี่ยนกลับมาใช้ปกหน้าอัตโนมัติแล้ว', 'info');
       });
     }
@@ -522,6 +526,7 @@ export function initWorkspace(workspaceElement) {
     if (btnReset) {
       btnReset.addEventListener('click', () => {
         resetCoverToGenerated('back');
+        autosaveManager.triggerImmediateSave(projectStore.getState());
         showToast('เปลี่ยนกลับมาใช้ปกหลังอัตโนมัติแล้ว', 'info');
       });
     }
@@ -588,6 +593,7 @@ export function initWorkspace(workspaceElement) {
       if (idToDelete) {
         const removed = removeStudentImage(idToDelete);
         if (removed) {
+          autosaveManager.triggerImmediateSave(projectStore.getState());
           showToast('ลบรูปภาพเรียบร้อยแล้ว', 'info');
         }
       }

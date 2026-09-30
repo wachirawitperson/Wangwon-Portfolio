@@ -340,13 +340,14 @@ export function resetCoverToGenerated(type) {
 }
 
 /**
- * Canonical reset function for the entire project state.
+ * Safely revokes all active blob: Object URLs attached to a project state.
+ * @param {object} state
  */
-export function resetPortfolioProject() {
-  const currentState = projectStore.getState();
+export function cleanupProjectObjectUrls(state) {
+  if (!state) return;
 
   // Clean up activity image URLs
-  const currentImages = currentState.images || [];
+  const currentImages = state.images || [];
   currentImages.forEach((img) => {
     if (img.previewUrl && typeof img.previewUrl === 'string' && img.previewUrl.startsWith('blob:')) {
       try {
@@ -358,41 +359,71 @@ export function resetPortfolioProject() {
   });
 
   // Clean up student photo URL
-  if (currentState.studentPhoto?.previewUrl && currentState.studentPhoto.previewUrl.startsWith('blob:')) {
+  if (state.studentPhoto?.previewUrl && state.studentPhoto.previewUrl.startsWith('blob:')) {
     try {
-      URL.revokeObjectURL(currentState.studentPhoto.previewUrl);
+      URL.revokeObjectURL(state.studentPhoto.previewUrl);
     } catch (e) {
       // ignore
     }
   }
 
   // Clean up custom watermark URL
-  if (currentState.watermark?.custom?.previewUrl && currentState.watermark.custom.previewUrl.startsWith('blob:')) {
+  if (state.watermark?.custom?.previewUrl && state.watermark.custom.previewUrl.startsWith('blob:')) {
     try {
-      URL.revokeObjectURL(currentState.watermark.custom.previewUrl);
+      URL.revokeObjectURL(state.watermark.custom.previewUrl);
     } catch (e) {
       // ignore
     }
   }
 
   // Clean up custom front cover URL
-  if (currentState.frontCover?.customPreviewUrl && currentState.frontCover.customPreviewUrl.startsWith('blob:')) {
+  if (state.frontCover?.customPreviewUrl && state.frontCover.customPreviewUrl.startsWith('blob:')) {
     try {
-      URL.revokeObjectURL(currentState.frontCover.customPreviewUrl);
+      URL.revokeObjectURL(state.frontCover.customPreviewUrl);
     } catch (e) {
       // ignore
     }
   }
 
   // Clean up custom back cover URL
-  if (currentState.backCover?.customPreviewUrl && currentState.backCover.customPreviewUrl.startsWith('blob:')) {
+  if (state.backCover?.customPreviewUrl && state.backCover.customPreviewUrl.startsWith('blob:')) {
     try {
-      URL.revokeObjectURL(currentState.backCover.customPreviewUrl);
+      URL.revokeObjectURL(state.backCover.customPreviewUrl);
     } catch (e) {
       // ignore
     }
   }
+}
 
+/**
+ * Hydrates the project store with a restored project state from draft storage.
+ * Automatically cleans up current Object URLs and notifies all subscribers.
+ *
+ * @param {object} restoredState
+ * @returns {object} The hydrated state
+ */
+export function hydrateProjectState(restoredState) {
+  const currentState = projectStore.getState();
+  cleanupProjectObjectUrls(currentState);
+
+  const finalState = {
+    ...restoredState,
+    output: {
+      ...restoredState.output,
+      filename: generatePdfFilename(restoredState.student)
+    }
+  };
+
+  projectStore.reset(finalState);
+  return finalState;
+}
+
+/**
+ * Canonical reset function for the entire project state.
+ */
+export function resetPortfolioProject() {
+  const currentState = projectStore.getState();
+  cleanupProjectObjectUrls(currentState);
   projectStore.reset(createDefaultProjectState());
 }
 

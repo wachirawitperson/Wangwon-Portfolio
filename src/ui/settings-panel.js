@@ -12,6 +12,7 @@ import {
 import { isSupportedImage } from '../core/file-utils.js';
 import { decodeHeicIfNeeded, createPreviewUrl, getImageDimensions } from '../core/image-utils.js';
 import { showToast } from './notifications.js';
+import { autosaveManager } from '../core/autosave-manager.js';
 
 export function initSettingsPanel(panelElement) {
   if (!panelElement) return;
@@ -197,6 +198,7 @@ export function initSettingsPanel(panelElement) {
       }
 
       setCustomWatermark(file, previewUrl, decoded.mimeType, width, height);
+      autosaveManager.triggerImmediateSave(projectStore.getState());
       showToast('อัปโหลดภาพลายน้ำเรียบร้อย', 'success');
     } catch (err) {
       console.error('Watermark upload error:', err);
@@ -227,6 +229,7 @@ export function initSettingsPanel(panelElement) {
   if (btnRemoveWatermark) {
     btnRemoveWatermark.addEventListener('click', () => {
       removeCustomWatermark();
+      autosaveManager.triggerImmediateSave(projectStore.getState());
       showToast('ลบลายน้ำเรียบร้อย', 'info');
     });
   }

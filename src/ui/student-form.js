@@ -4,6 +4,7 @@ import { validateStudentInformation } from '../core/student-utils.js';
 import { isSupportedImage } from '../core/file-utils.js';
 import { decodeHeicIfNeeded, getImageDimensions, createPreviewUrl } from '../core/image-utils.js';
 import { showToast } from './notifications.js';
+import { autosaveManager } from '../core/autosave-manager.js';
 
 let formInstance = null;
 
@@ -146,6 +147,7 @@ export function initStudentForm(formElement) {
         width: dimensions.width,
         height: dimensions.height
       });
+      autosaveManager.triggerImmediateSave(projectStore.getState());
 
       showToast('อัปโหลดรูปนักเรียนเรียบร้อย', 'success');
     } catch (err) {
@@ -175,6 +177,7 @@ export function initStudentForm(formElement) {
   if (btnRemovePhoto) {
     btnRemovePhoto.addEventListener('click', () => {
       clearStudentPhoto();
+      autosaveManager.triggerImmediateSave(projectStore.getState());
       showToast('ลบรูปนักเรียนเรียบร้อย', 'info');
     });
   }
