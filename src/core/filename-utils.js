@@ -38,6 +38,33 @@ export function sanitizeFilename(rawName, fallback = 'portfolio') {
 }
 
 /**
+ * Returns the standardized student base name for file exports.
+ * Format: "[prefix][firstName]_[lastName]" (or "[prefix][firstName]" if no lastName).
+ * Fallback: "นักเรียน"
+ *
+ * @param {object} student - Student state object
+ * @returns {string} Sanitized base name without extension
+ */
+export function getStudentExportBaseName(student = {}) {
+  const prefix = (student?.prefix || '').trim();
+  const firstName = (student?.firstName || '').trim();
+  const lastName = (student?.lastName || '').trim();
+
+  if (!firstName) {
+    return 'นักเรียน';
+  }
+
+  let raw = '';
+  if (lastName) {
+    raw = `${prefix}${firstName}_${lastName}`;
+  } else {
+    raw = `${prefix}${firstName}`;
+  }
+
+  return sanitizeFilename(raw, 'นักเรียน');
+}
+
+/**
  * Generates the portfolio PDF filename based on student information.
  * Example: "ด.ช.สมชาย_ใจดี.pdf"
  *
@@ -45,22 +72,10 @@ export function sanitizeFilename(rawName, fallback = 'portfolio') {
  * @returns {string} Sanitized PDF filename
  */
 export function generatePdfFilename(student = {}) {
-  const prefix = (student.prefix || '').trim();
-  const firstName = (student.firstName || '').trim();
-  const lastName = (student.lastName || '').trim();
-
-  // When student data is incomplete, return safe fallback
-  if (!firstName) {
+  const baseName = getStudentExportBaseName(student);
+  if (baseName === 'นักเรียน' && !(student?.firstName || '').trim()) {
     return DEFAULT_PDF_FALLBACK_FILENAME;
   }
-
-  let baseName = '';
-  if (lastName) {
-    baseName = `${prefix}${firstName}_${lastName}`;
-  } else {
-    baseName = `${prefix}${firstName}`;
-  }
-
   const safe = sanitizeFilename(baseName, 'portfolio-นักเรียน');
 
   // Ensure it doesn't end with double .pdf or missing .pdf
@@ -72,15 +87,25 @@ export function generatePdfFilename(student = {}) {
  * Generates a renamed exported image filename with zero-padded sequence numbering.
  * Example: "ด.ช.สมชาย_ใจดี_01.jpg"
  *
- * @param {object} student - Student state object
- * @param {number} index - 1-based index
- * @param {string} extension - Image file extension (default: 'jpg')
+ * @param {object} params
+ * @param {object} params.student - Student state object
+ * @param {number} params.sequence - 1-based sequence index
+ * @param {string} params.extension - Image file extension (e.g. 'jpg', 'png', 'webp')
  * @returns {string} Sanitized image filename
  */
-export function generateImageExportFilename(student = {}, index = 1, extension = 'jpg') {
-  const pdfName = generatePdfFilename(student).replace(/\.pdf$/i, '');
-  const seq = String(index).padStart(2, '0');
-  const cleanExt = extension.replace(/^\./, '').toLowerCase() || 'jpg';
+export function getExportImageFilename({ student = {}, sequence = 1, extension = 'jpg' } = {}) {
+  const baseName = getStudentExportBaseName(student);
+  const seq = String(sequence).padStart(2, '0');
+  const cleanExt = (extension || 'jpg').replace(/^\./, '').toLowerCase() || 'jpg';
 
-  return `${pdfName}_${seq}.${cleanExt}`;
+  return `${baseName}_${seq}.${cleanExt}`;
 }
+
+/**
+ * Legacy/convenience wrapper matching earlier signature:
+ * generateImageExportFilename(student, index, extension)
+ */
+export function generateImageExportFilename(student = {}, index = 1, extension = 'jpg') {
+  return getExportImageFilename({ student, sequence: index, extension });
+}
+

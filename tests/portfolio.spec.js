@@ -4370,7 +4370,764 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
     await page.screenshot({ path: 'tests/screenshots/phase9-export-progress-ui.png', fullPage: false });
   });
 
+  // =========================================================================
+  // PHASE 10: Filename + Renamed Image Export Engine Tests (Tests 123–140)
+  // =========================================================================
+
+  test('123. Phase 10: getStudentExportBaseName formats Thai names and handles fallbacks correctly', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+
+    const results = await page.evaluate(() => {
+      const { getStudentExportBaseName } = window.__WANGWON_FILENAME_UTILS__;
+      return {
+        standardBoy: getStudentExportBaseName({ prefix: 'ด.ช.', firstName: 'สมชาย', lastName: 'ใจดี' }),
+        standardGirl: getStudentExportBaseName({ prefix: 'ด.หญิง', firstName: 'สมหญิง', lastName: 'ใจงาม' }),
+        mister: getStudentExportBaseName({ prefix: 'นาย', firstName: 'อนันต์', lastName: 'สุขใจ' }),
+        miss: getStudentExportBaseName({ prefix: 'นางสาว', firstName: 'กานดา', lastName: 'มีสุข' }),
+        noLastName: getStudentExportBaseName({ prefix: 'ด.ช.', firstName: 'สมชาย', lastName: '' }),
+        noFirstName: getStudentExportBaseName({ prefix: 'ด.ช.', firstName: '', lastName: 'ใจดี' }),
+        emptyStudent: getStudentExportBaseName({}),
+        nullStudent: getStudentExportBaseName(null),
+        spacesAround: getStudentExportBaseName({ prefix: ' ด.ช. ', firstName: '  สมชาย  ', lastName: '  ใจดี  ' }),
+        unsafeChars: getStudentExportBaseName({ prefix: 'ด.ช.', firstName: 'สม/ชาย*?:"<>|', lastName: 'ใจ\\ดี' }),
+        doubleSpaces: getStudentExportBaseName({ prefix: 'ด.ช.', firstName: 'สม  ชาย', lastName: 'ใจ   ดี' })
+      };
+    });
+
+    expect(results.standardBoy).toBe('ด.ช.สมชาย_ใจดี');
+    expect(results.standardGirl).toBe('ด.หญิงสมหญิง_ใจงาม');
+    expect(results.mister).toBe('นายอนันต์_สุขใจ');
+    expect(results.miss).toBe('นางสาวกานดา_มีสุข');
+    expect(results.noLastName).toBe('ด.ช.สมชาย');
+    expect(results.noFirstName).toBe('นักเรียน');
+    expect(results.emptyStudent).toBe('นักเรียน');
+    expect(results.nullStudent).toBe('นักเรียน');
+    expect(results.spacesAround).toBe('ด.ช.สมชาย_ใจดี');
+    expect(results.unsafeChars).toBe('ด.ช.สมชาย_ใจดี');
+    expect(results.doubleSpaces).toBe('ด.ช.สม_ชาย_ใจ_ดี');
+  });
+
+  test('124. Phase 10: getExportImageFilename generates clean 2-digit zero-padded sequence names', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+
+    const results = await page.evaluate(() => {
+      const { getExportImageFilename } = window.__WANGWON_FILENAME_UTILS__;
+      const student = { prefix: 'ด.ช.', firstName: 'สมชาย', lastName: 'ใจดี' };
+      return {
+        seq1: getExportImageFilename({ student, sequence: 1, extension: 'jpg' }),
+        seq9: getExportImageFilename({ student, sequence: 9, extension: 'jpg' }),
+        seq10: getExportImageFilename({ student, sequence: 10, extension: 'jpg' }),
+        seq99: getExportImageFilename({ student, sequence: 99, extension: 'jpg' }),
+        seq100: getExportImageFilename({ student, sequence: 100, extension: 'jpg' }),
+        dotExt: getExportImageFilename({ student, sequence: 2, extension: '.png' }),
+        upperExt: getExportImageFilename({ student, sequence: 3, extension: 'JPEG' }),
+        fallbackStudent: getExportImageFilename({ student: {}, sequence: 1, extension: 'webp' })
+      };
+    });
+
+    expect(results.seq1).toBe('ด.ช.สมชาย_ใจดี_01.jpg');
+    expect(results.seq9).toBe('ด.ช.สมชาย_ใจดี_09.jpg');
+    expect(results.seq10).toBe('ด.ช.สมชาย_ใจดี_10.jpg');
+    expect(results.seq99).toBe('ด.ช.สมชาย_ใจดี_99.jpg');
+    expect(results.seq100).toBe('ด.ช.สมชาย_ใจดี_100.jpg');
+    expect(results.dotExt).toBe('ด.ช.สมชาย_ใจดี_02.png');
+    expect(results.upperExt).toBe('ด.ช.สมชาย_ใจดี_03.jpeg');
+    expect(results.fallbackStudent).toBe('นักเรียน_01.webp');
+  });
+
+  test('125. Phase 10: Format and MIME resolution maps JPG, PNG, WebP, BMP, and HEIC properly', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+
+    const results = await page.evaluate(() => {
+      const { resolveExportExtensionAndMime } = window.__WANGWON_IMAGE_EXPORTER__;
+      return {
+        jpg: resolveExportExtensionAndMime({ file: { name: 'photo.jpg', type: 'image/jpeg' } }),
+        jpeg: resolveExportExtensionAndMime({ file: { name: 'photo.jpeg', type: 'image/jpeg' } }),
+        png: resolveExportExtensionAndMime({ file: { name: 'graphic.png', type: 'image/png' } }),
+        webp: resolveExportExtensionAndMime({ file: { name: 'image.webp', type: 'image/webp' } }),
+        bmp: resolveExportExtensionAndMime({ file: { name: 'scan.bmp', type: 'image/bmp' } }),
+        heic: resolveExportExtensionAndMime({ file: { name: 'shot.heic', type: 'image/heic' } }),
+        heif: resolveExportExtensionAndMime({ file: { name: 'shot.heif', type: 'image/heif' } }),
+        fallback: resolveExportExtensionAndMime({})
+      };
+    });
+
+    expect(results.jpg).toEqual({ extension: 'jpg', mimeType: 'image/jpeg', isConvertibleFormat: false });
+    expect(results.jpeg).toEqual({ extension: 'jpg', mimeType: 'image/jpeg', isConvertibleFormat: false });
+    expect(results.png).toEqual({ extension: 'png', mimeType: 'image/png', isConvertibleFormat: false });
+    expect(results.webp).toEqual({ extension: 'webp', mimeType: 'image/webp', isConvertibleFormat: false });
+    expect(results.bmp).toEqual({ extension: 'jpg', mimeType: 'image/jpeg', isConvertibleFormat: true });
+    expect(results.heic).toEqual({ extension: 'jpg', mimeType: 'image/jpeg', isConvertibleFormat: true });
+    expect(results.heif).toEqual({ extension: 'jpg', mimeType: 'image/jpeg', isConvertibleFormat: true });
+    expect(results.fallback).toEqual({ extension: 'jpg', mimeType: 'image/jpeg', isConvertibleFormat: false });
+  });
+
+  test('126. Phase 10: Empty images array returns [] without errors', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+
+    const result = await page.evaluate(async () => {
+      const state = window.__WANGWON_STORE__.getState();
+      const emptyState = { ...state, images: [] };
+      return await window.__WANGWON_IMAGE_EXPORTER__.prepareAllActivityImageExports(emptyState);
+    });
+
+    expect(Array.isArray(result)).toBe(true);
+    expect(result.length).toBe(0);
+  });
+
+  test('127. Phase 10: Fast path for unrotated images preserves exact original Blob bytes', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+
+    const result = await page.evaluate(async () => {
+      const store = window.__WANGWON_STORE__;
+      store.setState((s) => ({
+        ...s,
+        student: { prefix: 'ด.ช.', firstName: 'สมชาย', lastName: 'ใจดี' }
+      }));
+
+      // Create a test 100x80 canvas blob with specific byte length
+      const canvas = document.createElement('canvas');
+      canvas.width = 100;
+      canvas.height = 80;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#0284c7';
+      ctx.fillRect(0, 0, 100, 80);
+
+      const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.9));
+      const testFile = new File([blob], 'original_activity.jpg', { type: 'image/jpeg' });
+
+      const imageItem = {
+        id: 'img-test-1',
+        file: testFile,
+        name: testFile.name,
+        mimeType: testFile.type,
+        width: 100,
+        height: 80,
+        rotation: 0
+      };
+
+      const res = await window.__WANGWON_IMAGE_EXPORTER__.exportSingleActivityImage(imageItem, {
+        student: store.getState().student,
+        sequence: 1
+      });
+
+      return {
+        filename: res.filename,
+        sameBlobInstance: res.blob === testFile,
+        size: res.blob.size,
+        origSize: testFile.size,
+        width: res.width,
+        height: res.height,
+        mimeType: res.mimeType,
+        originalFileNameUnchanged: testFile.name
+      };
+    });
+
+    expect(result.filename).toBe('ด.ช.สมชาย_ใจดี_01.jpg');
+    expect(result.sameBlobInstance).toBe(true);
+    expect(result.size).toBe(result.origSize);
+    expect(result.width).toBe(100);
+    expect(result.height).toBe(80);
+    expect(result.mimeType).toBe('image/jpeg');
+    expect(result.originalFileNameUnchanged).toBe('original_activity.jpg');
+  });
+
+  test('128. Phase 10: Rotated images (90, 180, 270 deg) swap or retain dimensions and produce new Blob', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+
+    const result = await page.evaluate(async () => {
+      const student = { prefix: 'ด.ช.', firstName: 'สมชาย', lastName: 'ใจดี' };
+
+      function makeCanvasBlob() {
+        const c = document.createElement('canvas');
+        c.width = 120;
+        c.height = 80;
+        const ctx = c.getContext('2d');
+        ctx.fillStyle = '#f59e0b';
+        ctx.fillRect(0, 0, 120, 80);
+        return new Promise(r => c.toBlob(r, 'image/jpeg', 0.9));
+      }
+
+      const b90 = await makeCanvasBlob();
+      const b180 = await makeCanvasBlob();
+      const b270 = await makeCanvasBlob();
+
+      const f90 = new File([b90], 'act90.jpg', { type: 'image/jpeg' });
+      const f180 = new File([b180], 'act180.jpg', { type: 'image/jpeg' });
+      const f270 = new File([b270], 'act270.jpg', { type: 'image/jpeg' });
+
+      const res90 = await window.__WANGWON_IMAGE_EXPORTER__.exportSingleActivityImage({
+        id: 'i-90', file: f90, rotation: 90, width: 120, height: 80
+      }, { student, sequence: 1 });
+
+      const res180 = await window.__WANGWON_IMAGE_EXPORTER__.exportSingleActivityImage({
+        id: 'i-180', file: f180, rotation: 180, width: 120, height: 80
+      }, { student, sequence: 2 });
+
+      const res270 = await window.__WANGWON_IMAGE_EXPORTER__.exportSingleActivityImage({
+        id: 'i-270', file: f270, rotation: 270, width: 120, height: 80
+      }, { student, sequence: 3 });
+
+      return {
+        r90: {
+          filename: res90.filename,
+          width: res90.width,
+          height: res90.height,
+          sameBlob: res90.blob === f90
+        },
+        r180: {
+          filename: res180.filename,
+          width: res180.width,
+          height: res180.height,
+          sameBlob: res180.blob === f180
+        },
+        r270: {
+          filename: res270.filename,
+          width: res270.width,
+          height: res270.height,
+          sameBlob: res270.blob === f270
+        }
+      };
+    });
+
+    expect(result.r90.filename).toBe('ด.ช.สมชาย_ใจดี_01.jpg');
+    expect(result.r90.width).toBe(80);
+    expect(result.r90.height).toBe(120);
+    expect(result.r90.sameBlob).toBe(false);
+
+    expect(result.r180.filename).toBe('ด.ช.สมชาย_ใจดี_02.jpg');
+    expect(result.r180.width).toBe(120);
+    expect(result.r180.height).toBe(80);
+    expect(result.r180.sameBlob).toBe(false);
+
+    expect(result.r270.filename).toBe('ด.ช.สมชาย_ใจดี_03.jpg');
+    expect(result.r270.width).toBe(80);
+    expect(result.r270.height).toBe(120);
+    expect(result.r270.sameBlob).toBe(false);
+  });
+
+  test('129. Phase 10: PNG transparency is preserved when rotated or exported', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+
+    const result = await page.evaluate(async () => {
+      const student = { prefix: 'ด.ช.', firstName: 'สมชาย', lastName: 'ใจดี' };
+
+      const canvas = document.createElement('canvas');
+      canvas.width = 60;
+      canvas.height = 40;
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, 60, 40);
+      ctx.fillStyle = 'rgba(255, 0, 0, 0.8)';
+      ctx.fillRect(10, 10, 20, 20);
+
+      const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+      const file = new File([blob], 'logo.png', { type: 'image/png' });
+
+      const res = await window.__WANGWON_IMAGE_EXPORTER__.exportSingleActivityImage({
+        id: 'png-rot', file, rotation: 90, width: 60, height: 40
+      }, { student, sequence: 1 });
+
+      return {
+        filename: res.filename,
+        mimeType: res.mimeType,
+        width: res.width,
+        height: res.height,
+        isPngType: res.blob.type === 'image/png'
+      };
+    });
+
+    expect(result.filename).toBe('ด.ช.สมชาย_ใจดี_01.png');
+    expect(result.mimeType).toBe('image/png');
+    expect(result.width).toBe(40);
+    expect(result.height).toBe(60);
+    expect(result.isPngType).toBe(true);
+  });
+
+  test('130. Phase 10: BMP is converted to standard JPEG on export', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+
+    const result = await page.evaluate(async () => {
+      const student = { prefix: 'ด.ช.', firstName: 'สมชาย', lastName: 'ใจดี' };
+
+      const canvas = document.createElement('canvas');
+      canvas.width = 50;
+      canvas.height = 50;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#10b981';
+      ctx.fillRect(0, 0, 50, 50);
+
+      const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+      const bmpFile = new File([blob], 'drawing.bmp', { type: 'image/bmp' });
+
+      const res = await window.__WANGWON_IMAGE_EXPORTER__.exportSingleActivityImage({
+        id: 'bmp-test', file: bmpFile, rotation: 0, width: 50, height: 50
+      }, { student, sequence: 1 });
+
+      return {
+        filename: res.filename,
+        mimeType: res.mimeType,
+        blobType: res.blob.type,
+        width: res.width,
+        height: res.height
+      };
+    });
+
+    expect(result.filename).toBe('ด.ช.สมชาย_ใจดี_01.jpg');
+    expect(result.mimeType).toBe('image/jpeg');
+    expect(result.blobType).toBe('image/jpeg');
+    expect(result.width).toBe(50);
+    expect(result.height).toBe(50);
+  });
+
+  test('131. Phase 10: Exclusion of student photo, front cover, and back cover from export', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+
+    const result = await page.evaluate(async () => {
+      const store = window.__WANGWON_STORE__;
+
+      const c = document.createElement('canvas');
+      c.width = 100;
+      c.height = 100;
+      const blob = await new Promise(r => c.toBlob(r, 'image/jpeg'));
+      const profilePhoto = { file: new File([blob], 'student_headshot.jpg', { type: 'image/jpeg' }) };
+
+      const act1 = { id: 'act-1', file: new File([blob], 'act1.jpg', { type: 'image/jpeg' }), rotation: 0, width: 100, height: 100 };
+      const act2 = { id: 'act-2', file: new File([blob], 'act2.jpg', { type: 'image/jpeg' }), rotation: 0, width: 100, height: 100 };
+
+      const complexState = {
+        ...store.getState(),
+        student: { prefix: 'ด.ช.', firstName: 'สมชาย', lastName: 'ใจดี' },
+        studentPhoto: profilePhoto,
+        frontCover: { mode: 'custom', customFile: new File([blob], 'front.jpg', { type: 'image/jpeg' }) },
+        backCover: { mode: 'custom', customFile: new File([blob], 'back.jpg', { type: 'image/jpeg' }) },
+        images: [act1, act2]
+      };
+
+      const exports = await window.__WANGWON_IMAGE_EXPORTER__.prepareAllActivityImageExports(complexState);
+
+      return {
+        count: exports.length,
+        filenames: exports.map(e => e.filename),
+        ids: exports.map(e => e.imageId)
+      };
+    });
+
+    expect(result.count).toBe(2);
+    expect(result.filenames).toEqual(['ด.ช.สมชาย_ใจดี_01.jpg', 'ด.ช.สมชาย_ใจดี_02.jpg']);
+    expect(result.ids).toEqual(['act-1', 'act-2']);
+  });
+
+  test('132. Phase 10: Sequence numbering reflects current projectStore.images order and reordering', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+
+    const result = await page.evaluate(async () => {
+      const student = { prefix: 'ด.ช.', firstName: 'สมชาย', lastName: 'ใจดี' };
+      const c = document.createElement('canvas');
+      c.width = 50; c.height = 50;
+      const blob = await new Promise(r => c.toBlob(r, 'image/jpeg'));
+
+      const imgA = { id: 'A', file: new File([blob], 'A.jpg', { type: 'image/jpeg' }), rotation: 0, width: 50, height: 50 };
+      const imgB = { id: 'B', file: new File([blob], 'B.jpg', { type: 'image/jpeg' }), rotation: 0, width: 50, height: 50 };
+      const imgC = { id: 'C', file: new File([blob], 'C.jpg', { type: 'image/jpeg' }), rotation: 0, width: 50, height: 50 };
+
+      const exports1 = await window.__WANGWON_IMAGE_EXPORTER__.prepareAllActivityImageExports({
+        student,
+        images: [imgA, imgB, imgC]
+      });
+
+      const exports2 = await window.__WANGWON_IMAGE_EXPORTER__.prepareAllActivityImageExports({
+        student,
+        images: [imgC, imgA, imgB]
+      });
+
+      const exports3 = await window.__WANGWON_IMAGE_EXPORTER__.prepareAllActivityImageExports({
+        student,
+        images: [imgC, imgA]
+      });
+
+      const imgC_dup = { id: 'C_dup', file: new File([blob], 'C_dup.jpg', { type: 'image/jpeg' }), rotation: 0, width: 50, height: 50 };
+      const exports4 = await window.__WANGWON_IMAGE_EXPORTER__.prepareAllActivityImageExports({
+        student,
+        images: [imgC, imgC_dup, imgA]
+      });
+
+      return {
+        initial: exports1.map(e => ({ id: e.imageId, name: e.filename, seq: e.sequence })),
+        reordered: exports2.map(e => ({ id: e.imageId, name: e.filename, seq: e.sequence })),
+        deleted: exports3.map(e => ({ id: e.imageId, name: e.filename, seq: e.sequence })),
+        duplicated: exports4.map(e => ({ id: e.imageId, name: e.filename, seq: e.sequence }))
+      };
+    });
+
+    expect(result.initial).toEqual([
+      { id: 'A', name: 'ด.ช.สมชาย_ใจดี_01.jpg', seq: 1 },
+      { id: 'B', name: 'ด.ช.สมชาย_ใจดี_02.jpg', seq: 2 },
+      { id: 'C', name: 'ด.ช.สมชาย_ใจดี_03.jpg', seq: 3 }
+    ]);
+
+    expect(result.reordered).toEqual([
+      { id: 'C', name: 'ด.ช.สมชาย_ใจดี_01.jpg', seq: 1 },
+      { id: 'A', name: 'ด.ช.สมชาย_ใจดี_02.jpg', seq: 2 },
+      { id: 'B', name: 'ด.ช.สมชาย_ใจดี_03.jpg', seq: 3 }
+    ]);
+
+    expect(result.deleted).toEqual([
+      { id: 'C', name: 'ด.ช.สมชาย_ใจดี_01.jpg', seq: 1 },
+      { id: 'A', name: 'ด.ช.สมชาย_ใจดี_02.jpg', seq: 2 }
+    ]);
+
+    expect(result.duplicated).toEqual([
+      { id: 'C', name: 'ด.ช.สมชาย_ใจดี_01.jpg', seq: 1 },
+      { id: 'C_dup', name: 'ด.ช.สมชาย_ใจดี_02.jpg', seq: 2 },
+      { id: 'A', name: 'ด.ช.สมชาย_ใจดี_03.jpg', seq: 3 }
+    ]);
+  });
+
+  test('133. Phase 10: Zero mutation of source File.name, size, and store image objects', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+
+    const result = await page.evaluate(async () => {
+      const student = { prefix: 'ด.ช.', firstName: 'สมชาย', lastName: 'ใจดี' };
+      const c = document.createElement('canvas');
+      c.width = 60; c.height = 40;
+      const blob = await new Promise(r => c.toBlob(r, 'image/jpeg'));
+      const originalFile = new File([blob], 'my_original_unmutated_name.jpg', { type: 'image/jpeg' });
+
+      const imageItem = {
+        id: 'fixed-id',
+        file: originalFile,
+        name: 'my_original_unmutated_name.jpg',
+        rotation: 90,
+        width: 60,
+        height: 40
+      };
+
+      const originalObjectFreeze = JSON.stringify(imageItem);
+      const exported = await window.__WANGWON_IMAGE_EXPORTER__.exportSingleActivityImage(imageItem, { student, sequence: 1 });
+
+      return {
+        exportedName: exported.filename,
+        originalFileObjName: originalFile.name,
+        originalItemName: imageItem.name,
+        originalItemRotation: imageItem.rotation,
+        itemUnchanged: JSON.stringify(imageItem) === originalObjectFreeze
+      };
+    });
+
+    expect(result.exportedName).toBe('ด.ช.สมชาย_ใจดี_01.jpg');
+    expect(result.originalFileObjName).toBe('my_original_unmutated_name.jpg');
+    expect(result.originalItemName).toBe('my_original_unmutated_name.jpg');
+    expect(result.originalItemRotation).toBe(90);
+    expect(result.itemUnchanged).toBe(true);
+  });
+
+  test('134. Phase 10: Isolation - Exported image copies do NOT have watermarks baked in', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+
+    const result = await page.evaluate(async () => {
+      const store = window.__WANGWON_STORE__;
+      store.setState(s => ({
+        ...s,
+        watermark: {
+          enabled: true,
+          sourceType: 'school-logo',
+          opacity: 0.8,
+          scale: 0.3,
+          position: 'center',
+          applyTo: 'all-pages'
+        }
+      }));
+
+      const canvas = document.createElement('canvas');
+      canvas.width = 100;
+      canvas.height = 100;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#0284c7';
+      ctx.fillRect(0, 0, 100, 100);
+
+      const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg'));
+      const file = new File([blob], 'test_isolated.jpg', { type: 'image/jpeg' });
+
+      const exported = await window.__WANGWON_IMAGE_EXPORTER__.exportSingleActivityImage(
+        { id: 'iso-1', file, rotation: 180, width: 100, height: 100 },
+        { student: { prefix: 'ด.ช.', firstName: 'สมชาย', lastName: 'ใจดี' }, sequence: 1 }
+      );
+
+      const expImg = new Image();
+      const url = URL.createObjectURL(exported.blob);
+      await new Promise(r => { expImg.onload = r; expImg.src = url; });
+
+      const checkCanvas = document.createElement('canvas');
+      checkCanvas.width = 100;
+      checkCanvas.height = 100;
+      const checkCtx = checkCanvas.getContext('2d');
+      checkCtx.drawImage(expImg, 0, 0);
+      URL.revokeObjectURL(url);
+
+      const pixel = checkCtx.getImageData(50, 50, 1, 1).data;
+      return {
+        r: pixel[0],
+        g: pixel[1],
+        b: pixel[2],
+        isBlueRange: pixel[2] > 180 && pixel[0] < 20
+      };
+    });
+
+    expect(result.isBlueRange).toBe(true);
+  });
+
+  test('135. Phase 10: Friendly error handling without exposing local filesystem paths', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+
+    const result = await page.evaluate(async () => {
+      const student = { prefix: 'ด.ช.', firstName: 'สมชาย', lastName: 'ใจดี' };
+      try {
+        await window.__WANGWON_IMAGE_EXPORTER__.exportSingleActivityImage(
+          { id: 'corrupt-1', file: null, rotation: 0 },
+          { student, sequence: 4 }
+        );
+        return { caught: false };
+      } catch (err) {
+        return {
+          caught: true,
+          message: err.message,
+          hasLocalPath: /([A-Z]:\\|\/Users\/|\/home\/)/i.test(err.message)
+        };
+      }
+    });
+
+    expect(result.caught).toBe(true);
+    expect(result.message).toContain('ไม่สามารถเตรียมรูปที่ 4');
+    expect(result.hasLocalPath).toBe(false);
+  });
+
+  test('136. Phase 10: onProgress callback fires sequentially with accurate percentages', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+
+    const progressReports = await page.evaluate(async () => {
+      const student = { prefix: 'ด.ช.', firstName: 'สมชาย', lastName: 'ใจดี' };
+      const c = document.createElement('canvas');
+      c.width = 40; c.height = 40;
+      const b = await new Promise(r => c.toBlob(r, 'image/jpeg'));
+
+      const images = [1, 2, 3].map(i => ({
+        id: `img-${i}`,
+        file: new File([b], `photo${i}.jpg`, { type: 'image/jpeg' }),
+        rotation: 0,
+        width: 40,
+        height: 40
+      }));
+
+      const reports = [];
+      await window.__WANGWON_IMAGE_EXPORTER__.prepareAllActivityImageExports(
+        { student, images },
+        {
+          onProgress: (p) => {
+            reports.push({ ...p });
+          }
+        }
+      );
+      return reports;
+    });
+
+    expect(progressReports.length).toBeGreaterThanOrEqual(3);
+    const finalReport = progressReports[progressReports.length - 1];
+    expect(finalReport.current).toBe(3);
+    expect(finalReport.total).toBe(3);
+    expect(finalReport.percentage).toBe(100);
+    expect(finalReport.filename).toBe('ด.ช.สมชาย_ใจดี_03.jpg');
+  });
+
+  test('137. Phase 10: Performance & memory - 25 synthetic images export cleanly without memory leaks', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+
+    const result = await page.evaluate(async () => {
+      const student = { prefix: 'ด.ช.', firstName: 'สมชาย', lastName: 'ใจดี' };
+      const c = document.createElement('canvas');
+      c.width = 80; c.height = 60;
+      const b = await new Promise(r => c.toBlob(r, 'image/jpeg'));
+
+      const images = [];
+      for (let i = 1; i <= 25; i++) {
+        images.push({
+          id: `img-${i}`,
+          file: new File([b], `sample_${i}.jpg`, { type: 'image/jpeg' }),
+          rotation: (i % 4) * 90,
+          width: 80,
+          height: 60
+        });
+      }
+
+      const t0 = performance.now();
+      const exports = await window.__WANGWON_IMAGE_EXPORTER__.prepareAllActivityImageExports({
+        student,
+        images
+      });
+      const durationMs = performance.now() - t0;
+
+      return {
+        count: exports.length,
+        firstFilename: exports[0].filename,
+        lastFilename: exports[24].filename,
+        durationMs
+      };
+    });
+
+    expect(result.count).toBe(25);
+    expect(result.firstFilename).toBe('ด.ช.สมชาย_ใจดี_01.jpg');
+    expect(result.lastFilename).toBe('ด.ช.สมชาย_ใจดี_25.jpg');
+    expect(result.durationMs).toBeLessThan(10000);
+  });
+
+  test('138. Phase 10: Save 5 required synthetic QA image export artifacts to tests/artifacts/', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+
+    // 1. Original JPG (0 deg)
+    const base64Jpg = await page.evaluate(async () => {
+      const student = { prefix: 'ด.ช.', firstName: 'สมชาย', lastName: 'ใจดี' };
+      const c = document.createElement('canvas');
+      c.width = 160; c.height = 120;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#0284c7';
+      ctx.fillRect(0, 0, 160, 120);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '16px sans-serif';
+      ctx.fillText('Original JPG 0°', 20, 60);
+
+      const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.92));
+      const res = await window.__WANGWON_IMAGE_EXPORTER__.exportSingleActivityImage({
+        id: 'orig', file: new File([blob], 'raw.jpg', { type: 'image/jpeg' }), rotation: 0, width: 160, height: 120
+      }, { student, sequence: 1 });
+
+      const buf = await res.blob.arrayBuffer();
+      let bin = '';
+      const b = new Uint8Array(buf);
+      for (let i = 0; i < b.length; i++) bin += String.fromCharCode(b[i]);
+      return btoa(bin);
+    });
+    fs.writeFileSync('tests/artifacts/phase10-original-jpg.jpg', Buffer.from(base64Jpg, 'base64'));
+
+    // 2. Rotated 90 deg JPG
+    const base64Rot90 = await page.evaluate(async () => {
+      const student = { prefix: 'ด.ช.', firstName: 'สมชาย', lastName: 'ใจดี' };
+      const c = document.createElement('canvas');
+      c.width = 160; c.height = 120;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#f59e0b';
+      ctx.fillRect(0, 0, 160, 120);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '16px sans-serif';
+      ctx.fillText('Rotated 90°', 20, 60);
+
+      const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.92));
+      const res = await window.__WANGWON_IMAGE_EXPORTER__.exportSingleActivityImage({
+        id: 'rot90', file: new File([blob], 'raw.jpg', { type: 'image/jpeg' }), rotation: 90, width: 160, height: 120
+      }, { student, sequence: 2 });
+
+      const buf = await res.blob.arrayBuffer();
+      let bin = '';
+      const b = new Uint8Array(buf);
+      for (let i = 0; i < b.length; i++) bin += String.fromCharCode(b[i]);
+      return btoa(bin);
+    });
+    fs.writeFileSync('tests/artifacts/phase10-rotated-90.jpg', Buffer.from(base64Rot90, 'base64'));
+
+    // 3. Rotated 180 deg JPG
+    const base64Rot180 = await page.evaluate(async () => {
+      const student = { prefix: 'ด.ช.', firstName: 'สมชาย', lastName: 'ใจดี' };
+      const c = document.createElement('canvas');
+      c.width = 160; c.height = 120;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#10b981';
+      ctx.fillRect(0, 0, 160, 120);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '16px sans-serif';
+      ctx.fillText('Rotated 180°', 20, 60);
+
+      const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.92));
+      const res = await window.__WANGWON_IMAGE_EXPORTER__.exportSingleActivityImage({
+        id: 'rot180', file: new File([blob], 'raw.jpg', { type: 'image/jpeg' }), rotation: 180, width: 160, height: 120
+      }, { student, sequence: 3 });
+
+      const buf = await res.blob.arrayBuffer();
+      let bin = '';
+      const b = new Uint8Array(buf);
+      for (let i = 0; i < b.length; i++) bin += String.fromCharCode(b[i]);
+      return btoa(bin);
+    });
+    fs.writeFileSync('tests/artifacts/phase10-rotated-180.jpg', Buffer.from(base64Rot180, 'base64'));
+
+    // 4. Transparent PNG
+    const base64Png = await page.evaluate(async () => {
+      const student = { prefix: 'ด.ช.', firstName: 'สมชาย', lastName: 'ใจดี' };
+      const c = document.createElement('canvas');
+      c.width = 120; c.height = 120;
+      const ctx = c.getContext('2d');
+      ctx.clearRect(0, 0, 120, 120);
+      ctx.fillStyle = '#ef4444';
+      ctx.beginPath();
+      ctx.arc(60, 60, 45, 0, Math.PI * 2);
+      ctx.fill();
+
+      const blob = await new Promise(r => c.toBlob(r, 'image/png'));
+      const res = await window.__WANGWON_IMAGE_EXPORTER__.exportSingleActivityImage({
+        id: 'png-trans', file: new File([blob], 'circle.png', { type: 'image/png' }), rotation: 0, width: 120, height: 120
+      }, { student, sequence: 4 });
+
+      const buf = await res.blob.arrayBuffer();
+      let bin = '';
+      const b = new Uint8Array(buf);
+      for (let i = 0; i < b.length; i++) bin += String.fromCharCode(b[i]);
+      return btoa(bin);
+    });
+    fs.writeFileSync('tests/artifacts/phase10-transparent.png', Buffer.from(base64Png, 'base64'));
+
+    // 5. BMP converted to JPG
+    const base64BmpConv = await page.evaluate(async () => {
+      const student = { prefix: 'ด.ช.', firstName: 'สมชาย', lastName: 'ใจดี' };
+      const c = document.createElement('canvas');
+      c.width = 100; c.height = 100;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#8b5cf6';
+      ctx.fillRect(0, 0, 100, 100);
+
+      const blob = await new Promise(r => c.toBlob(r, 'image/png'));
+      const res = await window.__WANGWON_IMAGE_EXPORTER__.exportSingleActivityImage({
+        id: 'bmp-conv', file: new File([blob], 'sample.bmp', { type: 'image/bmp' }), rotation: 0, width: 100, height: 100
+      }, { student, sequence: 5 });
+
+      const buf = await res.blob.arrayBuffer();
+      let bin = '';
+      const b = new Uint8Array(buf);
+      for (let i = 0; i < b.length; i++) bin += String.fromCharCode(b[i]);
+      return btoa(bin);
+    });
+    fs.writeFileSync('tests/artifacts/phase10-bmp-converted.jpg', Buffer.from(base64BmpConv, 'base64'));
+
+    expect(fs.existsSync('tests/artifacts/phase10-original-jpg.jpg')).toBe(true);
+    expect(fs.existsSync('tests/artifacts/phase10-rotated-90.jpg')).toBe(true);
+    expect(fs.existsSync('tests/artifacts/phase10-rotated-180.jpg')).toBe(true);
+    expect(fs.existsSync('tests/artifacts/phase10-transparent.png')).toBe(true);
+    expect(fs.existsSync('tests/artifacts/phase10-bmp-converted.jpg')).toBe(true);
+  });
 });
+
 
 
 

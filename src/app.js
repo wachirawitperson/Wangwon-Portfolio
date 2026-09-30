@@ -25,7 +25,12 @@ import {
   getDefaultAcademicYear,
   normalizeStudentData
 } from './core/student-utils.js';
-import { generatePdfFilename, sanitizeFilename } from './core/filename-utils.js';
+import {
+  generatePdfFilename,
+  sanitizeFilename,
+  getStudentExportBaseName,
+  getExportImageFilename
+} from './core/filename-utils.js';
 import {
   createPreviewUrl,
   revokePreviewUrl,
@@ -104,7 +109,9 @@ document.addEventListener('DOMContentLoaded', () => {
   window.__WANGWON_TOAST__ = { showToast };
   window.__WANGWON_FILENAME_UTILS__ = {
     generatePdfFilename,
-    sanitizeFilename
+    sanitizeFilename,
+    getStudentExportBaseName,
+    getExportImageFilename
   };
   window.__WANGWON_STUDENT_UTILS__ = {
     validateStudentInformation,
@@ -189,5 +196,9 @@ document.addEventListener('DOMContentLoaded', () => {
       ...pdfGen,
       ...pageRenderer
     };
+  });
+
+  import('./portfolio/image-exporter.js').then((imgExp) => {
+    window.__WANGWON_IMAGE_EXPORTER__ = imgExp;
   });
 });
