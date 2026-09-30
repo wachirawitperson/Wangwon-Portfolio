@@ -1081,13 +1081,11 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
     await expect(headerLogo).toHaveAttribute('src', /ban-wangwon-logo\.png/);
     await expect(headerLogo).toHaveAttribute('alt', /โรงเรียนบ้านวังวน/);
 
-    const frontCoverLogo = page.locator('#front-cover-logo');
-    await expect(frontCoverLogo).toBeVisible();
-    await expect(frontCoverLogo).toHaveAttribute('src', /ban-wangwon-logo\.png/);
+    const frontCoverImg = page.locator('#front-cover-rendered-img');
+    await expect(frontCoverImg).toBeVisible();
 
-    const backCoverLogo = page.locator('#back-cover-logo');
-    await expect(backCoverLogo).toBeVisible();
-    await expect(backCoverLogo).toHaveAttribute('src', /ban-wangwon-logo\.png/);
+    const backCoverImg = page.locator('#back-cover-rendered-img');
+    await expect(backCoverImg).toBeVisible();
   });
 
   test('43. Student photo management: Optional, isolated from activity images, 4:5 preview, replace and remove', async ({ page }) => {
@@ -1917,22 +1915,21 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
     await page.fill('#student-number', '4');
     await expect(page.locator('#student-number')).toHaveValue('4');
 
-    // 5. Front cover placeholder without student photo shows clean portrait placeholder
+    // 5. Front cover shows rendered canvas preview image and actions
     const frontCover = page.locator('#front-cover-card');
-    await expect(frontCover).toContainText('PORTFOLIO');
-    await expect(frontCover).toContainText('แฟ้มสะสมผลงานนักเรียน');
-    await expect(frontCover.locator('#front-cover-logo')).toBeVisible();
-    await expect(frontCover.locator('.cover-student-photo-placeholder')).toBeVisible();
+    await expect(frontCover.locator('#front-cover-rendered-img')).toBeVisible();
+    await expect(frontCover.locator('.btn-view-cover-modal')).toBeVisible();
+    await expect(frontCover.locator('.btn-upload-cover')).toBeVisible();
+    await expect(frontCover.locator('.cover-template-badge')).toHaveText('Minimal School');
 
-    // 6. Back cover placeholder shows verified branding & decorative school-brand graphic
+    // 6. Back cover shows rendered canvas preview image and actions
     const backCover = page.locator('#back-cover-card');
-    await expect(backCover.locator('#back-cover-logo')).toBeVisible();
-    await expect(backCover).toContainText('โรงเรียนบ้านวังวน');
-    await expect(backCover.locator('.back-cover-accent-line')).toBeVisible();
-    await expect(backCover).not.toContainText('เรียนดี มีวินัย');
-    await expect(backCover).not.toContainText('สำนักงานเขตพื้นที่การศึกษา');
+    await expect(backCover.locator('#back-cover-rendered-img')).toBeVisible();
+    await expect(backCover.locator('.btn-view-cover-modal')).toBeVisible();
+    await expect(backCover.locator('.btn-upload-cover')).toBeVisible();
+    await expect(backCover.locator('.cover-template-badge')).toHaveText('Minimal School');
 
-    // 7. Student photo upload displays photo in student card AND front cover placeholder
+    // 7. Student photo upload displays photo in student card AND updates front cover canvas preview
     await page.evaluate(async () => {
       const canvas = document.createElement('canvas');
       canvas.width = 400;
@@ -1950,8 +1947,7 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
     });
 
     await expect(page.locator('#student-photo-preview-img')).toBeVisible();
-    await expect(frontCover.locator('.cover-student-photo-box img')).toBeVisible();
-    await expect(frontCover.locator('.cover-student-photo-placeholder')).toHaveCount(0);
+    await expect(frontCover.locator('#front-cover-rendered-img')).toBeVisible();
 
     // 8. Settings Sidebar hierarchy: Quality segmented control & values
     await expect(page.locator('[data-setting="quality"][data-value="balanced"]')).toHaveClass(/is-active/);
@@ -2099,6 +2095,471 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
     // 11. ui-polish-mobile.png (Mobile 390px layout)
     await page.setViewportSize({ width: 390, height: 844 });
     await page.screenshot({ path: 'tests/screenshots/ui-polish-mobile.png', fullPage: false });
+  });
+
+  // =========================================================================
+  // PHASE 6: Cover Template Generator Tests (Tests 64 - 75)
+  // =========================================================================
+
+  test('64. Phase 6: All 3 Cover Templates exist with stable IDs and default is minimal-school', async ({ page }) => {
+    await page.goto('/');
+
+    const templates = await page.evaluate(() => {
+      return window.__WANGWON_COVER_MANAGER__.COVER_TEMPLATES;
+    });
+
+    expect(templates.length).toBe(3);
+    expect(templates.map((t) => t.id)).toEqual(['minimal-school', 'colorful-portfolio', 'modern-academic']);
+
+    const state = await page.evaluate(() => window.__WANGWON_STORE__.getState());
+    expect(state.frontCover.templateId).toBe('minimal-school');
+    expect(state.backCover.templateId).toBe('minimal-school');
+    expect(state.frontCover.mode).toBe('generated');
+    expect(state.backCover.mode).toBe('generated');
+
+    // UI shows 3 Bento cards in section 2
+    const bentoCards = page.locator('.template-card');
+    await expect(bentoCards).toHaveCount(3);
+    await expect(page.locator('.template-card[data-template-id="minimal-school"]')).toHaveClass(/is-active/);
+    await expect(page.locator('.template-card[data-template-id="minimal-school"]')).toHaveAttribute('aria-checked', 'true');
+  });
+
+  test('65. Phase 6: Switching template via Bento cards updates store and rerenders both covers', async ({ page }) => {
+    await page.goto('/');
+
+    // Select colorful-portfolio
+    await page.click('.template-card[data-template-id="colorful-portfolio"]');
+    let state = await page.evaluate(() => window.__WANGWON_STORE__.getState());
+    expect(state.frontCover.templateId).toBe('colorful-portfolio');
+    expect(state.backCover.templateId).toBe('colorful-portfolio');
+
+    await expect(page.locator('.template-card[data-template-id="colorful-portfolio"]')).toHaveClass(/is-active/);
+    await expect(page.locator('#front-cover-card .cover-template-badge')).toHaveText('Colorful Portfolio');
+    await expect(page.locator('#back-cover-card .cover-template-badge')).toHaveText('Colorful Portfolio');
+
+    // Select modern-academic
+    await page.click('.template-card[data-template-id="modern-academic"]');
+    state = await page.evaluate(() => window.__WANGWON_STORE__.getState());
+    expect(state.frontCover.templateId).toBe('modern-academic');
+    expect(state.backCover.templateId).toBe('modern-academic');
+
+    await expect(page.locator('.template-card[data-template-id="modern-academic"]')).toHaveClass(/is-active/);
+    await expect(page.locator('#front-cover-card .cover-template-badge')).toHaveText('Modern Academic');
+    await expect(page.locator('#back-cover-card .cover-template-badge')).toHaveText('Modern Academic');
+  });
+
+  test('66. Phase 6: Template selector keyboard navigation (ArrowLeft, ArrowRight, Space, Enter)', async ({ page }) => {
+    await page.goto('/');
+
+    const firstCard = page.locator('.template-card[data-template-id="minimal-school"]');
+    await firstCard.focus();
+
+    // ArrowRight -> selects colorful-portfolio
+    await page.keyboard.press('ArrowRight');
+    let state = await page.evaluate(() => window.__WANGWON_STORE__.getState());
+    expect(state.frontCover.templateId).toBe('colorful-portfolio');
+
+    // ArrowRight -> selects modern-academic
+    await page.keyboard.press('ArrowRight');
+    state = await page.evaluate(() => window.__WANGWON_STORE__.getState());
+    expect(state.frontCover.templateId).toBe('modern-academic');
+
+    // ArrowLeft -> selects colorful-portfolio
+    await page.keyboard.press('ArrowLeft');
+    state = await page.evaluate(() => window.__WANGWON_STORE__.getState());
+    expect(state.frontCover.templateId).toBe('colorful-portfolio');
+  });
+
+  test('67. Phase 6: Student information reactively updates Canvas cover preview', async ({ page }) => {
+    await page.goto('/');
+
+    await page.fill('#student-firstname', 'สมหวัง');
+    await page.fill('#student-lastname', 'ตั้งใจเรียน');
+    await page.selectOption('#student-grade', 'ประถมศึกษาปีที่ 3');
+    await page.fill('#student-number', '18');
+    await page.fill('#student-year', '2568');
+
+    // Wait for debounce and render
+    await page.waitForTimeout(300);
+
+    const frontImgSrc = await page.locator('#front-cover-rendered-img').getAttribute('src');
+    expect(frontImgSrc).toContain('data:image/png;base64');
+
+    const state = await page.evaluate(() => window.__WANGWON_STORE__.getState());
+    expect(state.student.firstName).toBe('สมหวัง');
+    expect(state.student.lastName).toBe('ตั้งใจเรียน');
+    expect(state.student.grade).toBe('ประถมศึกษาปีที่ 3');
+    expect(state.student.studentNumber).toBe('18');
+    expect(state.student.academicYear).toBe('2568');
+  });
+
+  test('68. Phase 6: Long Thai student name scales font without crashing or throwing', async ({ page }) => {
+    await page.goto('/');
+
+    const longFirst = 'กฤษฎิ์ชานนท์พัฒนเดชากุลธร';
+    const longLast = 'อภิมหาศิริรุ่งเรืองไพศาลเลิศสถิตภักดี';
+    await page.fill('#student-firstname', longFirst);
+    await page.fill('#student-lastname', longLast);
+
+    await page.waitForTimeout(300);
+
+    // Front cover rendered successfully without throwing error
+    const frontImg = page.locator('#front-cover-rendered-img');
+    await expect(frontImg).toBeVisible();
+    const imgSrc = await frontImg.getAttribute('src');
+    expect(imgSrc).toContain('data:image/png;base64');
+  });
+
+  test('69. Phase 6: Student photo automatic integration & neutral silhouette fallback', async ({ page }) => {
+    await page.goto('/');
+
+    // Initially no photo: silhouette fallback rendered in canvas
+    let frontImg = page.locator('#front-cover-rendered-img');
+    await expect(frontImg).toBeVisible();
+
+    // Upload student photo
+    await page.evaluate(async () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 400;
+      canvas.height = 500;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#3b82f6';
+      ctx.fillRect(0, 0, 400, 500);
+      const blob = await new Promise((r) => canvas.toBlob(r, 'image/jpeg'));
+      const file = new File([blob], 'avatar.jpg', { type: 'image/jpeg', lastModified: 1000 });
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      const input = document.querySelector('#student-photo-input');
+      input.files = dt.files;
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+
+    await expect(page.locator('#student-photo-preview-img')).toBeVisible();
+    await page.waitForTimeout(300);
+    await expect(frontImg).toBeVisible();
+
+    // Remove photo: restores silhouette fallback
+    await page.click('#btn-remove-student-photo');
+    await expect(page.locator('#student-photo-preview-img')).toBeHidden();
+    await page.waitForTimeout(300);
+    await expect(frontImg).toBeVisible();
+  });
+
+  test('70. Phase 6: Custom Front and Back Cover uploads and Independent Reset to Generated', async ({ page }) => {
+    await page.goto('/');
+
+    // Upload custom Front Cover
+    await page.evaluate(async () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1240;
+      canvas.height = 1754;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#10b981';
+      ctx.fillRect(0, 0, 1240, 1754);
+      const blob = await new Promise((r) => canvas.toBlob(r, 'image/png'));
+      const file = new File([blob], 'custom_front.png', { type: 'image/png', lastModified: 1000 });
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      const input = document.querySelector('#custom-front-cover-input');
+      input.files = dt.files;
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+
+    await expect(page.locator('#front-cover-card .cover-custom-badge')).toHaveText('ปกที่อัปโหลดเอง');
+    await expect(page.locator('#btn-reset-front-cover')).toBeVisible();
+
+    let state = await page.evaluate(() => window.__WANGWON_STORE__.getState());
+    expect(state.frontCover.mode).toBe('custom');
+    expect(state.backCover.mode).toBe('generated'); // Back remains generated!
+
+    // Reset Front Cover back to generated
+    await page.click('#btn-reset-front-cover');
+    await expect(page.locator('#front-cover-card .cover-template-badge')).toHaveText('Minimal School');
+    await expect(page.locator('#btn-reset-front-cover')).toHaveCount(0);
+
+    state = await page.evaluate(() => window.__WANGWON_STORE__.getState());
+    expect(state.frontCover.mode).toBe('generated');
+
+    // Upload custom Back Cover
+    await page.evaluate(async () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1240;
+      canvas.height = 1754;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#6366f1';
+      ctx.fillRect(0, 0, 1240, 1754);
+      const blob = await new Promise((r) => canvas.toBlob(r, 'image/png'));
+      const file = new File([blob], 'custom_back.png', { type: 'image/png', lastModified: 2000 });
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      const input = document.querySelector('#custom-back-cover-input');
+      input.files = dt.files;
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+
+    await expect(page.locator('#back-cover-card .cover-custom-badge')).toHaveText('ปกที่อัปโหลดเอง');
+    await expect(page.locator('#btn-reset-back-cover')).toBeVisible();
+
+    state = await page.evaluate(() => window.__WANGWON_STORE__.getState());
+    expect(state.backCover.mode).toBe('custom');
+
+    // Reset Back Cover
+    await page.click('#btn-reset-back-cover');
+    await expect(page.locator('#back-cover-card .cover-template-badge')).toHaveText('Minimal School');
+    await expect(page.locator('#btn-reset-back-cover')).toHaveCount(0);
+  });
+
+  test('71. Phase 6: Aspect ratio mismatch warning on custom cover upload (>15% deviation)', async ({ page }) => {
+    await page.goto('/');
+
+    // Upload a square image (aspect ratio 1.0 vs A4 portrait ~0.707 => > 15% deviation)
+    await page.evaluate(async () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1000;
+      canvas.height = 1000;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#e11d48';
+      ctx.fillRect(0, 0, 1000, 1000);
+      const blob = await new Promise((r) => canvas.toBlob(r, 'image/jpeg'));
+      const file = new File([blob], 'square_front.jpg', { type: 'image/jpeg', lastModified: 1000 });
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      const input = document.querySelector('#custom-front-cover-input');
+      input.files = dt.files;
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+
+    // Warning toast is triggered but image is still accepted
+    const toast = page.locator('.toast.toast-warning');
+    await expect(toast).toBeVisible();
+    await expect(toast).toContainText('สัดส่วนภาพ');
+
+    const state = await page.evaluate(() => window.__WANGWON_STORE__.getState());
+    expect(state.frontCover.mode).toBe('custom');
+  });
+
+  test('72. Phase 6: Cover Lightbox Preview Modal opens, switches front/back, and closes with Escape', async ({ page }) => {
+    await page.goto('/');
+
+    // Open from Front Cover
+    await page.click('#btn-view-large-front');
+    const modal = page.locator('#cover-preview-modal');
+    await expect(modal).toHaveClass(/is-open/);
+    await expect(page.locator('#cover-preview-modal-title')).toHaveText('ตัวอย่างปกหน้า Portfolio');
+    await expect(page.locator('#cover-preview-tab-front')).toHaveClass(/is-active/);
+
+    // Switch to Back Cover tab
+    await page.click('#cover-preview-tab-back');
+    await expect(page.locator('#cover-preview-modal-title')).toHaveText('ตัวอย่างปกหลัง Portfolio');
+    await expect(page.locator('#cover-preview-tab-back')).toHaveClass(/is-active/);
+
+    // Switch back to Front Cover tab
+    await page.click('#cover-preview-tab-front');
+    await expect(page.locator('#cover-preview-tab-front')).toHaveClass(/is-active/);
+
+    // Close on Escape key
+    await page.keyboard.press('Escape');
+    await expect(modal).not.toHaveClass(/is-open/);
+
+    // Open from Back Cover
+    await page.click('#btn-view-large-back');
+    await expect(modal).toHaveClass(/is-open/);
+    await expect(page.locator('#cover-preview-modal-title')).toHaveText('ตัวอย่างปกหลัง Portfolio');
+
+    // Close button
+    await page.click('#btn-close-cover-preview');
+    await expect(modal).not.toHaveClass(/is-open/);
+  });
+
+  test('73. Phase 6: Covers remain locked (cannot be dragged, reordered, deleted, or rotated)', async ({ page }) => {
+    await page.goto('/');
+
+    const frontCover = page.locator('#front-cover-card');
+    const backCover = page.locator('#back-cover-card');
+
+    await expect(frontCover).toHaveClass(/locked-cover/);
+    await expect(backCover).toHaveClass(/locked-cover/);
+
+    // No activity card controls exist on covers
+    await expect(frontCover.locator('.btn-rotate')).toHaveCount(0);
+    await expect(frontCover.locator('.btn-delete')).toHaveCount(0);
+    await expect(frontCover.locator('.btn-more')).toHaveCount(0);
+
+    await expect(backCover.locator('.btn-rotate')).toHaveCount(0);
+    await expect(backCover.locator('.btn-delete')).toHaveCount(0);
+    await expect(backCover.locator('.btn-more')).toHaveCount(0);
+  });
+
+  test('74. Phase 6: Canvas Generator API renders print-ready resolution (1240x1754 portrait, 1754x1240 landscape)', async ({ page }) => {
+    await page.goto('/');
+
+    const dimensions = await page.evaluate(async () => {
+      const pCanvas = await window.__WANGWON_COVER_GENERATOR__.generateCoverCanvas({
+        type: 'front',
+        templateId: 'minimal-school',
+        orientation: 'portrait'
+      });
+      const lCanvas = await window.__WANGWON_COVER_GENERATOR__.generateCoverCanvas({
+        type: 'front',
+        templateId: 'minimal-school',
+        orientation: 'landscape'
+      });
+      return {
+        pWidth: pCanvas.width,
+        pHeight: pCanvas.height,
+        lWidth: lCanvas.width,
+        lHeight: lCanvas.height
+      };
+    });
+
+    expect(dimensions.pWidth).toBe(1240);
+    expect(dimensions.pHeight).toBe(1754);
+    expect(dimensions.lWidth).toBe(1754);
+    expect(dimensions.lHeight).toBe(1240);
+  });
+
+  test('75. Phase 6 Visual QA: Capture 12 required screenshots across templates, states, and viewports', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/');
+
+    // 1. Fill student info
+    await page.fill('#student-firstname', 'วชิรวิทย์');
+    await page.fill('#student-lastname', 'วังวนศิษย์ดี');
+    await page.selectOption('#student-grade', 'ประถมศึกษาปีที่ 6');
+    await page.fill('#student-number', '1');
+    await page.fill('#student-year', '2568');
+
+    // 2. Upload student photo
+    await page.evaluate(async () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 400;
+      canvas.height = 500;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#2563eb';
+      ctx.fillRect(0, 0, 400, 500);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '32px sans-serif';
+      ctx.fillText('รูปนักเรียน', 120, 260);
+      const blob = await new Promise((r) => canvas.toBlob(r, 'image/jpeg'));
+      const file = new File([blob], 'student_photo.jpg', { type: 'image/jpeg', lastModified: 1000 });
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      const input = document.querySelector('#student-photo-input');
+      input.files = dt.files;
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    await page.waitForTimeout(300);
+
+    // 1. phase6-minimal-school.png
+    await page.locator('#front-cover-card').scrollIntoViewIfNeeded();
+    await page.locator('#front-cover-card').screenshot({ path: 'tests/screenshots/phase6-minimal-school.png' });
+
+    // 2. phase6-colorful-portfolio.png
+    await page.click('.template-card[data-template-id="colorful-portfolio"]');
+    await page.waitForTimeout(300);
+    await page.locator('#front-cover-card').screenshot({ path: 'tests/screenshots/phase6-colorful-portfolio.png' });
+
+    // 3. phase6-modern-academic.png
+    await page.click('.template-card[data-template-id="modern-academic"]');
+    await page.waitForTimeout(300);
+    await page.locator('#front-cover-card').screenshot({ path: 'tests/screenshots/phase6-modern-academic.png' });
+
+    // Reset back to minimal-school
+    await page.click('.template-card[data-template-id="minimal-school"]');
+    await page.waitForTimeout(200);
+
+    // 4. phase6-no-student-photo.png
+    await page.click('#btn-remove-student-photo');
+    await page.waitForTimeout(300);
+    await page.locator('#front-cover-card').screenshot({ path: 'tests/screenshots/phase6-no-student-photo.png' });
+
+    // 5. phase6-long-thai-name.png
+    await page.fill('#student-firstname', 'กฤษฎิ์ชานนท์พัฒนเดชากุลธร');
+    await page.fill('#student-lastname', 'อภิมหาศิริรุ่งเรืองไพศาลเลิศสถิตภักดี');
+    await page.waitForTimeout(300);
+    await page.locator('#front-cover-card').screenshot({ path: 'tests/screenshots/phase6-long-thai-name.png' });
+
+    // Restore name
+    await page.fill('#student-firstname', 'วชิรวิทย์');
+    await page.fill('#student-lastname', 'วังวนศิษย์ดี');
+
+    // 6. phase6-custom-front-cover.png
+    await page.evaluate(async () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1240;
+      canvas.height = 1754;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#0f766e';
+      ctx.fillRect(0, 0, 1240, 1754);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '60px sans-serif';
+      ctx.fillText('CUSTOM FRONT COVER DESIGN', 200, 800);
+      const blob = await new Promise((r) => canvas.toBlob(r, 'image/png'));
+      const file = new File([blob], 'custom_front_shot.png', { type: 'image/png', lastModified: 1000 });
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      const input = document.querySelector('#custom-front-cover-input');
+      input.files = dt.files;
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    await expect(page.locator('#front-cover-card .cover-custom-badge')).toBeVisible();
+    await page.locator('#front-cover-card').screenshot({ path: 'tests/screenshots/phase6-custom-front-cover.png' });
+
+    // 7. phase6-custom-back-cover.png
+    await page.evaluate(async () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1240;
+      canvas.height = 1754;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#4338ca';
+      ctx.fillRect(0, 0, 1240, 1754);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '60px sans-serif';
+      ctx.fillText('CUSTOM BACK COVER DESIGN', 200, 800);
+      const blob = await new Promise((r) => canvas.toBlob(r, 'image/png'));
+      const file = new File([blob], 'custom_back_shot.png', { type: 'image/png', lastModified: 2000 });
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      const input = document.querySelector('#custom-back-cover-input');
+      input.files = dt.files;
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    await expect(page.locator('#back-cover-card .cover-custom-badge')).toBeVisible();
+    await page.locator('#back-cover-card').screenshot({ path: 'tests/screenshots/phase6-custom-back-cover.png' });
+
+    // Reset both covers back to generated
+    await page.locator('#front-cover-card').scrollIntoViewIfNeeded();
+    await page.evaluate(() => document.querySelector('#btn-reset-front-cover')?.click());
+    await expect(page.locator('#front-cover-card .cover-template-badge')).toBeVisible();
+
+    await page.locator('#back-cover-card').scrollIntoViewIfNeeded();
+    await page.evaluate(() => document.querySelector('#btn-reset-back-cover')?.click());
+    await expect(page.locator('#back-cover-card .cover-template-badge')).toBeVisible();
+
+    // 8. phase6-template-selector.png
+    const selectorSection = page.locator('.cover-template-section');
+    await selectorSection.scrollIntoViewIfNeeded();
+    await selectorSection.screenshot({ path: 'tests/screenshots/phase6-template-selector.png' });
+
+    // 9. phase6-desktop-workspace.png
+    await page.locator('#portfolio-workspace').scrollIntoViewIfNeeded();
+    await page.screenshot({ path: 'tests/screenshots/phase6-desktop-workspace.png', fullPage: false });
+
+    // 10. phase6-tablet.png (768px)
+    await page.setViewportSize({ width: 768, height: 1024 });
+    await page.screenshot({ path: 'tests/screenshots/phase6-tablet.png', fullPage: false });
+
+    // 11. phase6-mobile.png (390px)
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.screenshot({ path: 'tests/screenshots/phase6-mobile.png', fullPage: false });
+
+    // 12. phase6-cover-preview-modal.png
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.locator('#front-cover-card').scrollIntoViewIfNeeded();
+    await page.evaluate(() => document.querySelector('#btn-view-large-front')?.click());
+    await expect(page.locator('#cover-preview-modal')).toHaveClass(/is-open/);
+    await page.waitForTimeout(400);
+    await page.screenshot({ path: 'tests/screenshots/phase6-cover-preview-modal.png', fullPage: false });
   });
 
 });

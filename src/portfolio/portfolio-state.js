@@ -27,9 +27,11 @@ export function createDefaultProjectState() {
 
     // Page 1: Locked Front Cover
     frontCover: {
-      source: 'template', // 'template' | 'custom'
+      mode: 'generated', // 'generated' | 'custom'
+      source: 'template', // backwards compatibility alias for 'generated'
       templateId: 'minimal-school', // 'minimal-school' | 'colorful-portfolio' | 'modern-academic'
-      customImage: null,
+      customFile: null,
+      customPreviewUrl: null,
       isLocked: true
     },
 
@@ -38,9 +40,11 @@ export function createDefaultProjectState() {
 
     // Last Page: Locked Back Cover
     backCover: {
-      source: 'template', // 'template' | 'custom'
+      mode: 'generated', // 'generated' | 'custom'
+      source: 'template',
       templateId: 'minimal-school',
-      customImage: null,
+      customFile: null,
+      customPreviewUrl: null,
       isLocked: true
     },
 
@@ -160,6 +164,87 @@ export function updateWatermark(watermarkData) {
 }
 
 /**
+ * Sets the active cover template for both Front and Back covers.
+ * @param {string} templateId - 'minimal-school' | 'colorful-portfolio' | 'modern-academic'
+ */
+export function setCoverTemplate(templateId) {
+  projectStore.setState((state) => ({
+    frontCover: {
+      ...state.frontCover,
+      templateId
+    },
+    backCover: {
+      ...state.backCover,
+      templateId
+    }
+  }));
+}
+
+/**
+ * Sets an uploaded custom cover image for Front or Back cover.
+ * Automatically revokes any previous custom preview URL.
+ *
+ * @param {'front'|'back'} type
+ * @param {File} file
+ * @param {string} previewUrl
+ */
+export function setCustomCover(type, file, previewUrl) {
+  const key = type === 'front' ? 'frontCover' : 'backCover';
+  const currentCover = projectStore.getState()[key];
+
+  if (currentCover?.customPreviewUrl && currentCover.customPreviewUrl !== previewUrl) {
+    if (typeof currentCover.customPreviewUrl === 'string' && currentCover.customPreviewUrl.startsWith('blob:')) {
+      try {
+        URL.revokeObjectURL(currentCover.customPreviewUrl);
+      } catch (e) {
+        // ignore
+      }
+    }
+  }
+
+  projectStore.setState({
+    [key]: {
+      ...currentCover,
+      mode: 'custom',
+      source: 'custom',
+      customFile: file,
+      customPreviewUrl: previewUrl
+    }
+  });
+}
+
+/**
+ * Resets a cover from custom back to the generated template.
+ * Safely revokes the custom preview URL.
+ *
+ * @param {'front'|'back'} type
+ */
+export function resetCoverToGenerated(type) {
+  const key = type === 'front' ? 'frontCover' : 'backCover';
+  const currentCover = projectStore.getState()[key];
+
+  if (currentCover?.customPreviewUrl) {
+    if (typeof currentCover.customPreviewUrl === 'string' && currentCover.customPreviewUrl.startsWith('blob:')) {
+      try {
+        URL.revokeObjectURL(currentCover.customPreviewUrl);
+      } catch (e) {
+        // ignore
+      }
+    }
+  }
+
+  projectStore.setState({
+    [key]: {
+      ...currentCover,
+      mode: 'generated',
+      source: 'template',
+      customFile: null,
+      customPreviewUrl: null
+    }
+  });
+}
+
+/**
  * Canonical reset function for the entire project state.
  */
 export function resetPortfolioProject() {
@@ -190,6 +275,24 @@ export function resetPortfolioProject() {
   if (currentState.watermark?.previewUrl && currentState.watermark.previewUrl.startsWith('blob:')) {
     try {
       URL.revokeObjectURL(currentState.watermark.previewUrl);
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  // Clean up custom front cover URL
+  if (currentState.frontCover?.customPreviewUrl && currentState.frontCover.customPreviewUrl.startsWith('blob:')) {
+    try {
+      URL.revokeObjectURL(currentState.frontCover.customPreviewUrl);
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  // Clean up custom back cover URL
+  if (currentState.backCover?.customPreviewUrl && currentState.backCover.customPreviewUrl.startsWith('blob:')) {
+    try {
+      URL.revokeObjectURL(currentState.backCover.customPreviewUrl);
     } catch (e) {
       // ignore
     }

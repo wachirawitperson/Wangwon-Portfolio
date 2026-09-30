@@ -335,10 +335,86 @@
             <span class="form-helper">ขนาดมาตรฐาน A4 (210 × 297 มม.)</span>
           </div>
 
-          <!-- Group 2: การวางภาพ -->
+          <!-- Group 2: รูปแบบปก (Cover Templates Bento Selector) -->
+          <div class="form-group setting-section cover-template-section">
+            <label class="form-label" id="heading-cover-templates">
+              <span class="setting-step-num">2</span> รูปแบบปก
+            </label>
+            <div class="template-bento-grid" role="radiogroup" aria-labelledby="heading-cover-templates">
+              <!-- Template 1: Minimal School -->
+              <div
+                class="template-card is-active"
+                role="radio"
+                tabindex="0"
+                aria-checked="true"
+                data-template-id="minimal-school"
+                id="tpl-opt-minimal-school"
+              >
+                <div class="template-thumb-preview thumb-minimal-school" aria-hidden="true">
+                  <div class="thumb-mini-header"></div>
+                  <div class="thumb-mini-emblem"></div>
+                  <div class="thumb-mini-text bold"></div>
+                  <div class="thumb-mini-frame"></div>
+                  <div class="thumb-mini-text sm"></div>
+                </div>
+                <div class="template-info">
+                  <span class="template-name">Minimal School</span>
+                  <span class="template-sub">โรงเรียนมาตรฐาน</span>
+                </div>
+              </div>
+
+              <!-- Template 2: Colorful Portfolio -->
+              <div
+                class="template-card"
+                role="radio"
+                tabindex="0"
+                aria-checked="false"
+                data-template-id="colorful-portfolio"
+                id="tpl-opt-colorful-portfolio"
+              >
+                <div class="template-thumb-preview thumb-colorful-portfolio" aria-hidden="true">
+                  <div class="thumb-mini-blob"></div>
+                  <div class="thumb-mini-emblem"></div>
+                  <div class="thumb-mini-pill"></div>
+                  <div class="thumb-mini-frame rounded"></div>
+                  <div class="thumb-mini-text sm"></div>
+                </div>
+                <div class="template-info">
+                  <span class="template-name">Colorful Portfolio</span>
+                  <span class="template-sub">สีสันสดใส</span>
+                </div>
+              </div>
+
+              <!-- Template 3: Modern Academic -->
+              <div
+                class="template-card"
+                role="radio"
+                tabindex="0"
+                aria-checked="false"
+                data-template-id="modern-academic"
+                id="tpl-opt-modern-academic"
+              >
+                <div class="template-thumb-preview thumb-modern-academic" aria-hidden="true">
+                  <div class="thumb-mini-side-col"></div>
+                  <div class="thumb-mini-content">
+                    <div class="thumb-mini-text bold"></div>
+                    <div class="thumb-mini-frame"></div>
+                    <div class="thumb-mini-box"></div>
+                  </div>
+                </div>
+                <div class="template-info">
+                  <span class="template-name">Modern Academic</span>
+                  <span class="template-sub">วิชาการสมัยใหม่</span>
+                </div>
+              </div>
+            </div>
+            <span class="form-helper">เปลี่ยนรูปแบบทั้งปกหน้าและปกหลังให้เข้าชุดกัน</span>
+          </div>
+
+          <!-- Group 3: การวางภาพ -->
           <div class="form-group setting-section">
             <label class="form-label">
-              <span class="setting-step-num">2</span> การวางภาพ
+              <span class="setting-step-num">3</span> การวางภาพ
             </label>
             <div class="segmented-control" role="radiogroup" aria-label="การวางภาพ">
               <button
@@ -365,10 +441,10 @@
             <span class="form-helper">Fit: แสดงรูปครบไม่ตัดขอบ | Fill: ขยายเต็มแผ่น</span>
           </div>
 
-          <!-- Group 3: คุณภาพเอกสาร PDF (Segmented Control + Synced Select) -->
+          <!-- Group 4: คุณภาพเอกสาร PDF (Segmented Control + Synced Select) -->
           <div class="form-group setting-section">
             <label for="setting-quality" class="form-label">
-              <span class="setting-step-num">3</span> คุณภาพเอกสาร PDF
+              <span class="setting-step-num">4</span> คุณภาพเอกสาร PDF
             </label>
             <div class="segmented-control" role="radiogroup" aria-label="คุณภาพเอกสาร PDF">
               <button
@@ -410,10 +486,10 @@
             <span class="form-helper">แนะนำ "สมดุล" เพื่อความคมชัดและขนาดไฟล์ที่พอดี</span>
           </div>
 
-          <!-- Group 4: ชื่อไฟล์ (Relocated from Student Card) -->
+          <!-- Group 5: ชื่อไฟล์ (Relocated from Student Card) -->
           <div class="form-group setting-section sidebar-filename-group">
             <label class="form-label" for="preview-filename-badge">
-              <span class="setting-step-num">4</span> ชื่อไฟล์
+              <span class="setting-step-num">5</span> ชื่อไฟล์
             </label>
             <div class="sidebar-filename-card" aria-live="polite">
               <span class="sidebar-filename-icon" aria-hidden="true">📄</span>
@@ -422,11 +498,11 @@
             <span class="form-helper">สร้างชื่อไฟล์อัตโนมัติตามชื่อและชั้นนักเรียน</span>
           </div>
 
-          <!-- Group 5: Watermark Redesign -->
+          <!-- Group 6: Watermark Redesign -->
           <div class="form-group setting-section watermark-settings-card">
             <div class="watermark-toggle-row">
               <label class="form-label" for="setting-watermark-enabled" style="margin-bottom: 0;">
-                <span class="setting-step-num">5</span> ลายน้ำ (Watermark)
+                <span class="setting-step-num">6</span> ลายน้ำ (Watermark)
               </label>
               <label class="switch-toggle" aria-label="เปิดหรือปิดลายน้ำ">
                 <input type="checkbox" id="setting-watermark-enabled" class="switch-input" />
@@ -722,6 +798,61 @@
     accept="image/jpeg,image/png,image/webp,image/bmp,image/heic,image/heif"
     aria-hidden="true"
   />
+
+  <!-- Hidden File Input for Custom Front Cover Upload -->
+  <input
+    type="file"
+    id="custom-front-cover-input"
+    class="sr-only"
+    accept="image/jpeg,image/png,image/webp,image/bmp,image/heic,image/heif"
+    aria-hidden="true"
+  />
+
+  <!-- Hidden File Input for Custom Back Cover Upload -->
+  <input
+    type="file"
+    id="custom-back-cover-input"
+    class="sr-only"
+    accept="image/jpeg,image/png,image/webp,image/bmp,image/heic,image/heif"
+    aria-hidden="true"
+  />
+
+  <!-- Dedicated Full-Resolution Cover Preview Modal -->
+  <div
+    class="modal-backdrop lightbox-backdrop"
+    id="cover-preview-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-hidden="true"
+    aria-labelledby="cover-preview-modal-title"
+  >
+    <div class="modal-dialog lightbox-dialog cover-preview-dialog">
+      <div class="modal-header lightbox-header">
+        <div class="lightbox-title-wrap">
+          <span id="cover-preview-badge" class="badge page-badge">ปกหน้า</span>
+          <h3 class="modal-title lightbox-title" id="cover-preview-modal-title">ตัวอย่างปกหน้า Portfolio</h3>
+        </div>
+        <div class="cover-modal-tabs" role="tablist" aria-label="สลับดูปก">
+          <button type="button" role="tab" id="cover-preview-tab-front" class="btn-tab is-active" aria-selected="true">ปกหน้า</button>
+          <button type="button" role="tab" id="cover-preview-tab-back" class="btn-tab" aria-selected="false">ปกหลัง</button>
+        </div>
+        <button type="button" class="btn-icon" id="btn-close-cover-preview" data-dismiss="modal" aria-label="ปิดหน้าต่างตัวอย่างปก">✕</button>
+      </div>
+      <div class="modal-body lightbox-body cover-preview-body">
+        <div class="cover-lightbox-stage">
+          <img id="cover-preview-modal-img" class="cover-lightbox-img" alt="ตัวอย่างปกขนาดใหญ่" />
+        </div>
+      </div>
+      <div class="modal-footer lightbox-footer">
+        <div class="lightbox-meta" id="cover-preview-meta">
+          <span id="cover-preview-template-text">รูปแบบ: Minimal School</span>
+          <span class="meta-dot" aria-hidden="true">•</span>
+          <span id="cover-preview-res">A4 (1240 × 1754 px)</span>
+        </div>
+        <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">ปิด</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Application Bootstrap (ES Modules) -->
   <script type="module" src="./src/app.js"></script>

@@ -8,21 +8,27 @@
 export const COVER_TEMPLATES = [
   {
     id: 'minimal-school',
-    name: 'โรงเรียนมาตรฐาน (Minimal School)',
-    description: 'เรียบง่าย สะอาดตา เหมาะสำหรับรายงานผลการเรียนและกิจกรรมทั่วไป',
+    name: 'Minimal School (โรงเรียนมาตรฐาน)',
+    shortName: 'Minimal School',
+    thaiName: 'โรงเรียนมาตรฐาน',
+    description: 'เรียบง่าย สะอาดตา สุภาพ เป็นทางการ เหมาะสำหรับทุกระดับชั้น',
     accentColor: '#1e3a8a'
   },
   {
     id: 'colorful-portfolio',
-    name: 'สีสันสดใส (Colorful Portfolio)',
-    description: 'เน้นความสดใส เหมาะสำหรับนักเรียนระดับปฐมวัยและประถมต้น',
-    accentColor: '#059669'
+    name: 'Colorful Portfolio (สีสันสดใส)',
+    shortName: 'Colorful Portfolio',
+    thaiName: 'สีสันสดใส',
+    description: 'สดใส มีชีวิตชีวา ลายเส้นโค้งมน เหมาะสำหรับกิจกรรมและปฐมวัย/ประถม',
+    accentColor: '#0284c7'
   },
   {
     id: 'modern-academic',
-    name: 'วิชาการสมัยใหม่ (Modern Academic)',
-    description: 'เป็นทางการ สวยงาม เหมาะสำหรับการแข่งขันและแฟ้มประเมินคุณภาพ',
-    accentColor: '#4f46e5'
+    name: 'Modern Academic (วิชาการสมัยใหม่)',
+    shortName: 'Modern Academic',
+    thaiName: 'วิชาการสมัยใหม่',
+    description: 'โครงสร้างแบบ Editorial เส้นสายเรขาคณิต สำหรับแฟ้มประเมินและผลงานวิชาการ',
+    accentColor: '#2563eb'
   }
 ];
 

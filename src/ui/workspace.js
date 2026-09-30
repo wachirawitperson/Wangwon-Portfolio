@@ -3,10 +3,13 @@
  * Orchestrates the visual sequence:
  * [Locked Front Cover (Page 1)] -> [Empty Image State / Student Images] -> [Locked Back Cover (Last Page)]
  */
-import { projectStore } from '../portfolio/portfolio-state.js';
+import { projectStore, setCustomCover, resetCoverToGenerated } from '../portfolio/portfolio-state.js';
 import { importStudentImages, removeStudentImage } from '../portfolio/image-manager.js';
 import { createImageCard } from './image-card.js';
 import { COVER_TEMPLATES, getCoverTemplate } from '../portfolio/cover-manager.js';
+import { generateCoverDataUrl } from '../portfolio/cover-generator.js';
+import { isSupportedImage } from '../core/file-utils.js';
+import { decodeHeicIfNeeded, getImageDimensions, createPreviewUrl } from '../core/image-utils.js';
 import { showToast } from './notifications.js';
 import { openModal, closeModal } from './modal.js';
 import { icons } from './icons.js';
@@ -204,13 +207,170 @@ export function initWorkspace(workspaceElement) {
     }
   });
 
+  // Local in-memory caches for rendered cover data URLs
+  let cachedFrontCoverDataUrl = null;
+  let cachedBackCoverDataUrl = null;
+  let lastFrontRenderKey = '';
+  let lastBackRenderKey = '';
+
+  // Cover Preview Modal elements
+  const coverPreviewModal = document.querySelector('#cover-preview-modal');
+  const coverPreviewBadge = document.querySelector('#cover-preview-badge');
+  const coverPreviewModalTitle = document.querySelector('#cover-preview-modal-title');
+  const coverPreviewTabFront = document.querySelector('#cover-preview-tab-front');
+  const coverPreviewTabBack = document.querySelector('#cover-preview-tab-back');
+  const coverPreviewModalImg = document.querySelector('#cover-preview-modal-img');
+  const coverPreviewTemplateText = document.querySelector('#cover-preview-template-text');
+  const coverPreviewRes = document.querySelector('#cover-preview-res');
+
+  const customFrontCoverInput = document.querySelector('#custom-front-cover-input');
+  const customBackCoverInput = document.querySelector('#custom-back-cover-input');
+
+  function openCoverPreview(type) {
+    if (!coverPreviewModal) return;
+    const state = projectStore.getState();
+    const isFront = type === 'front';
+    const coverState = isFront ? state.frontCover : state.backCover;
+    const template = getCoverTemplate(coverState.templateId);
+    const isLandscape = state.pdfSettings?.orientation === 'landscape';
+
+    if (coverPreviewModalTitle) {
+      coverPreviewModalTitle.textContent = isFront ? 'ตัวอย่างปกหน้า Portfolio' : 'ตัวอย่างปกหลัง Portfolio';
+    }
+
+    if (coverPreviewBadge) {
+      coverPreviewBadge.textContent = isFront ? 'ปกหน้า (Page 1)' : `ปกหลัง (Page ${(state.images?.length || 0) + 2})`;
+    }
+
+    if (coverPreviewTabFront && coverPreviewTabBack) {
+      if (isFront) {
+        coverPreviewTabFront.classList.add('is-active');
+        coverPreviewTabFront.setAttribute('aria-selected', 'true');
+        coverPreviewTabBack.classList.remove('is-active');
+        coverPreviewTabBack.setAttribute('aria-selected', 'false');
+      } else {
+        coverPreviewTabBack.classList.add('is-active');
+        coverPreviewTabBack.setAttribute('aria-selected', 'true');
+        coverPreviewTabFront.classList.remove('is-active');
+        coverPreviewTabFront.setAttribute('aria-selected', 'false');
+      }
+    }
+
+    const previewSrc = isFront
+      ? (coverState.mode === 'custom' ? coverState.customPreviewUrl : cachedFrontCoverDataUrl)
+      : (coverState.mode === 'custom' ? coverState.customPreviewUrl : cachedBackCoverDataUrl);
+
+    if (coverPreviewModalImg && previewSrc) {
+      coverPreviewModalImg.src = previewSrc;
+    }
+
+    if (coverPreviewTemplateText) {
+      if (coverState.mode === 'custom') {
+        coverPreviewTemplateText.textContent = 'ปกที่อัปโหลดเอง (Custom)';
+      } else {
+        coverPreviewTemplateText.textContent = `รูปแบบ: ${template.name}`;
+      }
+    }
+
+    if (coverPreviewRes) {
+      coverPreviewRes.textContent = isLandscape ? 'A4 แนวนอน (1754 × 1240 px)' : 'A4 แนวตั้ง (1240 × 1754 px)';
+    }
+
+    openModal(coverPreviewModal);
+  }
+
+  if (coverPreviewTabFront) {
+    coverPreviewTabFront.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openCoverPreview('front');
+    });
+  }
+
+  if (coverPreviewTabBack) {
+    coverPreviewTabBack.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openCoverPreview('back');
+    });
+  }
+
+  // Handle custom cover image file upload
+  async function handleCustomCoverUpload(type, file) {
+    if (!file) return;
+
+    if (!isSupportedImage(file)) {
+      showToast('ไฟล์ไม่ถูกต้อง รองรับ JPG, PNG, WebP, BMP, HEIC', 'warning');
+      return;
+    }
+
+    try {
+      const decoded = await decodeHeicIfNeeded(file);
+      const previewUrl = createPreviewUrl(decoded.blob);
+      const dims = await getImageDimensions(decoded.blob);
+
+      // Aspect ratio check against A4 orientation
+      const state = projectStore.getState();
+      const isLandscape = state.pdfSettings?.orientation === 'landscape';
+      const targetRatio = isLandscape ? 297 / 210 : 210 / 297;
+      const imgRatio = dims.width / dims.height;
+
+      if (Math.abs(imgRatio - targetRatio) / targetRatio > 0.15) {
+        showToast('สัดส่วนภาพปกต่างจากกระดาษ อาจมีพื้นที่ว่างเมื่อสร้าง PDF', 'warning');
+      }
+
+      setCustomCover(type, file, previewUrl);
+      showToast(`อัปโหลด${type === 'front' ? 'ปกหน้า' : 'ปกหลัง'}เรียบร้อยแล้ว`, 'success');
+    } catch (err) {
+      console.error('Failed to load custom cover:', err);
+      showToast('ไม่สามารถเปิดไฟล์รูปภาพปกได้', 'danger');
+    }
+  }
+
+  if (customFrontCoverInput) {
+    customFrontCoverInput.addEventListener('change', (e) => {
+      const file = e.target.files?.[0];
+      if (file) handleCustomCoverUpload('front', file);
+      customFrontCoverInput.value = '';
+    });
+  }
+
+  if (customBackCoverInput) {
+    customBackCoverInput.addEventListener('change', (e) => {
+      const file = e.target.files?.[0];
+      if (file) handleCustomCoverUpload('back', file);
+      customBackCoverInput.value = '';
+    });
+  }
+
   // Render Front Cover Card
-  function renderFrontCover(state) {
+  async function renderFrontCover(state) {
     if (!frontCoverCard) return;
-    const template = getCoverTemplate(state.frontCover.templateId);
-    const student = state.student || {};
-    const fullName = `${student.prefix || ''}${student.firstName || ''} ${student.lastName || ''}`.trim() || 'ชื่อ-นามสกุล นักเรียน';
-    const studentPhoto = state.studentPhoto;
+    const front = state.frontCover || {};
+    const template = getCoverTemplate(front.templateId);
+    const isCustom = front.mode === 'custom' && front.customPreviewUrl;
+    const isLandscape = state.pdfSettings?.orientation === 'landscape';
+
+    // Unique render cache key
+    const renderKey = `${front.templateId}|${state.pdfSettings?.orientation}|${state.student?.prefix}|${state.student?.firstName}|${state.student?.lastName}|${state.student?.grade}|${state.student?.studentNumber}|${state.student?.academicYear}|${state.studentPhoto?.previewUrl || ''}`;
+
+    let coverImageSrc = front.customPreviewUrl;
+
+    if (!isCustom) {
+      if (renderKey !== lastFrontRenderKey || !cachedFrontCoverDataUrl) {
+        lastFrontRenderKey = renderKey;
+        try {
+          cachedFrontCoverDataUrl = await generateCoverDataUrl({
+            type: 'front',
+            templateId: front.templateId,
+            student: state.student,
+            studentPhoto: state.studentPhoto,
+            orientation: state.pdfSettings?.orientation || 'portrait'
+          });
+        } catch (err) {
+          console.error('Front cover generation error:', err);
+        }
+      }
+      coverImageSrc = cachedFrontCoverDataUrl;
+    }
 
     frontCoverCard.innerHTML = `
       <div class="card-header locked-header">
@@ -218,61 +378,90 @@ export function initWorkspace(workspaceElement) {
           <span class="icon-inline" aria-hidden="true">${icons.lock}</span> หน้า 1
         </span>
         <span class="cover-type-label">ปกหน้า</span>
+        ${isCustom ? `
+          <span class="cover-custom-badge">ปกที่อัปโหลดเอง</span>
+        ` : `
+          <span class="cover-template-badge">${template.shortName || template.name}</span>
+        `}
       </div>
       <p class="cover-description">ปกหน้าจะอยู่หน้าแรกเสมอ</p>
       <div class="cover-card-body">
-        <div class="cover-visual-preview cover-front-theme" style="--accent: ${template.accentColor}">
-          <div class="cover-inner-content">
-            <div class="cover-school-header">
-              <img src="./assets/branding/ban-wangwon-logo.png" alt="ตราโรงเรียนบ้านวังวน" class="cover-school-emblem" id="front-cover-logo" />
-              <div class="cover-school-tag">โรงเรียนบ้านวังวน</div>
-            </div>
-            <div class="cover-category-badge" aria-hidden="true">PORTFOLIO</div>
-            <h3 class="cover-title">แฟ้มสะสมผลงานนักเรียน</h3>
-            ${studentPhoto?.previewUrl ? `
-              <div class="cover-student-photo-box">
-                <img src="${studentPhoto.previewUrl}" alt="รูปถ่ายนักเรียน" class="cover-photo-img" />
-              </div>
-            ` : `
-              <div class="cover-student-photo-placeholder" aria-label="พื้นที่รูปถ่ายนักเรียน">
-                <svg class="cover-photo-placeholder-icon" xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/></svg>
-                <span class="cover-photo-placeholder-text">พื้นที่รูปถ่าย</span>
-              </div>
-            `}
-            <div class="cover-student-name">${fullName}</div>
-            <div class="cover-student-sub">${student.grade || 'ระดับชั้น'} ${student.studentNumber ? `| เลขที่ ${student.studentNumber}` : ''}</div>
-            <div class="cover-year">ปีการศึกษา ${student.academicYear || '2569'}</div>
-          </div>
+        <div class="cover-preview-canvas-wrap ${isLandscape ? 'is-landscape' : ''}">
+          <img
+            src="${coverImageSrc || './assets/branding/ban-wangwon-logo.png'}"
+            alt="ตัวอย่างปกหน้า Portfolio"
+            class="cover-preview-rendered-img"
+            id="front-cover-rendered-img"
+          />
         </div>
       </div>
       <div class="card-footer locked-footer">
-        <label for="front-template-select" class="form-label" style="font-size: var(--font-size-xs);">รูปแบบปกหน้า:</label>
-        <select id="front-template-select" class="form-select select-sm" aria-label="เลือกรูปแบบปกหน้า">
-          ${COVER_TEMPLATES.map(
-            (t) => `<option value="${t.id}" ${t.id === state.frontCover.templateId ? 'selected' : ''}>${t.name}</option>`
-          ).join('')}
-        </select>
+        <div class="cover-card-actions">
+          <button type="button" class="cover-action-btn btn-view-cover-modal" id="btn-view-large-front" aria-label="ดูปกหน้าขนาดใหญ่">
+            ${icons.eye} ดูปกขนาดใหญ่
+          </button>
+          <button type="button" class="cover-action-btn btn-upload-cover" id="btn-upload-custom-front" aria-label="อัปโหลดปกหน้าเอง">
+            ${icons.upload} อัปโหลดปกเอง
+          </button>
+          ${isCustom ? `
+            <button type="button" class="cover-action-btn btn-reset-cover" id="btn-reset-front-cover" aria-label="กลับไปใช้ปกหน้าอัตโนมัติ">
+              ${icons.refreshCw} ใช้ปกอัตโนมัติ
+            </button>
+          ` : ''}
+        </div>
       </div>
     `;
 
-    const select = frontCoverCard.querySelector('#front-template-select');
-    if (select) {
-      select.addEventListener('change', (e) => {
-        projectStore.setState({
-          frontCover: {
-            ...state.frontCover,
-            templateId: e.target.value
-          }
-        });
+    // Button event listeners
+    const btnViewLarge = frontCoverCard.querySelector('#btn-view-large-front');
+    if (btnViewLarge) {
+      btnViewLarge.addEventListener('click', () => openCoverPreview('front'));
+    }
+
+    const btnUpload = frontCoverCard.querySelector('#btn-upload-custom-front');
+    if (btnUpload && customFrontCoverInput) {
+      btnUpload.addEventListener('click', () => customFrontCoverInput.click());
+    }
+
+    const btnReset = frontCoverCard.querySelector('#btn-reset-front-cover');
+    if (btnReset) {
+      btnReset.addEventListener('click', () => {
+        resetCoverToGenerated('front');
+        showToast('เปลี่ยนกลับมาใช้ปกหน้าอัตโนมัติแล้ว', 'info');
       });
     }
   }
 
   // Render Back Cover Card
-  function renderBackCover(state, totalPages) {
+  async function renderBackCover(state, totalPages) {
     if (!backCoverCard) return;
-    const template = getCoverTemplate(state.backCover.templateId);
+    const back = state.backCover || {};
+    const template = getCoverTemplate(back.templateId);
+    const isCustom = back.mode === 'custom' && back.customPreviewUrl;
+    const isLandscape = state.pdfSettings?.orientation === 'landscape';
     const finalPageText = totalPages ? `หน้า ${totalPages} (หน้าสุดท้าย)` : 'หน้าสุดท้าย';
+
+    // Unique render cache key
+    const renderKey = `${back.templateId}|${state.pdfSettings?.orientation}|${totalPages}`;
+
+    let coverImageSrc = back.customPreviewUrl;
+
+    if (!isCustom) {
+      if (renderKey !== lastBackRenderKey || !cachedBackCoverDataUrl) {
+        lastBackRenderKey = renderKey;
+        try {
+          cachedBackCoverDataUrl = await generateCoverDataUrl({
+            type: 'back',
+            templateId: back.templateId,
+            student: state.student,
+            orientation: state.pdfSettings?.orientation || 'portrait'
+          });
+        } catch (err) {
+          console.error('Back cover generation error:', err);
+        }
+      }
+      coverImageSrc = cachedBackCoverDataUrl;
+    }
 
     backCoverCard.innerHTML = `
       <div class="card-header locked-header">
@@ -280,38 +469,56 @@ export function initWorkspace(workspaceElement) {
           <span class="icon-inline" aria-hidden="true">${icons.lock}</span> ${finalPageText}
         </span>
         <span class="cover-type-label">ปกหลัง</span>
+        ${isCustom ? `
+          <span class="cover-custom-badge">ปกที่อัปโหลดเอง</span>
+        ` : `
+          <span class="cover-template-badge">${template.shortName || template.name}</span>
+        `}
       </div>
       <p class="cover-description">ปกหลังจะอยู่หน้าสุดท้ายเสมอ</p>
       <div class="cover-card-body">
-        <div class="cover-visual-preview cover-back-theme" style="--accent: ${template.accentColor}">
-          <div class="cover-inner-content">
-            <div class="cover-school-header">
-              <img src="./assets/branding/ban-wangwon-logo.png" alt="ตราโรงเรียนบ้านวังวน" class="cover-school-emblem" id="back-cover-logo" />
-              <div class="cover-school-tag">โรงเรียนบ้านวังวน</div>
-            </div>
-            <div class="back-cover-accent-line" aria-hidden="true"></div>
-          </div>
+        <div class="cover-preview-canvas-wrap ${isLandscape ? 'is-landscape' : ''}">
+          <img
+            src="${coverImageSrc || './assets/branding/ban-wangwon-logo.png'}"
+            alt="ตัวอย่างปกหลัง Portfolio"
+            class="cover-preview-rendered-img"
+            id="back-cover-rendered-img"
+          />
         </div>
       </div>
       <div class="card-footer locked-footer">
-        <label for="back-template-select" class="form-label" style="font-size: var(--font-size-xs);">รูปแบบปกหลัง:</label>
-        <select id="back-template-select" class="form-select select-sm" aria-label="เลือกรูปแบบปกหลัง">
-          ${COVER_TEMPLATES.map(
-            (t) => `<option value="${t.id}" ${t.id === state.backCover.templateId ? 'selected' : ''}>${t.name}</option>`
-          ).join('')}
-        </select>
+        <div class="cover-card-actions">
+          <button type="button" class="cover-action-btn btn-view-cover-modal" id="btn-view-large-back" aria-label="ดูปกหลังขนาดใหญ่">
+            ${icons.eye} ดูปกขนาดใหญ่
+          </button>
+          <button type="button" class="cover-action-btn btn-upload-cover" id="btn-upload-custom-back" aria-label="อัปโหลดปกหลังเอง">
+            ${icons.upload} อัปโหลดปกเอง
+          </button>
+          ${isCustom ? `
+            <button type="button" class="cover-action-btn btn-reset-cover" id="btn-reset-back-cover" aria-label="กลับไปใช้ปกหลังอัตโนมัติ">
+              ${icons.refreshCw} ใช้ปกอัตโนมัติ
+            </button>
+          ` : ''}
+        </div>
       </div>
     `;
 
-    const select = backCoverCard.querySelector('#back-template-select');
-    if (select) {
-      select.addEventListener('change', (e) => {
-        projectStore.setState({
-          backCover: {
-            ...state.backCover,
-            templateId: e.target.value
-          }
-        });
+    // Button event listeners
+    const btnViewLarge = backCoverCard.querySelector('#btn-view-large-back');
+    if (btnViewLarge) {
+      btnViewLarge.addEventListener('click', () => openCoverPreview('back'));
+    }
+
+    const btnUpload = backCoverCard.querySelector('#btn-upload-custom-back');
+    if (btnUpload && customBackCoverInput) {
+      btnUpload.addEventListener('click', () => customBackCoverInput.click());
+    }
+
+    const btnReset = backCoverCard.querySelector('#btn-reset-back-cover');
+    if (btnReset) {
+      btnReset.addEventListener('click', () => {
+        resetCoverToGenerated('back');
+        showToast('เปลี่ยนกลับมาใช้ปกหลังอัตโนมัติแล้ว', 'info');
       });
     }
   }

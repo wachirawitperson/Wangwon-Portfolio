@@ -137,4 +137,18 @@ document.addEventListener('DOMContentLoaded', () => {
     replaceStudentImage,
     duplicateStudentImage
   };
+
+  import('./portfolio/cover-manager.js').then((m) => {
+    window.__WANGWON_COVER_MANAGER__ = m;
+  });
+  import('./portfolio/cover-generator.js').then((m) => {
+    window.__WANGWON_COVER_GENERATOR__ = m;
+  });
+  import('./portfolio/portfolio-state.js').then((m) => {
+    window.__WANGWON_COVER_STATE__ = {
+      setCoverTemplate: m.setCoverTemplate,
+      setCustomCover: m.setCustomCover,
+      resetCoverToGenerated: m.resetCoverToGenerated
+    };
+  });
 });
