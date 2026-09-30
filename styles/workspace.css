@@ -48,21 +48,21 @@
 
 /* Locked Cover Cards (Page 1 Front Cover & Last Page Back Cover) */
 .cover-card.locked-cover {
-  background: #ffffff;
-  border: 1px solid var(--color-border-subtle, #e2e8f0);
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
   border-radius: var(--radius-lg);
-  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
+  box-shadow: var(--shadow-sm);
 }
 
 .cover-card.locked-cover:hover {
-  border-color: #cbd5e1;
-  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
+  border-color: var(--color-border-strong);
+  box-shadow: var(--shadow-md);
 }
 
 .card-header {
   padding: var(--space-3) var(--space-4);
   background-color: var(--color-surface);
-  border-bottom: 1px solid var(--color-border-subtle, #e2e8f0);
+  border-bottom: 1px solid var(--color-border-subtle);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -70,8 +70,8 @@
 }
 
 .card-header.locked-header {
-  background-color: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
+  background-color: var(--color-surface-alt);
+  border-bottom: 1px solid var(--color-border-subtle);
 }
 
 .cover-description {
@@ -246,8 +246,8 @@
 
 .card-footer.locked-footer {
   padding: var(--space-2) var(--space-4) var(--space-3);
-  background-color: #f8fafc;
-  border-top: 1px solid var(--color-border-subtle, #e2e8f0);
+  background-color: var(--color-surface-alt);
+  border-top: 1px solid var(--color-border-subtle);
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -255,8 +255,8 @@
 
 /* Empty Student Image Area */
 .empty-images-card {
-  background-color: #fafbfc;
-  border: 2px dashed #93c5fd;
+  background-color: var(--color-surface-alt);
+  border: 2px dashed var(--color-border-strong);
   border-radius: var(--radius-lg);
   display: flex;
   flex-direction: column;
@@ -277,7 +277,7 @@
 
 .empty-images-card.is-dragover,
 .workspace-grid.is-dragover {
-  background-color: #eff6ff;
+  background-color: var(--color-primary-soft);
   border-color: var(--color-primary);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25);
   transform: scale(1.01);
@@ -320,10 +320,10 @@
   color: var(--color-primary);
   font-weight: var(--font-weight-medium);
   margin-top: var(--space-3);
-  background-color: #ffffff;
+  background-color: var(--color-surface);
   padding: 3px 10px;
   border-radius: var(--radius-pill);
-  border: 1px solid #bfdbfe;
+  border: 1px solid var(--color-border);
 }
 
 .empty-helper-types {
@@ -337,12 +337,14 @@
    ======================================================================== */
 .student-image-card {
   cursor: default;
+  background-color: var(--card-bg);
+  border: 1px solid var(--card-border);
 }
 
 /* Normal State */
 .student-image-card .card-preview {
   flex: 1;
-  background-color: #f1f5f9;
+  background-color: var(--color-surface-alt);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -438,8 +440,8 @@
 
 /* Compact Add Page Card (Grid In-line Item) */
 .compact-add-page-card {
-  background: #fdfefe;
-  border: 1.5px dashed #cbd5e1;
+  background: var(--color-surface);
+  border: 1.5px dashed var(--color-border-strong);
   border-radius: var(--radius-lg);
   cursor: pointer;
   display: flex;
@@ -452,7 +454,7 @@
 
 .compact-add-page-card:hover {
   border-color: var(--color-primary);
-  background-color: var(--color-brand-sky-light);
+  background-color: var(--color-primary-subtle);
   transform: translateY(-2px);
   box-shadow: var(--shadow-sm);
 }
@@ -909,32 +911,32 @@
   padding: 4px 10px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--color-border);
-  background-color: #ffffff;
+  background-color: var(--color-surface);
   color: var(--color-text);
   cursor: pointer;
   transition: all var(--transition-fast);
 }
 
 .cover-action-btn:hover {
-  background-color: #f1f5f9;
-  border-color: #cbd5e1;
+  background-color: var(--color-surface-hover);
+  border-color: var(--color-border-strong);
   color: var(--color-primary);
 }
 
 .cover-action-btn:focus-visible {
-  outline: 2px solid var(--color-brand-sky);
+  outline: 2px solid var(--color-border-focus);
   outline-offset: 1px;
 }
 
 .cover-action-btn.btn-reset-cover {
-  color: #b91c1c;
-  border-color: #fecaca;
-  background-color: #fff1f2;
+  color: var(--color-danger);
+  border-color: var(--color-danger-border);
+  background-color: var(--color-danger-soft);
 }
 
 .cover-action-btn.btn-reset-cover:hover {
-  background-color: #fee2e2;
-  border-color: #fca5a5;
+  background-color: rgba(239, 68, 68, 0.2);
+  border-color: var(--color-danger);
 }
 
 /* Template Bento Selector Grid in Settings Sidebar */
@@ -950,29 +952,29 @@
   align-items: center;
   gap: 12px;
   padding: 8px 10px;
-  border: 2px solid #e2e8f0;
+  border: 2px solid var(--color-border-subtle);
   border-radius: var(--radius-md);
-  background-color: #ffffff;
+  background-color: var(--color-surface);
   cursor: pointer;
   transition: all var(--transition-fast);
   user-select: none;
 }
 
 .template-card:hover {
-  border-color: #93c5fd;
-  background-color: #f8fafc;
+  border-color: var(--color-primary);
+  background-color: var(--color-surface-hover);
   transform: translateY(-1px);
 }
 
 .template-card:focus-visible {
-  outline: 2px solid var(--color-brand-sky);
+  outline: 2px solid var(--color-border-focus);
   outline-offset: 2px;
 }
 
 .template-card.is-active {
-  border-color: var(--color-primary, #0284c7);
-  background-color: #eff6ff;
-  box-shadow: 0 0 0 1px var(--color-primary, #0284c7);
+  border-color: var(--color-primary);
+  background-color: var(--color-primary-soft);
+  box-shadow: 0 0 0 1px var(--color-primary);
 }
 
 /* Miniature Template Previews */

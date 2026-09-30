@@ -12,6 +12,7 @@ import {
   clearStudentPhoto,
   updateWatermark
 } from './portfolio/portfolio-state.js';
+import { initTheme, getTheme, setTheme, toggleTheme, subscribeTheme } from './core/theme-manager.js';
 import { initStudentForm, clearAllFormValidationErrors, validateAndHighlightStudentForm } from './ui/student-form.js';
 import { initWorkspace } from './ui/workspace.js';
 import { initSettingsPanel } from './ui/settings-panel.js';
@@ -49,6 +50,9 @@ import {
 
 document.addEventListener('DOMContentLoaded', () => {
   console.info('🚀 Wangwon Portfolio v0.3.0 initialized (Student Information + Reactive App State)');
+
+  // Initialize Theme System (Light / Dark)
+  initTheme();
 
   // Initialize Student Form
   const studentForm = document.querySelector('#student-info-form');
@@ -136,6 +140,13 @@ document.addEventListener('DOMContentLoaded', () => {
     reorderImageByIndex,
     replaceStudentImage,
     duplicateStudentImage
+  };
+
+  window.__WANGWON_THEME_MANAGER__ = {
+    getTheme,
+    setTheme,
+    toggleTheme,
+    subscribeTheme
   };
 
   import('./portfolio/cover-manager.js').then((m) => {

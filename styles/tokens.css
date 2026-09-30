@@ -4,13 +4,10 @@
  * Soft, calm, teacher-friendly, accessible palette designed for a primary school context.
  */
 
-:root {
+:root,
+[data-theme="light"] {
   /* ========================================================================
-     Color Tokens
-     ======================================================================== */
-
-  /* ========================================================================
-     Color Tokens - Wangwon Soft Workspace
+     Color Tokens - Light Mode (Wangwon Soft Workspace)
      ======================================================================== */
 
   /* Primary: Soft School Blue / Sky Blue */
@@ -72,75 +69,164 @@
   --color-info-soft: #f0f9ff;
   --color-info-border: #bae6fd;
 
-  /* ========================================================================
-     Typography Tokens
-     ======================================================================== */
+  /* Component specifics */
+  --header-bg: linear-gradient(180deg, #f0f7ff 0%, #faf8f5 100%);
+  --header-border: #e2e8f0;
+  --intro-bg: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%);
+  --intro-border: #bfdbfe;
+  --action-toolbar-bg: rgba(255, 255, 255, 0.98);
+  --action-toolbar-border: #e2e8f0;
+  --footer-border: #f1f5f9;
+  --footer-text: #94a3b8;
+  --input-bg: #ffffff;
+  --input-border: #e2e8f0;
+  --card-bg: #ffffff;
+  --card-border: #e2e8f0;
 
-  /* Privacy-first font stack: Native Thai system fonts & fallback */
-  --font-family-thai: "Prompt", "Noto Sans Thai", "Sarabun", "Leelawadee UI", "Tahoma", system-ui, -apple-system, sans-serif;
-  --font-family-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-
-  /* Semantic Type Scale */
-  --font-size-xs: 0.75rem;    /* 12px - Badges, captions, small hints */
-  --font-size-sm: 0.875rem;   /* 14px - Labels, secondary text, button sm */
-  --font-size-md: 1rem;       /* 16px - Base body text, inputs */
-  --font-size-lg: 1.125rem;   /* 18px - Card titles, section subheadings */
-  --font-size-xl: 1.25rem;    /* 20px - Section titles */
-  --font-size-2xl: 1.5rem;    /* 24px - Page titles, brand title */
-  --font-size-3xl: 1.75rem;   /* 28px - Display titles */
-
-  /* Font Weights */
-  --font-weight-regular: 400;
-  --font-weight-medium: 500;
-  --font-weight-semibold: 600;
-  --font-weight-bold: 700;
-
-  /* Line Heights */
-  --line-height-tight: 1.25;
-  --line-height-base: 1.5;
-  --line-height-relaxed: 1.625;
-
-  /* ========================================================================
-     Spacing Tokens
-     ======================================================================== */
-  --space-1: 0.25rem;   /* 4px */
-  --space-2: 0.5rem;    /* 8px */
-  --space-3: 0.75rem;   /* 12px */
-  --space-4: 1rem;      /* 16px */
-  --space-5: 1.25rem;   /* 20px */
-  --space-6: 1.5rem;    /* 24px */
-  --space-8: 2rem;      /* 32px */
-  --space-10: 2.5rem;   /* 40px */
-  --space-12: 3rem;     /* 48px */
-
-  /* ========================================================================
-     Border Radius Tokens
-     ======================================================================== */
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 20px;
-  --radius-pill: 9999px;
-
-  /* ========================================================================
-     Elevation & Shadows (Subtle, non-muddy)
-     ======================================================================== */
+  /* Elevation & Shadows */
   --shadow-xs: 0 1px 2px 0 rgba(15, 23, 42, 0.04);
   --shadow-sm: 0 1px 3px 0 rgba(15, 23, 42, 0.08), 0 1px 2px -1px rgba(15, 23, 42, 0.04);
   --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.08), 0 2px 4px -2px rgba(15, 23, 42, 0.04);
   --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.03);
   --shadow-modal: 0 20px 25px -5px rgba(15, 23, 42, 0.12), 0 8px 10px -6px rgba(15, 23, 42, 0.08);
 
-  /* ========================================================================
-     Transitions & Motion Tokens
-     ======================================================================== */
+  /* Typography Tokens */
+  --font-family-thai: "Prompt", "Noto Sans Thai", "Sarabun", "Leelawadee UI", "Tahoma", system-ui, -apple-system, sans-serif;
+  --font-family-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  --font-size-xs: 0.75rem;    /* 12px */
+  --font-size-sm: 0.875rem;   /* 14px */
+  --font-size-md: 1rem;       /* 16px */
+  --font-size-lg: 1.125rem;   /* 18px */
+  --font-size-xl: 1.25rem;    /* 20px */
+  --font-size-2xl: 1.5rem;    /* 24px */
+  --font-size-3xl: 1.75rem;   /* 28px */
+
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  --line-height-tight: 1.25;
+  --line-height-base: 1.5;
+  --line-height-relaxed: 1.625;
+
+  /* Spacing Tokens */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+
+  /* Border Radius Tokens */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-pill: 9999px;
+  --radius-circle: 50%;
+
+  /* Transitions & Motion */
   --duration-fast: 150ms;
   --duration-base: 200ms;
   --duration-slow: 300ms;
   --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
   --transition-fast: var(--duration-fast) var(--ease-standard);
   --transition-base: var(--duration-base) var(--ease-standard);
+  --theme-transition: background-color var(--duration-base) var(--ease-standard),
+                      color var(--duration-base) var(--ease-standard),
+                      border-color var(--duration-base) var(--ease-standard),
+                      box-shadow var(--duration-base) var(--ease-standard);
 
   /* Touch Target Standards */
   --target-min-height: 44px;
+}
+
+/* ========================================================================
+   Color Tokens - Dark Mode (Soft Navy / Charcoal Workspace)
+   ======================================================================== */
+[data-theme="dark"] {
+  /* Primary: Accessible Light Sky Blue for Dark Surfaces */
+  --color-primary: #38bdf8;            /* Accessible bright sky against dark */
+  --color-primary-hover: #7dd3fc;
+  --color-primary-active: #0284c7;
+  --color-primary-soft: rgba(56, 189, 248, 0.16);
+  --color-primary-subtle: rgba(56, 189, 248, 0.08);
+
+  /* School Brand Specific Palette in Dark Mode */
+  --color-brand-navy: #93c5fd;         /* Readable sky-blue heading */
+  --color-brand-blue: #60a5fa;
+  --color-brand-sky: rgba(56, 189, 248, 0.15);
+  --color-brand-sky-light: rgba(56, 189, 248, 0.08);
+  --color-brand-yellow: #fde047;
+  --color-brand-yellow-soft: rgba(253, 224, 71, 0.15);
+  --color-brand-pink: #fb7185;
+  --color-brand-pink-soft: rgba(251, 113, 133, 0.16);
+  --color-brand-pink-subtle: rgba(251, 113, 133, 0.08);
+
+  /* Secondary / Accent */
+  --color-accent: #fbbf24;
+  --color-accent-hover: #f59e0b;
+  --color-accent-soft: rgba(251, 191, 36, 0.16);
+
+  /* Surfaces & Backgrounds - Dark Soft Navy */
+  --color-bg: #0f172a;                 /* Slate 900 background */
+  --color-bg-soft: #141e33;
+  --color-surface: #1e293b;            /* Slate 800 raised card surface */
+  --color-surface-alt: #0f172a;        /* Slate 900 secondary surface */
+  --color-surface-hover: #334155;
+
+  /* Typography Colors */
+  --color-text: #f8fafc;               /* Slate 50 high-contrast */
+  --color-text-soft: #cbd5e1;          /* Slate 300 body */
+  --color-text-muted: #94a3b8;         /* Slate 400 helper/captions */
+  --color-text-inverse: #0f172a;       /* Dark text on light button/accent */
+
+  /* Borders & Dividers */
+  --color-border: rgba(148, 163, 184, 0.15);
+  --color-border-subtle: rgba(148, 163, 184, 0.25);
+  --color-border-strong: rgba(148, 163, 184, 0.4);
+  --color-border-focus: #38bdf8;       /* Vibrant accessible sky focus */
+
+  /* Semantic Feedback Colors */
+  --color-success: #4ade80;
+  --color-success-soft: rgba(74, 222, 128, 0.14);
+  --color-success-border: rgba(74, 222, 128, 0.35);
+
+  --color-warning: #fbbf24;
+  --color-warning-soft: rgba(251, 191, 36, 0.14);
+  --color-warning-border: rgba(251, 191, 36, 0.35);
+
+  --color-danger: #f87171;
+  --color-danger-soft: rgba(248, 113, 113, 0.16);
+  --color-danger-border: rgba(248, 113, 113, 0.35);
+
+  --color-info: #38bdf8;
+  --color-info-soft: rgba(56, 189, 248, 0.14);
+  --color-info-border: rgba(56, 189, 248, 0.35);
+
+  /* Component specifics */
+  --header-bg: linear-gradient(180deg, #111c33 0%, #0f172a 100%);
+  --header-border: rgba(148, 163, 184, 0.2);
+  --intro-bg: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%);
+  --intro-border: rgba(56, 189, 248, 0.3);
+  --action-toolbar-bg: rgba(15, 23, 42, 0.95);
+  --action-toolbar-border: rgba(148, 163, 184, 0.2);
+  --footer-border: rgba(148, 163, 184, 0.15);
+  --footer-text: #64748b;
+  --input-bg: #1e293b;
+  --input-border: rgba(148, 163, 184, 0.3);
+  --card-bg: #1e293b;
+  --card-border: rgba(148, 163, 184, 0.25);
+
+  /* Elevation & Shadows */
+  --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.4), 0 1px 2px -1px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.55), 0 4px 6px -4px rgba(0, 0, 0, 0.3);
+  --shadow-modal: 0 20px 25px -5px rgba(0, 0, 0, 0.7), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
 }

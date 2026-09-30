@@ -40,9 +40,9 @@
 .form-select {
   height: var(--target-min-height);
   padding: 0 var(--space-3);
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--input-border);
   border-radius: var(--radius-md);
-  background-color: var(--color-surface);
+  background-color: var(--input-bg);
   font-size: var(--font-size-sm);
   color: var(--color-text);
   line-height: normal;
@@ -58,7 +58,7 @@
 .form-input:focus,
 .form-select:focus {
   border-color: var(--color-border-focus);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
   outline: none;
 }
 
@@ -71,12 +71,12 @@
 .form-select.is-invalid,
 .form-input:invalid:not(:placeholder-shown) {
   border-color: var(--color-danger);
-  background-color: #fffbfa;
+  background-color: var(--color-danger-soft);
 }
 
 .form-input.is-invalid:focus,
 .form-select.is-invalid:focus {
-  box-shadow: 0 0 0 3px rgba(185, 28, 28, 0.15);
+  box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.25);
 }
 
 .form-error-msg {
@@ -259,7 +259,7 @@
   aspect-ratio: 4/5;
   border-radius: var(--radius-lg);
   border: 1.5px dashed var(--color-border-strong, #cbd5e1);
-  background-color: #f8fafc;
+  background-color: var(--color-surface-alt);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -367,8 +367,8 @@
   align-items: center;
   justify-content: space-between;
   padding: var(--space-4) var(--space-5);
-  background-color: var(--color-brand-sky-light);
-  border: 1px solid #bfdbfe;
+  background-color: var(--color-primary-subtle);
+  border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-lg);
   gap: var(--space-4);
   box-shadow: var(--shadow-xs);
@@ -385,12 +385,12 @@
   height: 60px;
   border-radius: var(--radius-sm);
   overflow: hidden;
-  background-color: #e2e8f0;
+  background-color: var(--color-surface-alt);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--color-border-strong);
 }
 
 .summary-photo-img {

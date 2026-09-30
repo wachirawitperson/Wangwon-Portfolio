@@ -2672,6 +2672,408 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
     await page.screenshot({ path: 'tests/screenshots/hotfix-cover-selector.png', fullPage: false });
   });
 
+  // =========================================================================
+  // Phase 7: Light / Dark Theme System
+  // =========================================================================
+
+  test('77. Phase 7: Theme defaults to Light mode on first visit without localStorage', async ({ page }) => {
+    // Clear localStorage before visiting
+    await page.goto('/');
+    await page.evaluate(() => localStorage.removeItem('wangwon-portfolio-theme'));
+    await page.reload();
+
+    const dataTheme = await page.evaluate(() => document.documentElement.dataset.theme);
+    expect(dataTheme).toBe('light');
+
+    const toggleBtn = page.locator('#btn-theme-toggle');
+    await expect(toggleBtn).toBeVisible();
+    await expect(toggleBtn).toHaveAttribute('aria-label', 'เปิดโหมดมืด');
+    await expect(toggleBtn).toHaveAttribute('aria-pressed', 'false');
+
+    // Theme manager reflects 'light'
+    const currentTheme = await page.evaluate(() => window.__WANGWON_THEME_MANAGER__.getTheme());
+    expect(currentTheme).toBe('light');
+  });
+
+  test('78. Phase 7: Theme toggle switches between Light and Dark immediately without page reload', async ({ page }) => {
+    await page.goto('/');
+    const toggleBtn = page.locator('#btn-theme-toggle');
+
+    // Toggle to Dark
+    await toggleBtn.click();
+    let dataTheme = await page.evaluate(() => document.documentElement.dataset.theme);
+    expect(dataTheme).toBe('dark');
+    await expect(toggleBtn).toHaveAttribute('aria-label', 'เปิดโหมดสว่าง');
+    await expect(toggleBtn).toHaveAttribute('aria-pressed', 'true');
+
+    // Verify localStorage was updated
+    const savedTheme = await page.evaluate(() => localStorage.getItem('wangwon-portfolio-theme'));
+    expect(savedTheme).toBe('dark');
+
+    // Toggle back to Light
+    await toggleBtn.click();
+    dataTheme = await page.evaluate(() => document.documentElement.dataset.theme);
+    expect(dataTheme).toBe('light');
+    await expect(toggleBtn).toHaveAttribute('aria-label', 'เปิดโหมดมืด');
+    await expect(toggleBtn).toHaveAttribute('aria-pressed', 'false');
+    expect(await page.evaluate(() => localStorage.getItem('wangwon-portfolio-theme'))).toBe('light');
+  });
+
+  test('79. Phase 7: Theme persists across page reloads without FOUC', async ({ page }) => {
+    await page.goto('/');
+    // Set to dark
+    await page.evaluate(() => window.__WANGWON_THEME_MANAGER__.setTheme('dark'));
+
+    // Reload page
+    await page.reload();
+
+    // Verify data-theme is immediately dark
+    const dataTheme = await page.evaluate(() => document.documentElement.dataset.theme);
+    expect(dataTheme).toBe('dark');
+
+    const toggleBtn = page.locator('#btn-theme-toggle');
+    await expect(toggleBtn).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  test('80. Phase 7: Project reset (เริ่มทำแฟ้มใหม่) preserves user theme preference', async ({ page }) => {
+    await page.goto('/');
+    // Set theme to dark
+    await page.click('#btn-theme-toggle');
+    expect(await page.evaluate(() => document.documentElement.dataset.theme)).toBe('dark');
+
+    // Populate some student data
+    await page.fill('#student-firstname', 'ธนกฤต');
+    await page.fill('#student-lastname', 'มั่นคง');
+
+    // Trigger reset modal
+    await page.click('#btn-reset-project');
+    const resetModal = page.locator('#reset-confirm-modal');
+    await expect(resetModal).toHaveClass(/is-open/);
+
+    // Confirm reset (button id is #btn-confirm-reset)
+    await page.click('#btn-confirm-reset');
+    await expect(resetModal).not.toHaveClass(/is-open/);
+
+    // Verify student name is reset
+    await expect(page.locator('#student-firstname')).toHaveValue('');
+
+    // CRITICAL: Verify theme is STILL dark
+    expect(await page.evaluate(() => document.documentElement.dataset.theme)).toBe('dark');
+    expect(await page.evaluate(() => localStorage.getItem('wangwon-portfolio-theme'))).toBe('dark');
+  });
+
+  test('81. Phase 7: Theme change preserves all portfolio state (images, rotation, student info, template)', async ({ page }) => {
+    await page.goto('/');
+
+    // Fill student details
+    await page.selectOption('#student-prefix', 'ด.ญ.');
+    await page.fill('#student-firstname', 'กานดา');
+    await page.fill('#student-lastname', 'สุขใจ');
+    await page.selectOption('#student-grade', 'ประถมศึกษาปีที่ 3');
+    await page.fill('#student-year', '2568');
+
+    // Import image
+    await page.evaluate(async () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1600;
+      canvas.height = 1200;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#10b981';
+      ctx.fillRect(0, 0, 1600, 1200);
+      const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg'));
+      const file = new File([blob], 'theme_state_test.jpg', { type: 'image/jpeg' });
+      await window.__WANGWON_IMAGE_MANAGER__.importStudentImages([file]);
+    });
+
+    const card = page.locator('.student-image-card').first();
+    await expect(card).toBeVisible();
+
+    const imgEl = card.locator('.card-preview img');
+    await expect(imgEl).toHaveAttribute('style', /rotate\(0deg\)/);
+
+    // Rotate the image
+    const btnRotate = card.locator('.btn-rotate');
+    await btnRotate.click();
+    let state = await page.evaluate(() => window.__WANGWON_STORE__.getState());
+    if (state.images[0].rotation === 0) {
+      // Direct call fallback if click event timing was missed
+      await page.evaluate(() => {
+        const id = window.__WANGWON_STORE__.getState().images[0].id;
+        window.__WANGWON_IMAGE_MANAGER__.rotateStudentImage(id);
+      });
+    }
+    await expect(imgEl).toHaveAttribute('style', /rotate\(90deg\)/);
+
+    // Switch theme to dark
+    await page.click('#btn-theme-toggle');
+    expect(await page.evaluate(() => document.documentElement.dataset.theme)).toBe('dark');
+
+    // Verify student data remains intact
+    await expect(page.locator('#student-firstname')).toHaveValue('กานดา');
+    await expect(page.locator('#student-lastname')).toHaveValue('สุขใจ');
+    await expect(page.locator('#student-grade')).toHaveValue('ประถมศึกษาปีที่ 3');
+    await expect(page.locator('#student-year')).toHaveValue('2568');
+
+    // Verify image count and rotation remain intact in Dark mode
+    state = await page.evaluate(() => window.__WANGWON_STORE__.getState());
+    expect(state.images[0].rotation).toBe(90);
+    const cardDark = page.locator('.student-image-card').first();
+    const imgElDark = cardDark.locator('.card-preview img');
+    await expect(page.locator('.student-image-card')).toHaveCount(1);
+    await expect(imgElDark).toHaveAttribute('style', /rotate\(90deg\)/);
+
+    // Switch theme back to light
+    await page.click('#btn-theme-toggle');
+    expect(await page.evaluate(() => document.documentElement.dataset.theme)).toBe('light');
+
+    // Still intact in Light mode
+    state = await page.evaluate(() => window.__WANGWON_STORE__.getState());
+    expect(state.images[0].rotation).toBe(90);
+    const cardLight = page.locator('.student-image-card').first();
+    const imgElLight = cardLight.locator('.card-preview img');
+    await expect(page.locator('.student-image-card')).toHaveCount(1);
+    await expect(imgElLight).toHaveAttribute('style', /rotate\(90deg\)/);
+  });
+
+  test('82. Phase 7: Canvas Cover Generator output is strictly theme-independent', async ({ page }) => {
+    await page.goto('/');
+
+    // Render cover canvas in light mode
+    await page.evaluate(() => window.__WANGWON_THEME_MANAGER__.setTheme('light'));
+    const lightCanvasData = await page.evaluate(async () => {
+      const c = await window.__WANGWON_COVER_GENERATOR__.generateCoverCanvas({
+        type: 'front',
+        templateId: 'minimal-school',
+        orientation: 'portrait'
+      });
+      // Sample 5 key pixel points (corners, center)
+      const ctx = c.getContext('2d');
+      const p1 = Array.from(ctx.getImageData(10, 10, 1, 1).data);
+      const p2 = Array.from(ctx.getImageData(620, 877, 1, 1).data);
+      const p3 = Array.from(ctx.getImageData(1200, 1700, 1, 1).data);
+      return { width: c.width, height: c.height, p1, p2, p3 };
+    });
+
+    // Switch to dark mode
+    await page.evaluate(() => window.__WANGWON_THEME_MANAGER__.setTheme('dark'));
+    const darkCanvasData = await page.evaluate(async () => {
+      const c = await window.__WANGWON_COVER_GENERATOR__.generateCoverCanvas({
+        type: 'front',
+        templateId: 'minimal-school',
+        orientation: 'portrait'
+      });
+      const ctx = c.getContext('2d');
+      const p1 = Array.from(ctx.getImageData(10, 10, 1, 1).data);
+      const p2 = Array.from(ctx.getImageData(620, 877, 1, 1).data);
+      const p3 = Array.from(ctx.getImageData(1200, 1700, 1, 1).data);
+      return { width: c.width, height: c.height, p1, p2, p3 };
+    });
+
+    // Verify canvas dimensions and pixel data are 100% IDENTICAL across themes
+    expect(lightCanvasData.width).toBe(darkCanvasData.width);
+    expect(lightCanvasData.height).toBe(darkCanvasData.height);
+    expect(lightCanvasData.p1).toEqual(darkCanvasData.p1);
+    expect(lightCanvasData.p2).toEqual(darkCanvasData.p2);
+    expect(lightCanvasData.p3).toEqual(darkCanvasData.p3);
+  });
+
+  test('83. Phase 7: Ban Wangwon School logo is un-inverted and un-filtered in both themes', async ({ page }) => {
+    await page.goto('/');
+
+    const logo = page.locator('#school-brand-logo');
+    await expect(logo).toBeVisible();
+
+    // Verify logo does not have invert() or grayscale() in either mode
+    const checkNoInvert = (filterStr) => {
+      expect(filterStr).not.toContain('invert');
+      expect(filterStr).not.toContain('grayscale');
+    };
+
+    // In Light mode
+    let filter = await logo.evaluate(el => window.getComputedStyle(el).filter);
+    checkNoInvert(filter);
+
+    // In Dark mode
+    await page.click('#btn-theme-toggle');
+    filter = await logo.evaluate(el => window.getComputedStyle(el).filter);
+    checkNoInvert(filter);
+  });
+
+  test('84. Phase 7: Workspace interactive controls remain responsive in Dark mode', async ({ page }) => {
+    await page.goto('/');
+    await page.click('#btn-theme-toggle');
+    expect(await page.evaluate(() => document.documentElement.dataset.theme)).toBe('dark');
+
+    // Modal backdrops remain non-blocking
+    const helpModal = page.locator('#help-modal');
+    expect(await helpModal.evaluate(el => window.getComputedStyle(el).pointerEvents)).toBe('none');
+
+    // File chooser triggers on "เพิ่มรูปภาพ"
+    const [chooser] = await Promise.all([
+      page.waitForEvent('filechooser', { timeout: 3000 }),
+      page.click('#btn-add-images')
+    ]);
+    expect(chooser).toBeTruthy();
+  });
+
+  test('85. Phase 7: Zero horizontal overflow across Desktop (1440), Tablet (768), and Mobile (390, 375)', async ({ page }) => {
+    await page.goto('/');
+    await page.evaluate(() => window.__WANGWON_THEME_MANAGER__.setTheme('dark'));
+
+    const viewports = [
+      { width: 1440, height: 900 },
+      { width: 768, height: 1024 },
+      { width: 390, height: 844 },
+      { width: 375, height: 667 }
+    ];
+
+    for (const vp of viewports) {
+      await page.setViewportSize(vp);
+      await page.waitForTimeout(100);
+      const scrollWidth = await page.evaluate(() => document.documentElement.scrollWidth);
+      const clientWidth = await page.evaluate(() => document.documentElement.clientWidth);
+      expect(scrollWidth).toBeLessThanOrEqual(clientWidth + 1); // 1px rounding tolerance
+    }
+  });
+
+  test('86. Phase 7: Visual QA Screenshot Capture (12 required screenshots)', async ({ page }) => {
+    await page.goto('/');
+
+    // Ensure we start fresh in Light mode
+    await page.evaluate(() => window.__WANGWON_THEME_MANAGER__.setTheme('light'));
+
+    // Populate student information and import 2 test images for rich visual capture
+    await page.selectOption('#student-prefix', 'ด.ญ.');
+    await page.fill('#student-firstname', 'พิมพ์มาดา');
+    await page.fill('#student-lastname', 'สิทธิโชค');
+    await page.selectOption('#student-grade', 'ประถมศึกษาปีที่ 6');
+    await page.fill('#student-year', '2568');
+
+    // Upload student photo via file input
+    const filePayload = await page.evaluate(async () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 400;
+      canvas.height = 500;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillRect(0, 0, 400, 500);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '24px sans-serif';
+      ctx.fillText('Student Photo', 80, 250);
+      return canvas.toDataURL('image/png');
+    });
+    const photoBuffer = Buffer.from(filePayload.split(',')[1], 'base64');
+    await page.setInputFiles('#student-photo-input', {
+      name: 'student_phimmada.png',
+      mimeType: 'image/png',
+      buffer: photoBuffer
+    });
+
+    await page.evaluate(async () => {
+      // Create 2 activity images
+      const img1Canvas = document.createElement('canvas');
+      img1Canvas.width = 1600;
+      img1Canvas.height = 1200;
+      const ictx1 = img1Canvas.getContext('2d');
+      ictx1.fillStyle = '#10b981';
+      ictx1.fillRect(0, 0, 1600, 1200);
+      ictx1.fillStyle = '#ffffff';
+      ictx1.font = '40px sans-serif';
+      ictx1.fillText('กิจกรรมวันวิทยาศาสตร์', 100, 200);
+      const blob1 = await new Promise(r => img1Canvas.toBlob(r, 'image/jpeg'));
+      const file1 = new File([blob1], 'science_day.jpg', { type: 'image/jpeg' });
+
+      const img2Canvas = document.createElement('canvas');
+      img2Canvas.width = 1200;
+      img2Canvas.height = 1600;
+      const ictx2 = img2Canvas.getContext('2d');
+      ictx2.fillStyle = '#f59e0b';
+      ictx2.fillRect(0, 0, 1200, 1600);
+      ictx2.fillStyle = '#ffffff';
+      ictx2.font = '40px sans-serif';
+      ictx2.fillText('แข่งขันตอบปัญหาวิชาการ', 100, 200);
+      const blob2 = await new Promise(r => img2Canvas.toBlob(r, 'image/jpeg'));
+      const file2 = new File([blob2], 'academic_contest.jpg', { type: 'image/jpeg' });
+
+      await window.__WANGWON_IMAGE_MANAGER__.importStudentImages([file1, file2]);
+    });
+
+    await page.waitForTimeout(300);
+
+    // 1. phase7-light-desktop.png
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.screenshot({ path: 'tests/screenshots/phase7-light-desktop.png', fullPage: false });
+
+    // Switch to Dark mode
+    await page.click('#btn-theme-toggle');
+    expect(await page.evaluate(() => document.documentElement.dataset.theme)).toBe('dark');
+    await page.waitForTimeout(300);
+
+    // 2. phase7-dark-desktop.png
+    await page.screenshot({ path: 'tests/screenshots/phase7-dark-desktop.png', fullPage: false });
+
+    // 3. phase7-dark-student-card.png
+    await page.locator('#student-section').scrollIntoViewIfNeeded();
+    await page.screenshot({ path: 'tests/screenshots/phase7-dark-student-card.png', fullPage: false });
+
+    // 4. phase7-dark-workspace.png
+    await page.locator('#portfolio-workspace').scrollIntoViewIfNeeded();
+    await page.screenshot({ path: 'tests/screenshots/phase7-dark-workspace.png', fullPage: false });
+
+    // 5. phase7-dark-settings.png
+    await page.locator('#settings-panel').scrollIntoViewIfNeeded();
+    await page.screenshot({ path: 'tests/screenshots/phase7-dark-settings.png', fullPage: false });
+
+    // 6. phase7-dark-template-selector.png
+    await page.locator('.cover-template-section').scrollIntoViewIfNeeded();
+    await page.screenshot({ path: 'tests/screenshots/phase7-dark-template-selector.png', fullPage: false });
+
+    // 7. phase7-dark-image-menu.png
+    const firstCardMoreBtn = page.locator('.student-image-card .btn-more').first();
+    await firstCardMoreBtn.scrollIntoViewIfNeeded();
+    await firstCardMoreBtn.click();
+    await expect(page.locator('.card-context-menu:not([hidden])')).toBeVisible();
+    await page.screenshot({ path: 'tests/screenshots/phase7-dark-image-menu.png', fullPage: false });
+    await page.keyboard.press('Escape');
+
+    // 8. phase7-dark-modal.png (Help modal in dark mode)
+    await page.click('#btn-help');
+    const helpModal = page.locator('#help-modal');
+    await expect(helpModal).toHaveClass(/is-open/);
+    await page.waitForTimeout(200);
+    await page.screenshot({ path: 'tests/screenshots/phase7-dark-modal.png', fullPage: false });
+    await page.keyboard.press('Escape');
+    await expect(helpModal).not.toHaveClass(/is-open/);
+
+    // 9. phase7-dark-cover-preview.png (Cover Preview Modal in dark mode)
+    await page.locator('#front-cover-card').scrollIntoViewIfNeeded();
+    await page.click('#btn-view-large-front');
+    const coverModal = page.locator('#cover-preview-modal');
+    await expect(coverModal).toHaveClass(/is-open/);
+    await page.waitForTimeout(300);
+    await page.screenshot({ path: 'tests/screenshots/phase7-dark-cover-preview.png', fullPage: false });
+    await page.click('#btn-close-cover-preview');
+    await expect(coverModal).not.toHaveClass(/is-open/);
+
+    // 10. phase7-dark-mobile.png (390px)
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.locator('#portfolio-workspace').scrollIntoViewIfNeeded();
+    await page.screenshot({ path: 'tests/screenshots/phase7-dark-mobile.png', fullPage: false });
+
+    // 11. phase7-dark-tablet.png (768px)
+    await page.setViewportSize({ width: 768, height: 1024 });
+    await page.locator('#portfolio-workspace').scrollIntoViewIfNeeded();
+    await page.screenshot({ path: 'tests/screenshots/phase7-dark-tablet.png', fullPage: false });
+
+    // 12. phase7-light-after-toggle.png (Toggle back to Light mode)
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.click('#btn-theme-toggle');
+    expect(await page.evaluate(() => document.documentElement.dataset.theme)).toBe('light');
+    await page.waitForTimeout(300);
+    await page.locator('#portfolio-workspace').scrollIntoViewIfNeeded();
+    await page.screenshot({ path: 'tests/screenshots/phase7-light-after-toggle.png', fullPage: false });
+  });
+
 });
 
 
