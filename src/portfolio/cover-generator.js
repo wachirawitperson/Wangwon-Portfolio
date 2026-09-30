@@ -706,9 +706,10 @@ export async function generateCoverCanvas(options = {}) {
   canvas.height = targetHeight;
   const ctx = canvas.getContext('2d');
 
-  const scaleFactor = targetWidth / baseWidth;
-  if (scaleFactor !== 1) {
-    ctx.scale(scaleFactor, scaleFactor);
+  const scaleX = targetWidth / baseWidth;
+  const scaleY = targetHeight / baseHeight;
+  if (scaleX !== 1 || scaleY !== 1) {
+    ctx.scale(scaleX, scaleY);
   }
 
   // Load required assets in parallel

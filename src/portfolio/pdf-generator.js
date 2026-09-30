@@ -19,23 +19,26 @@ import { loadWatermarkImage } from './watermark-renderer.js';
 import { generatePdfFilename } from '../core/filename-utils.js';
 import { getStudentDisplayName } from '../core/student-utils.js';
 
+// Primary loading path: Local ESM build of pdf-lib
+import * as PDFLibESM from '../../vendor/pdf-lib.esm.min.js';
+
 export { PDF_PAGE_POINTS };
 
 /**
- * Helper to retrieve the global PDFLib object.
- * Falls back to global window.PDFLib or self.PDFLib provided by vendor/pdf-lib.min.js.
+ * Helper to retrieve the PDFLib object.
+ * Uses the primary local ESM build, falling back to window.PDFLib if needed.
  */
 function getPdfLib() {
+  if (PDFLibESM && PDFLibESM.PDFDocument) {
+    return PDFLibESM;
+  }
   if (typeof window !== 'undefined' && window.PDFLib) {
     return window.PDFLib;
-  }
-  if (typeof self !== 'undefined' && self.PDFLib) {
-    return self.PDFLib;
   }
   if (typeof globalThis !== 'undefined' && globalThis.PDFLib) {
     return globalThis.PDFLib;
   }
-  throw new Error('PDFLib is not loaded. Please ensure vendor/pdf-lib.min.js is included.');
+  throw new Error('PDFLib is not loaded. Please ensure vendor/pdf-lib.esm.min.js is accessible.');
 }
 
 /**
@@ -99,6 +102,9 @@ export function downloadGeneratedPdf({ blob, filename }) {
 
 /**
  * Generates the complete Portfolio PDF document from projectState.
+ *
+ * Memory lifecycle: Sequentially renders each page, encodes it, embeds it into PDF,
+ * and releases temporary canvas resources before continuing to the next page.
  *
  * @param {object} projectState - Complete PortfolioProject state from store
  * @param {object} [options={}] - Options & callbacks
@@ -168,7 +174,7 @@ export async function generatePortfolioPdf(projectState, options = {}) {
   const totalPages = 1 + images.length + 1;
   let currentPageIndex = 0;
 
-  // Helper to embed and add a rendered canvas as a PDF page
+  // Helper to embed and add a rendered canvas as a PDF page, then release canvas memory
   async function addCanvasToPdf(canvas) {
     checkAborted();
     // Convert to high-efficiency JPEG bytes
@@ -185,7 +191,7 @@ export async function generatePortfolioPdf(projectState, options = {}) {
       height: pointDims.height
     });
 
-    // Explicitly release canvas memory
+    // Explicitly release canvas memory immediately
     canvas.width = 1;
     canvas.height = 1;
   }
@@ -223,14 +229,21 @@ export async function generatePortfolioPdf(projectState, options = {}) {
       `กำลังเรนเดอร์รูปผลงานที่ ${pageNum} จาก ${images.length}...`
     );
 
-    const activityCanvas = await renderActivityPageCanvas({
-      imageItem: images[i],
-      pageWidth: pixelDims.width,
-      pageHeight: pixelDims.height,
-      placement,
-      watermarkState: watermark,
-      watermarkImage: preloadedWatermarkImg
-    });
+    let activityCanvas;
+    try {
+      activityCanvas = await renderActivityPageCanvas({
+        imageItem: images[i],
+        pageWidth: pixelDims.width,
+        pageHeight: pixelDims.height,
+        placement,
+        watermarkState: watermark,
+        watermarkImage: preloadedWatermarkImg
+      });
+    } catch (pageErr) {
+      const imgName = images[i]?.file?.name || images[i]?.name || '';
+      const nameContext = imgName ? ` ("${imgName}")` : '';
+      throw new Error(`ไม่สามารถสร้าง PDF ได้ เนื่องจากรูปหน้า ${pageNum + 1}${nameContext} ไม่สามารถอ่านได้`);
+    }
 
     await addCanvasToPdf(activityCanvas);
   }
@@ -259,15 +272,14 @@ export async function generatePortfolioPdf(projectState, options = {}) {
   checkAborted();
   reportProgress('assembling', 90, totalPages, totalPages, 'กำลังใส่ข้อมูลเอกสารและประกอบไฟล์ PDF...');
 
-  const studentName = getStudentDisplayName(student);
-  const gradeText = student.grade ? ` ชั้น ${student.grade}` : '';
-  const title = `แฟ้มสะสมผลงาน (Portfolio) - ${studentName}${gradeText}`;
+  const studentFullName = getStudentDisplayName(student);
 
-  pdfDoc.setTitle(title);
+  // Strict approved metadata only
+  pdfDoc.setTitle(`Portfolio - ${studentFullName}`);
   pdfDoc.setAuthor('โรงเรียนบ้านวังวน');
-  pdfDoc.setSubject('แฟ้มสะสมผลงานนักเรียน โรงเรียนบ้านวังวน (Ban Wangwon School)');
-  pdfDoc.setCreator('Wangwon Portfolio (ระบบสร้าง Portfolio นักเรียน โรงเรียนบ้านวังวน)');
-  pdfDoc.setProducer('pdf-lib (https://github.com/Hopding/pdf-lib)');
+  pdfDoc.setSubject('แฟ้มสะสมผลงานนักเรียน');
+  pdfDoc.setCreator('Wangwon Portfolio');
+  pdfDoc.setProducer('pdf-lib');
   pdfDoc.setCreationDate(new Date());
   pdfDoc.setModificationDate(new Date());
 

@@ -4100,11 +4100,11 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
       };
     });
 
-    expect(meta.title).toContain('ด.ญ.พิมพ์มาดา สถิตย์');
-    expect(meta.title).toContain('ประถมศึกษาปีที่ 6');
+    expect(meta.title).toBe('Portfolio - ด.ญ.พิมพ์มาดา สถิตย์');
     expect(meta.author).toBe('โรงเรียนบ้านวังวน');
-    expect(meta.creator).toContain('Wangwon Portfolio');
-    expect(meta.subject).toContain('โรงเรียนบ้านวังวน');
+    expect(meta.subject).toBe('แฟ้มสะสมผลงานนักเรียน');
+    expect(meta.creator).toBe('Wangwon Portfolio');
+    expect(meta.producer).toContain('pdf-lib');
   });
 
   test('119. Phase 9: Thai filename sanitization produces valid download filename', async ({ page }) => {
@@ -4142,10 +4142,26 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
     await expect(successToast).toContainText('สร้างและดาวน์โหลดไฟล์');
   });
 
-  test('121. Phase 9: Error handling on aborted generation', async ({ page }) => {
+  test('121. Phase 9: Error handling on corrupted activity image and aborted generation', async ({ page }) => {
     await page.goto('/');
 
-    // Test AbortSignal cancellation
+    // 1. Test unreadable/corrupted activity image provides friendly error message with page context
+    const corruptImgResult = await page.evaluate(async () => {
+      const s = JSON.parse(JSON.stringify(window.__WANGWON_STORE__.getState()));
+      s.images = [
+        { id: 'bad-1', name: 'corrupted_drawing.jpg', previewUrl: 'blob:invalid-broken-url-not-exist' }
+      ];
+      try {
+        await window.__WANGWON_PDF_GENERATOR__.generatePortfolioPdf(s);
+        return { error: null };
+      } catch (err) {
+        return { error: err.message };
+      }
+    });
+
+    expect(corruptImgResult.error).toContain('ไม่สามารถสร้าง PDF ได้ เนื่องจากรูปหน้า 2 ("corrupted_drawing.jpg") ไม่สามารถอ่านได้');
+
+    // 2. Test AbortSignal cancellation
     const abortResult = await page.evaluate(async () => {
       const controller = new AbortController();
       controller.abort();
