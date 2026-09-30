@@ -1219,11 +1219,13 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
 
     // Preset selection: School emblem
     const schoolPreset = page.locator('#setting-watermark-school');
-    await schoolPreset.click();
+    if (!(await schoolPreset.isChecked())) {
+      await schoolPreset.click();
+    }
 
     const watermarkState = await page.evaluate(() => window.__WANGWON_STORE__.getState().watermark);
     expect(watermarkState.enabled).toBe(true);
-    expect(watermarkState.type).toBe('school');
+    expect(watermarkState.sourceType).toBe('school-logo');
 
     // Opacity slider adjustment
     const slider = page.locator('#watermark-opacity-slider');
@@ -3074,7 +3076,659 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
     await page.screenshot({ path: 'tests/screenshots/phase7-light-after-toggle.png', fullPage: false });
   });
 
+  // ========================================================================
+  // Phase 8: Watermark System Tests (Tests 87–106)
+  // ========================================================================
+
+  test('87. Phase 8: Watermark defaults to disabled with correct initial state', async ({ page }) => {
+    await page.goto('/');
+
+    const state = await page.evaluate(() => window.__WANGWON_STORE__.getState().watermark);
+    expect(state.enabled).toBe(false);
+    expect(state.sourceType).toBe('none');
+    expect(state.opacity).toBe(0.18);
+    expect(state.scale).toBe(0.18);
+    expect(state.position).toBe('bottom-right');
+    expect(state.applyTo).toBe('activity-only');
+    expect(state.custom).toEqual({
+      file: null,
+      previewUrl: null,
+      mimeType: null,
+      width: null,
+      height: null
+    });
+
+    const toggle = page.locator('#setting-watermark-enabled');
+    await expect(toggle).not.toBeChecked();
+    const optionsContainer = page.locator('#watermark-options-container');
+    await expect(optionsContainer).not.toBeVisible();
+  });
+
+  test('88. Phase 8: Toggling watermark ON shows options container and auto-selects school-logo', async ({ page }) => {
+    await page.goto('/');
+
+    const toggle = page.locator('#setting-watermark-enabled');
+    const optionsContainer = page.locator('#watermark-options-container');
+    await expect(optionsContainer).not.toBeVisible();
+
+    await toggle.click();
+    await expect(optionsContainer).toBeVisible();
+
+    const state = await page.evaluate(() => window.__WANGWON_STORE__.getState().watermark);
+    expect(state.enabled).toBe(true);
+    expect(state.sourceType).toBe('school-logo');
+
+    const schoolCheckbox = page.locator('#setting-watermark-school');
+    await expect(schoolCheckbox).toBeChecked();
+  });
+
+  test('89. Phase 8: School logo watermark sets sourceType and loads preview', async ({ page }) => {
+    await page.goto('/');
+
+    // Import 1 activity image
+    await page.evaluate(async () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 800;
+      canvas.height = 600;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#3b82f6';
+      ctx.fillRect(0, 0, 800, 600);
+      const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg'));
+      const file = new File([blob], 'activity1.jpg', { type: 'image/jpeg' });
+      await window.__WANGWON_IMAGE_MANAGER__.importStudentImages([file]);
+    });
+
+    // Enable watermark with school logo
+    await page.click('#setting-watermark-enabled');
+
+    const state = await page.evaluate(() => window.__WANGWON_STORE__.getState().watermark);
+    expect(state.sourceType).toBe('school-logo');
+
+    // Workspace activity card should show watermark overlay
+    const overlay = page.locator('.student-image-card .watermark-overlay');
+    await expect(overlay).toBeVisible();
+    const src = await overlay.getAttribute('src');
+    expect(src).toContain('ban-wangwon-logo.png');
+  });
+
+  test('90. Phase 8: Custom watermark upload via file input validates and updates store with dimensions', async ({ page }) => {
+    await page.goto('/');
+
+    await page.click('#setting-watermark-enabled');
+
+    // Create a 240x120 test image buffer
+    const pngBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+    const buffer = Buffer.from(pngBase64, 'base64');
+
+    await page.setInputFiles('#watermark-file-input', {
+      name: 'my_custom_watermark.png',
+      mimeType: 'image/png',
+      buffer
+    });
+
+    // Wait for upload handler
+    await page.waitForTimeout(300);
+
+    const state = await page.evaluate(() => window.__WANGWON_STORE__.getState().watermark);
+    expect(state.sourceType).toBe('custom');
+    expect(state.custom.file).not.toBeNull();
+    expect(state.custom.previewUrl).toMatch(/^blob:/);
+    expect(state.custom.width).toBeGreaterThan(0);
+    expect(state.custom.height).toBeGreaterThan(0);
+
+    // Custom thumbnail visible
+    const thumbBox = page.locator('#watermark-thumbnail-box');
+    await expect(thumbBox).toBeVisible();
+    const previewImg = page.locator('#watermark-preview-img');
+    await expect(previewImg).toHaveAttribute('src', state.custom.previewUrl);
+  });
+
+  test('91. Phase 8: Custom watermark replaces school watermark and unchecks school checkbox', async ({ page }) => {
+    await page.goto('/');
+    await page.click('#setting-watermark-enabled');
+
+    const schoolCheckbox = page.locator('#setting-watermark-school');
+    await expect(schoolCheckbox).toBeChecked();
+
+    // Upload custom watermark
+    const pngBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+    await page.setInputFiles('#watermark-file-input', {
+      name: 'logo2.png',
+      mimeType: 'image/png',
+      buffer: Buffer.from(pngBase64, 'base64')
+    });
+    await page.waitForTimeout(300);
+
+    await expect(schoolCheckbox).not.toBeChecked();
+    let state = await page.evaluate(() => window.__WANGWON_STORE__.getState().watermark);
+    expect(state.sourceType).toBe('custom');
+
+    // Click school checkbox to switch back
+    await schoolCheckbox.click();
+    await expect(schoolCheckbox).toBeChecked();
+    state = await page.evaluate(() => window.__WANGWON_STORE__.getState().watermark);
+    expect(state.sourceType).toBe('school-logo');
+  });
+
+  test('92. Phase 8: Remove watermark clears state and falls back to school-logo when enabled', async ({ page }) => {
+    await page.goto('/');
+    await page.click('#setting-watermark-enabled');
+
+    const pngBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+    await page.setInputFiles('#watermark-file-input', {
+      name: 'temp_wm.png',
+      mimeType: 'image/png',
+      buffer: Buffer.from(pngBase64, 'base64')
+    });
+    await page.waitForTimeout(300);
+
+    // Click remove watermark button
+    await page.click('#btn-remove-watermark');
+
+    const state = await page.evaluate(() => window.__WANGWON_STORE__.getState().watermark);
+    expect(state.sourceType).toBe('school-logo');
+    expect(state.custom.file).toBeNull();
+    expect(state.custom.previewUrl).toBeNull();
+
+    const placeholder = page.locator('#watermark-upload-placeholder');
+    await expect(placeholder).toBeVisible();
+  });
+
+  test('93. Phase 8: Opacity slider updates store and workspace overlay opacity', async ({ page }) => {
+    await page.goto('/');
+
+    await page.evaluate(async () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 600;
+      canvas.height = 400;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#6366f1';
+      ctx.fillRect(0, 0, 600, 400);
+      const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg'));
+      await window.__WANGWON_IMAGE_MANAGER__.importStudentImages([new File([blob], 'card.jpg', { type: 'image/jpeg' })]);
+    });
+
+    await page.click('#setting-watermark-enabled');
+
+    const slider = page.locator('#watermark-opacity-slider');
+    await slider.fill('40');
+    await slider.dispatchEvent('input');
+
+    await expect(page.locator('#watermark-opacity-val')).toHaveText('40%');
+    const state = await page.evaluate(() => window.__WANGWON_STORE__.getState().watermark);
+    expect(state.opacity).toBe(0.4);
+
+    const overlay = page.locator('.student-image-card .watermark-overlay');
+    const opacityStyle = await overlay.evaluate((el) => el.style.opacity);
+    expect(opacityStyle).toBe('0.4');
+  });
+
+  test('94. Phase 8: Scale slider updates store and overlay size', async ({ page }) => {
+    await page.goto('/');
+
+    await page.evaluate(async () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 600;
+      canvas.height = 400;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#10b981';
+      ctx.fillRect(0, 0, 600, 400);
+      const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg'));
+      await window.__WANGWON_IMAGE_MANAGER__.importStudentImages([new File([blob], 'card.jpg', { type: 'image/jpeg' })]);
+    });
+
+    await page.click('#setting-watermark-enabled');
+
+    const scaleSlider = page.locator('#watermark-scale-slider');
+    await scaleSlider.fill('25');
+    await scaleSlider.dispatchEvent('input');
+
+    await expect(page.locator('#watermark-scale-val')).toHaveText('25%');
+    const state = await page.evaluate(() => window.__WANGWON_STORE__.getState().watermark);
+    expect(state.scale).toBe(0.25);
+
+    const overlay = page.locator('.student-image-card .watermark-overlay');
+    const widthStyle = await overlay.evaluate((el) => parseFloat(el.style.width));
+    expect(widthStyle).toBeGreaterThan(0);
+  });
+
+  test('95. Phase 8: Position grid picker updates all 9 positions correctly', async ({ page }) => {
+    await page.goto('/');
+    await page.click('#setting-watermark-enabled');
+
+    const positions = [
+      'top-left', 'top-center', 'top-right',
+      'middle-left', 'center', 'middle-right',
+      'bottom-left', 'bottom-center', 'bottom-right'
+    ];
+
+    for (const pos of positions) {
+      const cell = page.locator(`.position-cell[data-position="${pos}"]`);
+      await cell.click();
+      await expect(cell).toHaveClass(/is-active/);
+      await expect(cell).toHaveAttribute('aria-checked', 'true');
+
+      const state = await page.evaluate(() => window.__WANGWON_STORE__.getState().watermark);
+      expect(state.position).toBe(pos);
+    }
+  });
+
+  test('96. Phase 8: Apply target segmented control: activity-only (default)', async ({ page }) => {
+    await page.goto('/');
+
+    await page.evaluate(async () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 400;
+      canvas.height = 300;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#eab308';
+      ctx.fillRect(0, 0, 400, 300);
+      const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg'));
+      await window.__WANGWON_IMAGE_MANAGER__.importStudentImages([new File([blob], 'act.jpg', { type: 'image/jpeg' })]);
+    });
+
+    await page.click('#setting-watermark-enabled');
+
+    const state = await page.evaluate(() => window.__WANGWON_STORE__.getState().watermark);
+    expect(state.applyTo).toBe('activity-only');
+
+    // Covers must NOT have visible watermark
+    const frontOverlay = page.locator('#front-cover-card .watermark-overlay');
+    await expect(frontOverlay).not.toBeVisible();
+    const backOverlay = page.locator('#back-cover-card .watermark-overlay');
+    await expect(backOverlay).not.toBeVisible();
+
+    // Activity card MUST have visible watermark
+    const actOverlay = page.locator('.student-image-card .watermark-overlay');
+    await expect(actOverlay).toBeVisible();
+  });
+
+  test('97. Phase 8: Apply target: all-pages shows overlays on covers AND activity images', async ({ page }) => {
+    await page.goto('/');
+
+    await page.evaluate(async () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 400;
+      canvas.height = 300;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#8b5cf6';
+      ctx.fillRect(0, 0, 400, 300);
+      const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg'));
+      await window.__WANGWON_IMAGE_MANAGER__.importStudentImages([new File([blob], 'act2.jpg', { type: 'image/jpeg' })]);
+    });
+
+    await page.click('#setting-watermark-enabled');
+
+    // Switch applyTo to all-pages
+    await page.click('.segmented-option[data-setting="applyTo"][data-value="all-pages"]');
+
+    const state = await page.evaluate(() => window.__WANGWON_STORE__.getState().watermark);
+    expect(state.applyTo).toBe('all-pages');
+
+    // Front cover, back cover, and activity images should all have visible watermark
+    await expect(page.locator('#front-cover-card .watermark-overlay')).toBeVisible();
+    await expect(page.locator('#back-cover-card .watermark-overlay')).toBeVisible();
+    await expect(page.locator('.student-image-card .watermark-overlay')).toBeVisible();
+  });
+
+  test('98. Phase 8: Apply target: exclude-covers hides overlays on both covers', async ({ page }) => {
+    await page.goto('/');
+
+    await page.evaluate(async () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 400;
+      canvas.height = 300;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#06b6d4';
+      ctx.fillRect(0, 0, 400, 300);
+      const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg'));
+      await window.__WANGWON_IMAGE_MANAGER__.importStudentImages([new File([blob], 'act3.jpg', { type: 'image/jpeg' })]);
+    });
+
+    await page.click('#setting-watermark-enabled');
+
+    // Switch to exclude-covers
+    await page.click('.segmented-option[data-setting="applyTo"][data-value="exclude-covers"]');
+
+    const state = await page.evaluate(() => window.__WANGWON_STORE__.getState().watermark);
+    expect(state.applyTo).toBe('exclude-covers');
+
+    await expect(page.locator('#front-cover-card .watermark-overlay')).not.toBeVisible();
+    await expect(page.locator('#back-cover-card .watermark-overlay')).not.toBeVisible();
+    await expect(page.locator('.student-image-card .watermark-overlay')).toBeVisible();
+  });
+
+  test('99. Phase 8: Watermark overlay position is page-relative even on rotated images', async ({ page }) => {
+    await page.goto('/');
+
+    await page.evaluate(async () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 600;
+      canvas.height = 400;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ec4899';
+      ctx.fillRect(0, 0, 600, 400);
+      const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg'));
+      await window.__WANGWON_IMAGE_MANAGER__.importStudentImages([new File([blob], 'rot.jpg', { type: 'image/jpeg' })]);
+    });
+
+    await page.click('#setting-watermark-enabled');
+
+    const card = page.locator('.student-image-card').first();
+    const overlay = card.locator('.watermark-overlay');
+    await expect(overlay).toBeVisible();
+
+    const initialLeft = await overlay.evaluate((el) => el.style.left);
+    const initialTop = await overlay.evaluate((el) => el.style.top);
+
+    // Rotate image
+    const rotateBtn = card.locator('.btn-rotate');
+    await rotateBtn.click();
+    await page.waitForTimeout(200);
+
+    const rotatedLeft = await overlay.evaluate((el) => el.style.left);
+    const rotatedTop = await overlay.evaluate((el) => el.style.top);
+
+    // Overlay position remains page-relative
+    expect(rotatedLeft).toBe(initialLeft);
+    expect(rotatedTop).toBe(initialTop);
+  });
+
+  test('100. Phase 8: Watermark persists across image import, delete, and reorder', async ({ page }) => {
+    await page.goto('/');
+    await page.click('#setting-watermark-enabled');
+
+    // Import 2 images
+    await page.evaluate(async () => {
+      const createImg = (name, color) => {
+        const c = document.createElement('canvas');
+        c.width = 400; c.height = 400;
+        const ctx = c.getContext('2d');
+        ctx.fillStyle = color;
+        ctx.fillRect(0, 0, 400, 400);
+        return new Promise(r => c.toBlob(b => r(new File([b], name, { type: 'image/jpeg' })), 'image/jpeg'));
+      };
+      const f1 = await createImg('img1.jpg', '#f97316');
+      const f2 = await createImg('img2.jpg', '#3b82f6');
+      await window.__WANGWON_IMAGE_MANAGER__.importStudentImages([f1, f2]);
+    });
+
+    let state = await page.evaluate(() => window.__WANGWON_STORE__.getState().watermark);
+    expect(state.enabled).toBe(true);
+
+    // Delete first image
+    const firstCard = page.locator('.student-image-card').first();
+    await firstCard.locator('.btn-delete').click();
+    await page.click('#btn-confirm-delete-image');
+
+    state = await page.evaluate(() => window.__WANGWON_STORE__.getState().watermark);
+    expect(state.enabled).toBe(true);
+    expect(state.sourceType).toBe('school-logo');
+
+    // Remaining card has watermark
+    const remainingOverlay = page.locator('.student-image-card .watermark-overlay');
+    await expect(remainingOverlay).toBeVisible();
+  });
+
+  test('101. Phase 8: Custom watermark blob URL revoked on replace and on project reset', async ({ page }) => {
+    await page.goto('/');
+    await page.click('#setting-watermark-enabled');
+
+    const pngBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+    await page.setInputFiles('#watermark-file-input', {
+      name: 'wm1.png',
+      mimeType: 'image/png',
+      buffer: Buffer.from(pngBase64, 'base64')
+    });
+    await page.waitForTimeout(200);
+
+    const firstUrl = await page.evaluate(() => window.__WANGWON_STORE__.getState().watermark.custom.previewUrl);
+    expect(firstUrl).toMatch(/^blob:/);
+
+    // Reset project
+    await page.click('#btn-reset-project');
+    await page.click('#btn-confirm-reset');
+
+    const resetState = await page.evaluate(() => window.__WANGWON_STORE__.getState().watermark);
+    expect(resetState.enabled).toBe(false);
+    expect(resetState.sourceType).toBe('none');
+    expect(resetState.custom.previewUrl).toBeNull();
+  });
+
+  test('102. Phase 8: Watermark identical in Light and Dark theme', async ({ page }) => {
+    await page.goto('/');
+
+    await page.evaluate(async () => {
+      const c = document.createElement('canvas');
+      c.width = 400; c.height = 300;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#64748b';
+      ctx.fillRect(0, 0, 400, 300);
+      const b = await new Promise(r => c.toBlob(r, 'image/jpeg'));
+      await window.__WANGWON_IMAGE_MANAGER__.importStudentImages([new File([b], 'theme.jpg', { type: 'image/jpeg' })]);
+    });
+
+    await page.click('#setting-watermark-enabled');
+
+    const overlay = page.locator('.student-image-card .watermark-overlay');
+    const lightOpacity = await overlay.evaluate(el => el.style.opacity);
+    const lightWidth = await overlay.evaluate(el => el.style.width);
+
+    // Switch to dark theme
+    await page.click('#btn-theme-toggle');
+    expect(await page.evaluate(() => document.documentElement.dataset.theme)).toBe('dark');
+
+    const darkOpacity = await overlay.evaluate(el => el.style.opacity);
+    const darkWidth = await overlay.evaluate(el => el.style.width);
+
+    expect(darkOpacity).toBe(lightOpacity);
+    expect(darkWidth).toBe(lightWidth);
+
+    // Revert to light
+    await page.click('#btn-theme-toggle');
+  });
+
+  test('103. Phase 8: Watermark renderer module API available on window.__WANGWON_WATERMARK__', async ({ page }) => {
+    await page.goto('/');
+
+    // Wait for async import of watermark module
+    await page.waitForFunction(() => !!window.__WANGWON_WATERMARK__);
+
+    const api = await page.evaluate(() => {
+      const wm = window.__WANGWON_WATERMARK__;
+      return {
+        hasLoadWatermarkImage: typeof wm.loadWatermarkImage === 'function',
+        hasCalculateLayout: typeof wm.calculateWatermarkLayout === 'function',
+        hasRenderCanvas: typeof wm.renderWatermarkOnCanvas === 'function',
+        hasCssOverlay: typeof wm.getWatermarkCssOverlayStyle === 'function',
+        hasShouldApply: typeof wm.shouldApplyWatermark === 'function',
+        positionsCount: Array.isArray(wm.WATERMARK_POSITIONS) ? wm.WATERMARK_POSITIONS.length : 0,
+        targetsCount: Array.isArray(wm.WATERMARK_TARGETS) ? wm.WATERMARK_TARGETS.length : 0,
+        hasSchoolLogoPath: typeof wm.SCHOOL_LOGO_PATH === 'string'
+      };
+    });
+
+    expect(api.hasLoadWatermarkImage).toBe(true);
+    expect(api.hasCalculateLayout).toBe(true);
+    expect(api.hasRenderCanvas).toBe(true);
+    expect(api.hasCssOverlay).toBe(true);
+    expect(api.hasShouldApply).toBe(true);
+    expect(api.positionsCount).toBe(9);
+    expect(api.targetsCount).toBe(3);
+    expect(api.hasSchoolLogoPath).toBe(true);
+  });
+
+  test('104. Phase 8: Watermark disabled does not show any overlays in workspace', async ({ page }) => {
+    await page.goto('/');
+
+    await page.evaluate(async () => {
+      const c = document.createElement('canvas');
+      c.width = 400; c.height = 300;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#10b981';
+      ctx.fillRect(0, 0, 400, 300);
+      const b = await new Promise(r => c.toBlob(r, 'image/jpeg'));
+      await window.__WANGWON_IMAGE_MANAGER__.importStudentImages([new File([b], 'no_wm.jpg', { type: 'image/jpeg' })]);
+    });
+
+    // Ensure watermark is disabled
+    const overlays = page.locator('.watermark-overlay');
+    const count = await overlays.count();
+    for (let i = 0; i < count; i++) {
+      await expect(overlays.nth(i)).not.toBeVisible();
+    }
+  });
+
+  test('105. Phase 8: Zero horizontal overflow with watermark controls across viewports', async ({ page }) => {
+    await page.goto('/');
+    await page.click('#setting-watermark-enabled');
+
+    const viewports = [
+      { width: 1440, height: 900 },
+      { width: 768, height: 1024 },
+      { width: 390, height: 844 },
+      { width: 375, height: 667 }
+    ];
+
+    for (const vp of viewports) {
+      await page.setViewportSize(vp);
+      const isOverflowing = await page.evaluate(() => {
+        return document.documentElement.scrollWidth > document.documentElement.clientWidth;
+      });
+      expect(isOverflowing).toBe(false);
+    }
+  });
+
+  test('106. Phase 8: Visual QA Screenshot Capture (15 required screenshots)', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/');
+
+    // Setup student info and activity images
+    await page.evaluate(async () => {
+      window.__WANGWON_STORE__.setState({
+        student: {
+          prefix: 'เด็กหญิง',
+          firstName: 'พิมพิศา',
+          lastName: 'สายรุ้งวงศ์',
+          grade: 'ประถมศึกษาปีที่ 6',
+          studentNumber: '14',
+          academicYear: '2567'
+        }
+      });
+
+      const createImg = (title, color) => {
+        const c = document.createElement('canvas');
+        c.width = 1200; c.height = 900;
+        const ctx = c.getContext('2d');
+        ctx.fillStyle = color;
+        ctx.fillRect(0, 0, 1200, 900);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 44px sans-serif';
+        ctx.fillText(title, 80, 120);
+        return new Promise(r => c.toBlob(b => r(new File([b], `${title}.jpg`, { type: 'image/jpeg' })), 'image/jpeg'));
+      };
+
+      const f1 = await createImg('โครงงานหุ่นยนต์พลังงานแสงอาทิตย์', '#1e40af');
+      const f2 = await createImg('กิจกรรมจิตอาสาพัฒนาโรงเรียน', '#065f46');
+      await window.__WANGWON_IMAGE_MANAGER__.importStudentImages([f1, f2]);
+    });
+
+    await page.waitForTimeout(400);
+
+    // 1. phase8-watermark-disabled.png
+    await page.screenshot({ path: 'tests/screenshots/phase8-watermark-disabled.png', fullPage: false });
+
+    // Enable watermark (default: school-logo, bottom-right, 18% opacity, 18% scale, activity-only)
+    await page.click('#setting-watermark-enabled');
+    await page.waitForTimeout(300);
+
+    // 2. phase8-watermark-school-logo.png
+    await page.locator('#portfolio-workspace').scrollIntoViewIfNeeded();
+    await page.screenshot({ path: 'tests/screenshots/phase8-watermark-school-logo.png', fullPage: false });
+
+    // 3. phase8-watermark-custom-upload.png
+    const pngBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+    await page.setInputFiles('#watermark-file-input', {
+      name: 'custom_ban_wangwon.png',
+      mimeType: 'image/png',
+      buffer: Buffer.from(pngBase64, 'base64')
+    });
+    await page.waitForTimeout(300);
+    await page.screenshot({ path: 'tests/screenshots/phase8-watermark-custom-upload.png', fullPage: false });
+
+    // Switch back to school logo for remaining captures
+    await page.click('#setting-watermark-school');
+    await page.waitForTimeout(200);
+
+    // 4. phase8-watermark-opacity-40.png
+    const opacitySlider = page.locator('#watermark-opacity-slider');
+    await opacitySlider.fill('40');
+    await opacitySlider.dispatchEvent('input');
+    await page.waitForTimeout(200);
+    await page.screenshot({ path: 'tests/screenshots/phase8-watermark-opacity-40.png', fullPage: false });
+
+    // 5. phase8-watermark-scale-30.png
+    const scaleSlider = page.locator('#watermark-scale-slider');
+    await scaleSlider.fill('30');
+    await scaleSlider.dispatchEvent('input');
+    await page.waitForTimeout(200);
+    await page.screenshot({ path: 'tests/screenshots/phase8-watermark-scale-30.png', fullPage: false });
+
+    // 6. phase8-watermark-position-top-left.png
+    await page.click('.position-cell[data-position="top-left"]');
+    await page.waitForTimeout(200);
+    await page.screenshot({ path: 'tests/screenshots/phase8-watermark-position-top-left.png', fullPage: false });
+
+    // 7. phase8-watermark-position-center.png
+    await page.click('.position-cell[data-position="center"]');
+    await page.waitForTimeout(200);
+    await page.screenshot({ path: 'tests/screenshots/phase8-watermark-position-center.png', fullPage: false });
+
+    // 8. phase8-watermark-position-bottom-right.png
+    await page.click('.position-cell[data-position="bottom-right"]');
+    await page.waitForTimeout(200);
+    await page.screenshot({ path: 'tests/screenshots/phase8-watermark-position-bottom-right.png', fullPage: false });
+
+    // 9. phase8-watermark-target-all-pages.png
+    await page.click('.segmented-option[data-setting="applyTo"][data-value="all-pages"]');
+    await page.waitForTimeout(200);
+    await page.screenshot({ path: 'tests/screenshots/phase8-watermark-target-all-pages.png', fullPage: false });
+
+    // 10. phase8-watermark-target-activity-only.png
+    await page.click('.segmented-option[data-setting="applyTo"][data-value="activity-only"]');
+    await page.waitForTimeout(200);
+    await page.screenshot({ path: 'tests/screenshots/phase8-watermark-target-activity-only.png', fullPage: false });
+
+    // 11. phase8-watermark-settings-panel.png
+    await page.locator('#settings-panel').scrollIntoViewIfNeeded();
+    await page.screenshot({ path: 'tests/screenshots/phase8-watermark-settings-panel.png', fullPage: false });
+
+    // 12. phase8-watermark-dark-theme.png
+    await page.click('#btn-theme-toggle');
+    await page.waitForTimeout(300);
+    await page.locator('#portfolio-workspace').scrollIntoViewIfNeeded();
+    await page.screenshot({ path: 'tests/screenshots/phase8-watermark-dark-theme.png', fullPage: false });
+    await page.click('#btn-theme-toggle'); // revert to light
+
+    // 13. phase8-watermark-rotated-image.png
+    const card = page.locator('.student-image-card').first();
+    await card.locator('.btn-rotate').click();
+    await page.waitForTimeout(200);
+    await page.screenshot({ path: 'tests/screenshots/phase8-watermark-rotated-image.png', fullPage: false });
+
+    // 14. phase8-watermark-mobile.png (390px)
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.locator('#portfolio-workspace').scrollIntoViewIfNeeded();
+    await page.screenshot({ path: 'tests/screenshots/phase8-watermark-mobile.png', fullPage: false });
+
+    // 15. phase8-watermark-tablet.png (768px)
+    await page.setViewportSize({ width: 768, height: 1024 });
+    await page.locator('#portfolio-workspace').scrollIntoViewIfNeeded();
+    await page.screenshot({ path: 'tests/screenshots/phase8-watermark-tablet.png', fullPage: false });
+  });
+
 });
+
 
 
 

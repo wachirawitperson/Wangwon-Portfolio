@@ -866,6 +866,19 @@
   display: block;
 }
 
+/* Phase 8: Watermark Overlay */
+.card-preview .watermark-overlay,
+.cover-preview-canvas-wrap .watermark-overlay {
+  position: absolute;
+  pointer-events: none;
+  user-select: none;
+  z-index: 5;
+  object-fit: contain;
+  max-width: none !important;
+  max-height: none !important;
+  transition: opacity var(--transition-fast);
+}
+
 .cover-custom-badge {
   display: inline-flex;
   align-items: center;

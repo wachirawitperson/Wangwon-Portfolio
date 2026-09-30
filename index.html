@@ -573,9 +573,44 @@
               <div class="watermark-opacity-row">
                 <div class="slider-label-row">
                   <label for="watermark-opacity-slider" class="form-label-xs">ความโปร่งใส:</label>
-                  <span id="watermark-opacity-val" class="opacity-val-badge">15%</span>
+                  <span id="watermark-opacity-val" class="opacity-val-badge">18%</span>
                 </div>
-                <input type="range" id="watermark-opacity-slider" min="5" max="50" value="15" step="5" class="form-range" aria-label="ระดับความโปร่งใสของลายน้ำ" />
+                <input type="range" id="watermark-opacity-slider" min="5" max="80" value="18" step="1" class="form-range" aria-label="ระดับความโปร่งใสของลายน้ำ" />
+              </div>
+
+              <!-- Watermark Scale Slider -->
+              <div class="watermark-scale-row">
+                <div class="slider-label-row">
+                  <label for="watermark-scale-slider" class="form-label-xs">ขนาดลายน้ำ:</label>
+                  <span id="watermark-scale-val" class="opacity-val-badge">18%</span>
+                </div>
+                <input type="range" id="watermark-scale-slider" min="8" max="40" value="18" step="1" class="form-range" aria-label="ระดับขนาดของลายน้ำ (เปอร์เซ็นต์ของหน้า)" />
+              </div>
+
+              <!-- Watermark Position 3x3 Grid -->
+              <div class="watermark-position-row">
+                <span class="form-label-xs">ตำแหน่งลายน้ำ:</span>
+                <div class="watermark-position-grid" id="watermark-position-grid" role="radiogroup" aria-label="ตำแหน่งลายน้ำ">
+                  <button type="button" class="position-cell" data-position="top-left" role="radio" aria-checked="false" aria-label="บนซ้าย" title="บนซ้าย"></button>
+                  <button type="button" class="position-cell" data-position="top-center" role="radio" aria-checked="false" aria-label="บนกลาง" title="บนกลาง"></button>
+                  <button type="button" class="position-cell" data-position="top-right" role="radio" aria-checked="false" aria-label="บนขวา" title="บนขวา"></button>
+                  <button type="button" class="position-cell" data-position="middle-left" role="radio" aria-checked="false" aria-label="กลางซ้าย" title="กลางซ้าย"></button>
+                  <button type="button" class="position-cell" data-position="center" role="radio" aria-checked="false" aria-label="ตรงกลาง" title="ตรงกลาง"></button>
+                  <button type="button" class="position-cell" data-position="middle-right" role="radio" aria-checked="false" aria-label="กลางขวา" title="กลางขวา"></button>
+                  <button type="button" class="position-cell" data-position="bottom-left" role="radio" aria-checked="false" aria-label="ล่างซ้าย" title="ล่างซ้าย"></button>
+                  <button type="button" class="position-cell" data-position="bottom-center" role="radio" aria-checked="false" aria-label="ล่างกลาง" title="ล่างกลาง"></button>
+                  <button type="button" class="position-cell is-active" data-position="bottom-right" role="radio" aria-checked="true" aria-label="ล่างขวา" title="ล่างขวา"></button>
+                </div>
+              </div>
+
+              <!-- Watermark Target (Apply To) -->
+              <div class="watermark-target-row">
+                <span class="form-label-xs">หน้าที่ใส่ลายน้ำ:</span>
+                <div class="segmented-control watermark-target-control" id="watermark-target-selector" role="radiogroup" aria-label="หน้าที่ใส่ลายน้ำ">
+                  <button type="button" class="segmented-option" data-setting="applyTo" data-value="all-pages" role="radio" aria-checked="false">ทุกหน้า</button>
+                  <button type="button" class="segmented-option is-active" data-setting="applyTo" data-value="activity-only" role="radio" aria-checked="true">เฉพาะรูปผลงาน</button>
+                  <button type="button" class="segmented-option" data-setting="applyTo" data-value="exclude-covers" role="radio" aria-checked="false">ไม่รวมปก</button>
+                </div>
               </div>
             </div>
           </div>

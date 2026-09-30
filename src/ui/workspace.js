@@ -10,6 +10,11 @@ import { COVER_TEMPLATES, getCoverTemplate } from '../portfolio/cover-manager.js
 import { generateCoverDataUrl } from '../portfolio/cover-generator.js';
 import { isSupportedImage } from '../core/file-utils.js';
 import { decodeHeicIfNeeded, getImageDimensions, createPreviewUrl } from '../core/image-utils.js';
+import {
+  getWatermarkCssOverlayStyle,
+  getWatermarkImageSrc,
+  shouldApplyWatermark
+} from '../portfolio/watermark-renderer.js';
 import { showToast } from './notifications.js';
 import { openModal, closeModal } from './modal.js';
 import { icons } from './icons.js';
@@ -430,6 +435,8 @@ export function initWorkspace(workspaceElement) {
         showToast('เปลี่ยนกลับมาใช้ปกหน้าอัตโนมัติแล้ว', 'info');
       });
     }
+
+    updateCoverWatermarkOverlay('front', state);
   }
 
   // Render Back Cover Card
@@ -521,6 +528,8 @@ export function initWorkspace(workspaceElement) {
         showToast('เปลี่ยนกลับมาใช้ปกหลังอัตโนมัติแล้ว', 'info');
       });
     }
+
+    updateCoverWatermarkOverlay('back', state);
   }
 
   // Wire up Phase 5 Interactive Modals and Actions
@@ -843,6 +852,83 @@ export function initWorkspace(workspaceElement) {
     });
 
     studentImagesContainer.appendChild(addPageCard);
+    updateActivityWatermarkOverlays(projectStore.getState());
+  }
+
+  function updateCoverWatermarkOverlay(type, state) {
+    const card = type === 'front' ? frontCoverCard : backCoverCard;
+    if (!card) return;
+    const wm = state?.watermark;
+    const wrap = card.querySelector('.cover-preview-canvas-wrap');
+    if (!wrap) return;
+
+    let overlay = wrap.querySelector('.watermark-overlay');
+    const pageType = type === 'front' ? 'front-cover' : 'back-cover';
+    const src = getWatermarkImageSrc(wm);
+    const shouldShow = !!(wm && wm.enabled && wm.sourceType !== 'none' && src && shouldApplyWatermark(wm.applyTo, pageType));
+
+    if (!shouldShow) {
+      if (overlay) overlay.remove();
+      return;
+    }
+
+    if (!overlay) {
+      overlay = document.createElement('img');
+      overlay.className = 'watermark-overlay';
+      overlay.alt = '';
+      overlay.setAttribute('aria-hidden', 'true');
+      wrap.appendChild(overlay);
+    }
+
+    const w = wrap.clientWidth || 210;
+    const h = wrap.clientHeight || 297;
+    const style = getWatermarkCssOverlayStyle(wm, w, h);
+    Object.assign(overlay.style, style);
+    if (overlay.src !== src) {
+      overlay.src = src;
+    }
+  }
+
+  function updateActivityWatermarkOverlays(state) {
+    if (!studentImagesContainer) return;
+    const wm = state?.watermark;
+    const src = getWatermarkImageSrc(wm);
+    const shouldShow = !!(wm && wm.enabled && wm.sourceType !== 'none' && src && shouldApplyWatermark(wm.applyTo, 'activity'));
+    const cards = studentImagesContainer.querySelectorAll('.student-image-card');
+
+    cards.forEach((card) => {
+      const preview = card.querySelector('.card-preview');
+      if (!preview) return;
+      let overlay = preview.querySelector('.watermark-overlay');
+
+      if (!shouldShow) {
+        if (overlay) overlay.remove();
+        return;
+      }
+
+      if (!overlay) {
+        overlay = document.createElement('img');
+        overlay.className = 'watermark-overlay';
+        overlay.alt = '';
+        overlay.setAttribute('aria-hidden', 'true');
+        preview.appendChild(overlay);
+      }
+
+      const w = preview.clientWidth || 220;
+      const h = preview.clientHeight || 220;
+      const style = getWatermarkCssOverlayStyle(wm, w, h);
+      Object.assign(overlay.style, style);
+      if (overlay.src !== src) {
+        overlay.src = src;
+      }
+    });
+  }
+
+  function updateAllWatermarkOverlays(state) {
+    const s = state || projectStore.getState();
+    updateCoverWatermarkOverlay('front', s);
+    updateCoverWatermarkOverlay('back', s);
+    updateActivityWatermarkOverlays(s);
   }
 
   // Subscribe to state updates
@@ -853,6 +939,7 @@ export function initWorkspace(workspaceElement) {
     renderFrontCover(state);
     renderStudentImages(images);
     renderBackCover(state, totalPages);
+    updateAllWatermarkOverlays(state);
 
     if (imageCountBadge) {
       imageCountBadge.textContent = `${images.length} ภาพผลงาน`;
@@ -862,9 +949,14 @@ export function initWorkspace(workspaceElement) {
     }
   });
 
+  window.addEventListener('resize', () => {
+    updateAllWatermarkOverlays(projectStore.getState());
+  });
+
   // Initial render
   const initialState = projectStore.getState();
   renderFrontCover(initialState);
   renderStudentImages(initialState.images);
   renderBackCover(initialState, (initialState.images?.length || 0) + 2);
+  updateAllWatermarkOverlays(initialState);
 }

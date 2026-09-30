@@ -1,10 +1,16 @@
-/**
- * Settings Panel Component (Phase 4.5 Soft Workspace)
- * Configures paper size, placement, quality presets, and watermark options.
- */
-import { projectStore, updateWatermark, setCoverTemplate } from '../portfolio/portfolio-state.js';
+import {
+  projectStore,
+  setCoverTemplate,
+  setWatermarkEnabled,
+  setWatermarkSourceType,
+  setCustomWatermark,
+  replaceCustomWatermark,
+  removeCustomWatermark,
+  updateWatermarkSettings,
+  updateWatermark
+} from '../portfolio/portfolio-state.js';
 import { isSupportedImage } from '../core/file-utils.js';
-import { decodeHeicIfNeeded, createPreviewUrl } from '../core/image-utils.js';
+import { decodeHeicIfNeeded, createPreviewUrl, getImageDimensions } from '../core/image-utils.js';
 import { showToast } from './notifications.js';
 
 export function initSettingsPanel(panelElement) {
@@ -65,12 +71,24 @@ export function initSettingsPanel(panelElement) {
   const watermarkPreviewImg = panelElement.querySelector('#watermark-preview-img');
   const watermarkOpacitySlider = panelElement.querySelector('#watermark-opacity-slider');
   const watermarkOpacityVal = panelElement.querySelector('#watermark-opacity-val');
+  const watermarkScaleSlider = panelElement.querySelector('#watermark-scale-slider');
+  const watermarkScaleVal = panelElement.querySelector('#watermark-scale-val');
+  const positionCells = panelElement.querySelectorAll('.position-cell');
+  const watermarkTargetButtons = panelElement.querySelectorAll('[data-setting="applyTo"]');
 
   function updateSegmentedUI(buttons, activeValue) {
     buttons.forEach((btn) => {
       const isMatch = btn.dataset.value === activeValue;
       btn.classList.toggle('is-active', isMatch);
       btn.setAttribute('aria-checked', isMatch ? 'true' : 'false');
+    });
+  }
+
+  function updatePositionGridUI(activePosition) {
+    positionCells.forEach((cell) => {
+      const isMatch = cell.dataset.position === activePosition;
+      cell.classList.toggle('is-active', isMatch);
+      cell.setAttribute('aria-checked', isMatch ? 'true' : 'false');
     });
   }
 
@@ -132,7 +150,7 @@ export function initSettingsPanel(panelElement) {
   if (watermarkToggle) {
     watermarkToggle.addEventListener('change', (e) => {
       const enabled = e.target.checked;
-      updateWatermark({ enabled });
+      setWatermarkEnabled(enabled);
       if (watermarkOptionsContainer) {
         watermarkOptionsContainer.style.display = enabled ? 'flex' : 'none';
       }
@@ -143,18 +161,14 @@ export function initSettingsPanel(panelElement) {
   if (watermarkSchoolCheckbox) {
     watermarkSchoolCheckbox.addEventListener('change', (e) => {
       if (e.target.checked) {
-        updateWatermark({
-          type: 'school',
-          previewUrl: './assets/branding/ban-wangwon-logo.png'
-        });
+        setWatermarkSourceType('school-logo');
         showToast('เลือกลายน้ำตราโรงเรียนบ้านวังวนแล้ว', 'info');
       } else {
-        // If unchecking school and no custom file, revert type to null
         const currentWatermark = projectStore.getState().watermark;
-        if (currentWatermark?.file) {
-          updateWatermark({ type: 'custom' });
+        if (currentWatermark.custom?.previewUrl) {
+          setWatermarkSourceType('custom');
         } else {
-          updateWatermark({ type: null, previewUrl: null });
+          setWatermarkSourceType('none');
         }
       }
     });
@@ -172,19 +186,17 @@ export function initSettingsPanel(panelElement) {
     try {
       const decoded = await decodeHeicIfNeeded(file);
       const previewUrl = createPreviewUrl(decoded.blob);
-
-      // Uncheck school emblem checkbox when custom uploaded
-      if (watermarkSchoolCheckbox) {
-        watermarkSchoolCheckbox.checked = false;
+      let width = 200;
+      let height = 200;
+      try {
+        const dims = await getImageDimensions(decoded.blob);
+        width = dims.width;
+        height = dims.height;
+      } catch (dimErr) {
+        console.warn('Could not read custom watermark dimensions:', dimErr);
       }
 
-      updateWatermark({
-        type: 'custom',
-        file,
-        previewUrl,
-        mimeType: decoded.mimeType
-      });
-
+      setCustomWatermark(file, previewUrl, decoded.mimeType, width, height);
       showToast('อัปโหลดภาพลายน้ำเรียบร้อย', 'success');
     } catch (err) {
       console.error('Watermark upload error:', err);
@@ -214,14 +226,7 @@ export function initSettingsPanel(panelElement) {
 
   if (btnRemoveWatermark) {
     btnRemoveWatermark.addEventListener('click', () => {
-      if (watermarkSchoolCheckbox) {
-        watermarkSchoolCheckbox.checked = false;
-      }
-      updateWatermark({
-        type: null,
-        file: null,
-        previewUrl: null
-      });
+      removeCustomWatermark();
       showToast('ลบลายน้ำเรียบร้อย', 'info');
     });
   }
@@ -229,13 +234,44 @@ export function initSettingsPanel(panelElement) {
   if (watermarkOpacitySlider) {
     watermarkOpacitySlider.addEventListener('input', (e) => {
       const val = parseInt(e.target.value, 10);
-      const opacity = val / 100;
+      const opacity = parseFloat((val / 100).toFixed(2));
       if (watermarkOpacityVal) {
         watermarkOpacityVal.textContent = `${val}%`;
       }
-      updateWatermark({ opacity });
+      updateWatermarkSettings({ opacity });
     });
   }
+
+  if (watermarkScaleSlider) {
+    watermarkScaleSlider.addEventListener('input', (e) => {
+      const val = parseInt(e.target.value, 10);
+      const scale = parseFloat((val / 100).toFixed(2));
+      if (watermarkScaleVal) {
+        watermarkScaleVal.textContent = `${val}%`;
+      }
+      updateWatermarkSettings({ scale });
+    });
+  }
+
+  // Watermark 3x3 Position Grid buttons
+  positionCells.forEach((cell) => {
+    cell.addEventListener('click', () => {
+      const position = cell.dataset.position;
+      if (!position) return;
+      updatePositionGridUI(position);
+      updateWatermarkSettings({ position });
+    });
+  });
+
+  // Watermark ApplyTo target buttons
+  watermarkTargetButtons.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const applyTo = btn.dataset.value;
+      if (!applyTo) return;
+      updateSegmentedUI(watermarkTargetButtons, applyTo);
+      updateWatermarkSettings({ applyTo });
+    });
+  });
 
   // Subscribe to store updates for UI synchronization
   projectStore.subscribe((state) => {
@@ -250,13 +286,14 @@ export function initSettingsPanel(panelElement) {
       watermarkOptionsContainer.style.display = wm.enabled ? 'flex' : 'none';
     }
     if (watermarkSchoolCheckbox) {
-      watermarkSchoolCheckbox.checked = wm.type === 'school';
+      watermarkSchoolCheckbox.checked = (wm.sourceType === 'school-logo');
     }
 
-    if (wm.previewUrl) {
+    const customUrl = wm.custom?.previewUrl;
+    if (customUrl) {
       if (watermarkPlaceholder) watermarkPlaceholder.style.display = 'none';
       if (watermarkThumbnailBox) watermarkThumbnailBox.style.display = 'flex';
-      if (watermarkPreviewImg) watermarkPreviewImg.src = wm.previewUrl;
+      if (watermarkPreviewImg) watermarkPreviewImg.src = customUrl;
     } else {
       if (watermarkPlaceholder) watermarkPlaceholder.style.display = 'flex';
       if (watermarkThumbnailBox) watermarkThumbnailBox.style.display = 'none';
@@ -267,6 +304,20 @@ export function initSettingsPanel(panelElement) {
       const pct = Math.round(wm.opacity * 100);
       watermarkOpacitySlider.value = pct;
       if (watermarkOpacityVal) watermarkOpacityVal.textContent = `${pct}%`;
+    }
+
+    if (watermarkScaleSlider && wm.scale !== undefined) {
+      const scalePct = Math.round(wm.scale * 100);
+      watermarkScaleSlider.value = scalePct;
+      if (watermarkScaleVal) watermarkScaleVal.textContent = `${scalePct}%`;
+    }
+
+    if (positionCells.length > 0) {
+      updatePositionGridUI(wm.position || 'bottom-right');
+    }
+
+    if (watermarkTargetButtons.length > 0) {
+      updateSegmentedUI(watermarkTargetButtons, wm.applyTo || 'activity-only');
     }
 
     // PDF settings sync
@@ -308,11 +359,22 @@ export function initSettingsPanel(panelElement) {
     watermarkOptionsContainer.style.display = initWm.enabled ? 'flex' : 'none';
   }
   if (watermarkSchoolCheckbox) {
-    watermarkSchoolCheckbox.checked = initWm.type === 'school';
+    watermarkSchoolCheckbox.checked = (initWm.sourceType === 'school-logo');
   }
   if (watermarkOpacitySlider) {
-    const pct = Math.round((initWm.opacity || 0.15) * 100);
+    const pct = Math.round((initWm.opacity !== undefined ? initWm.opacity : 0.18) * 100);
     watermarkOpacitySlider.value = pct;
     if (watermarkOpacityVal) watermarkOpacityVal.textContent = `${pct}%`;
+  }
+  if (watermarkScaleSlider) {
+    const scalePct = Math.round((initWm.scale !== undefined ? initWm.scale : 0.18) * 100);
+    watermarkScaleSlider.value = scalePct;
+    if (watermarkScaleVal) watermarkScaleVal.textContent = `${scalePct}%`;
+  }
+  if (positionCells.length > 0) {
+    updatePositionGridUI(initWm.position || 'bottom-right');
+  }
+  if (watermarkTargetButtons.length > 0) {
+    updateSegmentedUI(watermarkTargetButtons, initWm.applyTo || 'activity-only');
   }
 }
