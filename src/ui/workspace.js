@@ -26,7 +26,6 @@ export function initWorkspace(workspaceElement) {
   const studentImagesContainer = workspaceElement.querySelector('#student-images-container');
   const emptyPlaceholder = workspaceElement.querySelector('#images-empty-placeholder');
   const addImagesInput = workspaceElement.querySelector('#file-upload-input');
-  const addImagesBtn = workspaceElement.querySelector('#btn-add-images');
   const addImagesEmptyBtn = workspaceElement.querySelector('#btn-empty-add-images');
   const backCoverCard = workspaceElement.querySelector('#back-cover-card');
   const totalPagesBadge = document.querySelector('#total-pages-badge');
@@ -116,21 +115,19 @@ export function initWorkspace(workspaceElement) {
     });
   }
 
-  // Trigger file selection from both upload buttons
-  [addImagesBtn, addImagesEmptyBtn].forEach((btn) => {
-    if (btn && addImagesInput) {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
+  // Trigger file selection from upload button in empty placeholder
+  if (addImagesEmptyBtn && addImagesInput) {
+    addImagesEmptyBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      addImagesInput.click();
+    });
+    addImagesEmptyBtn.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
         addImagesInput.click();
-      });
-      btn.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          addImagesInput.click();
-        }
-      });
-    }
-  });
+      }
+    });
+  }
 
   if (emptyPlaceholder && addImagesInput) {
     emptyPlaceholder.addEventListener('click', () => {

@@ -2601,7 +2601,6 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
       }, { x: cx, y: cy });
     };
 
-    expect(await hitTest('#btn-add-images')).toBe('BUTTON');
     expect(await hitTest('#btn-empty-add-images')).toBe('BUTTON');
     expect(await hitTest('#btn-upload-student-photo')).toBe('BUTTON');
     expect(await hitTest('#btn-help')).toBe('BUTTON');
@@ -2609,14 +2608,7 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
     expect(await hitTest('#btn-view-large-front')).toBe('BUTTON');
     expect(await hitTest('#btn-upload-custom-front')).toBe('BUTTON');
 
-    // 3. File Chooser Triggers on Header Add Images Button
-    const [headerChooser] = await Promise.all([
-      page.waitForEvent('filechooser', { timeout: 3000 }),
-      page.click('#btn-add-images')
-    ]);
-    expect(headerChooser).toBeTruthy();
-
-    // 4. File Chooser Triggers on Empty Card Button
+    // 3. File Chooser Triggers on Empty Card Button
     const [emptyBtnChooser] = await Promise.all([
       page.waitForEvent('filechooser', { timeout: 3000 }),
       page.click('#btn-empty-add-images')
@@ -2910,10 +2902,10 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
     const helpModal = page.locator('#help-modal');
     expect(await helpModal.evaluate(el => window.getComputedStyle(el).pointerEvents)).toBe('none');
 
-    // File chooser triggers on "เพิ่มรูปภาพ"
+    // File chooser triggers on "เพิ่มรูปภาพ" (Empty Placeholder Button)
     const [chooser] = await Promise.all([
       page.waitForEvent('filechooser', { timeout: 3000 }),
-      page.click('#btn-add-images')
+      page.click('#btn-empty-add-images')
     ]);
     expect(chooser).toBeTruthy();
   });
