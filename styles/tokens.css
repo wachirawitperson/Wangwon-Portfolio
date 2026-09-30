@@ -9,21 +9,36 @@
      Color Tokens
      ======================================================================== */
 
+  /* ========================================================================
+     Color Tokens - Wangwon Soft Workspace
+     ======================================================================== */
+
   /* Primary: Soft School Blue / Sky Blue */
   --color-primary: #1d4ed8;            /* Primary brand blue (WCAG AAA against white) */
   --color-primary-hover: #1e40af;      /* Darker on hover */
   --color-primary-active: #172554;
-  --color-primary-soft: #dbeafe;       /* Soft sky blue background */
-  --color-primary-subtle: #eff6ff;     /* Subtle light tint */
+  --color-primary-soft: #e0f2fe;       /* Soft sky blue background */
+  --color-primary-subtle: #f0f9ff;     /* Subtle light tint */
+
+  /* School Brand Specific Palette (Ban Wangwon School) */
+  --color-brand-blue: #1d4ed8;
+  --color-brand-sky: #e0f2fe;
+  --color-brand-sky-light: #f0f9ff;
+  --color-brand-yellow: #fef08a;       /* Soft warm cream / school yellow */
+  --color-brand-yellow-soft: #fefce8;
+  --color-brand-pink: #f43f5e;         /* Subtle pink accent inspired by school emblem */
+  --color-brand-pink-soft: #ffe4e6;    /* Soft pink tint for accents/pills */
+  --color-brand-pink-subtle: #fff1f2;
 
   /* Secondary / Accent: Warm Cream / Soft Amber */
   --color-accent: #f59e0b;             /* Warm school yellow/amber */
   --color-accent-hover: #d97706;
   --color-accent-soft: #fef3c7;        /* Soft warm cream highlight */
 
-  /* Surfaces & Backgrounds */
-  --color-bg: #f8fafc;                 /* Very light cool gray/blue neutral background */
-  --color-surface: #ffffff;            /* Pure white card surface */
+  /* Surfaces & Backgrounds - Soft Workspace */
+  --color-bg: #f8fafc;                 /* Calm, warm-tinted soft neutral background */
+  --color-bg-soft: #f8fafc;
+  --color-surface: #ffffff;            /* Pure white card / paper surface */
   --color-surface-alt: #f1f5f9;        /* Secondary panel / neutral fill */
   --color-surface-hover: #f8fafc;
 
@@ -33,8 +48,9 @@
   --color-text-muted: #64748b;         /* Helper / secondary label text */
   --color-text-inverse: #ffffff;       /* Pure white on dark surfaces */
 
-  /* Borders & Dividers */
-  --color-border: #e2e8f0;             /* Subtle standard border */
+  /* Borders & Dividers - Reduced visual borders */
+  --color-border: #f1f5f9;             /* Ultra-subtle border */
+  --color-border-subtle: #e2e8f0;      /* Standard divider */
   --color-border-strong: #cbd5e1;      /* Interactive border / card boundary */
   --color-border-focus: #2563eb;       /* Focus ring border */
 

@@ -7,7 +7,10 @@ import {
   createDefaultProjectState,
   resetPortfolioProject,
   updateStudentField,
-  updateStudent
+  updateStudent,
+  updateStudentPhoto,
+  clearStudentPhoto,
+  updateWatermark
 } from './portfolio/portfolio-state.js';
 import { initStudentForm, clearAllFormValidationErrors, validateAndHighlightStudentForm } from './ui/student-form.js';
 import { initWorkspace } from './ui/workspace.js';
@@ -103,6 +106,9 @@ document.addEventListener('DOMContentLoaded', () => {
     clearAllFormValidationErrors,
     updateStudentField,
     updateStudent,
+    updateStudentPhoto,
+    clearStudentPhoto,
+    updateWatermark,
     resetPortfolioProject
   };
   window.__WANGWON_IMAGE_UTILS__ = {

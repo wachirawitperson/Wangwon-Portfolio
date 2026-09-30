@@ -29,6 +29,14 @@
   gap: var(--space-3);
 }
 
+.brand-logo-img {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  flex-shrink: 0;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+}
+
 .brand-logo-icon {
   width: 44px;
   height: 44px;
@@ -53,6 +61,19 @@
   font-weight: var(--font-weight-bold);
   color: var(--color-primary);
   line-height: var(--line-height-tight);
+}
+
+.brand-sub-wrap {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.brand-school {
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-soft);
 }
 
 .app-subtitle {
@@ -124,15 +145,82 @@
   margin-top: 4px;
 }
 
+/* Compact 3-Step Navigator */
+.step-navigator {
+  max-width: 1280px;
+  width: 100%;
+  margin: var(--space-4) auto 0;
+  padding: 0 var(--space-6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+}
+
+.step-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-pill);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  transition: all var(--transition-fast);
+}
+
+.step-item .step-number {
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-circle);
+  background-color: var(--color-surface-alt);
+  color: var(--color-text-soft);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+}
+
+.step-item.is-active {
+  background-color: var(--color-brand-sky-light);
+  border-color: #93c5fd;
+  color: var(--color-primary);
+  box-shadow: 0 1px 3px rgba(29, 78, 216, 0.08);
+}
+
+.step-item.is-active .step-number {
+  background-color: var(--color-primary);
+  color: var(--color-text-inverse);
+}
+
+.step-item.is-completed {
+  color: var(--color-success);
+}
+
+.step-item.is-completed .step-number {
+  background-color: var(--color-success);
+  color: var(--color-text-inverse);
+}
+
+.step-divider {
+  width: 32px;
+  height: 2px;
+  background-color: var(--color-border-subtle);
+  border-radius: 1px;
+}
+
 /* Main Container */
 .main-content {
   max-width: 1280px;
   width: 100%;
   margin: 0 auto;
-  padding: var(--space-5) var(--space-6) var(--space-12);
+  padding: var(--space-4) var(--space-6) var(--space-12);
   display: flex;
   flex-direction: column;
-  gap: var(--space-6);
+  gap: var(--space-5);
   flex: 1;
 }
 
@@ -141,7 +229,7 @@
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
-  padding: var(--space-6);
+  padding: var(--space-5) var(--space-6);
   box-shadow: var(--shadow-xs);
 }
 
@@ -149,7 +237,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: var(--space-5);
+  margin-bottom: var(--space-4);
   border-bottom: 1px solid var(--color-border);
   padding-bottom: var(--space-3);
   flex-wrap: wrap;
@@ -165,10 +253,54 @@
   gap: var(--space-2);
 }
 
+.section-step-badge {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-circle);
+  background-color: var(--color-brand-sky);
+  color: var(--color-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  flex-shrink: 0;
+}
+
 .section-subtitle {
   font-size: var(--font-size-sm);
   color: var(--color-text-muted);
   margin-top: 2px;
+}
+
+/* 2-Column Desktop Workspace Layout */
+.workspace-layout-container {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: var(--space-6);
+  align-items: start;
+}
+
+.settings-sidebar {
+  position: sticky;
+  top: 76px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  box-shadow: var(--shadow-xs);
+}
+
+.sidebar-header {
+  margin-bottom: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--space-3);
+}
+
+.sidebar-settings-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
 }
 
 /* Primary Sticky / Bottom Action Toolbar */
@@ -199,6 +331,13 @@
   gap: var(--space-2);
   font-size: var(--font-size-sm);
   color: var(--color-text-muted);
+}
+
+.toolbar-school-emblem {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+  flex-shrink: 0;
 }
 
 .toolbar-actions {

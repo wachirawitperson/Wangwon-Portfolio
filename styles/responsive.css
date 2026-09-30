@@ -28,6 +28,14 @@ html, body {
     padding: var(--space-3) var(--space-4);
   }
 
+  .workspace-layout-container {
+    grid-template-columns: 1fr;
+  }
+
+  .settings-sidebar {
+    position: static;
+  }
+
   .workspace-grid {
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
     gap: var(--space-4);
@@ -53,6 +61,24 @@ html, body {
   .header-right {
     justify-content: space-between;
     width: 100%;
+  }
+
+  .step-navigator {
+    padding: 0 var(--space-4);
+    gap: var(--space-2);
+  }
+
+  .step-item {
+    padding: var(--space-1) var(--space-2);
+    font-size: var(--font-size-xs);
+  }
+
+  .step-divider {
+    width: 16px;
+  }
+
+  .student-form-layout {
+    grid-template-columns: 1fr;
   }
 
   .form-grid {

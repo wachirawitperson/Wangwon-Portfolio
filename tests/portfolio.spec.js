@@ -1048,5 +1048,349 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
     await page.screenshot({ path: 'tests/screenshots/phase4-duplicate-modal.png', fullPage: false });
   });
 
+  /* ==========================================================================
+     PHASE 4.5 TESTS: Soft Workspace, 3-Step Flow, Branding, Student Photo & Quick Actions
+     ========================================================================== */
+
+  test('41. 3-Step Navigation Indicator renders correctly with Thai labels and accessibility', async ({ page }) => {
+    await page.goto('/');
+
+    const nav = page.locator('#step-navigator');
+    await expect(nav).toBeVisible();
+
+    const step1 = page.locator('#step-nav-1');
+    const step2 = page.locator('#step-nav-2');
+    const step3 = page.locator('#step-nav-3');
+
+    await expect(step1).toBeVisible();
+    await expect(step2).toBeVisible();
+    await expect(step3).toBeVisible();
+
+    await expect(step1).toContainText('ข้อมูลนักเรียน');
+    await expect(step2).toContainText('เพิ่มรูปภาพและจัดหน้า');
+    await expect(step3).toContainText('ตั้งค่าและสร้างไฟล์');
+
+    await expect(step1).toHaveClass(/is-active/);
+  });
+
+  test('42. School branding and authentic logo render in Header, Front Cover, and Back Cover', async ({ page }) => {
+    await page.goto('/');
+
+    const headerLogo = page.locator('#school-brand-logo');
+    await expect(headerLogo).toBeVisible();
+    await expect(headerLogo).toHaveAttribute('src', /ban-wangwon-logo\.png/);
+    await expect(headerLogo).toHaveAttribute('alt', /โรงเรียนบ้านวังวน/);
+
+    const frontCoverLogo = page.locator('#front-cover-logo');
+    await expect(frontCoverLogo).toBeVisible();
+    await expect(frontCoverLogo).toHaveAttribute('src', /ban-wangwon-logo\.png/);
+
+    const backCoverLogo = page.locator('#back-cover-logo');
+    await expect(backCoverLogo).toBeVisible();
+    await expect(backCoverLogo).toHaveAttribute('src', /ban-wangwon-logo\.png/);
+  });
+
+  test('43. Student photo management: Optional, isolated from activity images, 4:5 preview, replace and remove', async ({ page }) => {
+    await page.goto('/');
+
+    // 1. Student photo is strictly optional: Form can be valid without photo
+    await page.selectOption('#student-prefix', 'ด.ช.');
+    await page.fill('#student-firstname', 'ชานนท์');
+    await page.fill('#student-lastname', 'มีชัย');
+    await page.selectOption('#student-grade', 'ประถมศึกษาปีที่ 2');
+    await page.fill('#student-number', '7');
+
+    const formState = await page.evaluate(() => window.__WANGWON_STORE__.getState());
+    expect(formState.studentPhoto).toBeNull();
+
+    // 2. Upload student photo via file input
+    const filePayload = await page.evaluate(async () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 400;
+      canvas.height = 500;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#3b82f6';
+      ctx.fillRect(0, 0, 400, 500);
+      return canvas.toDataURL('image/png');
+    });
+    const photoBuffer = Buffer.from(filePayload.split(',')[1], 'base64');
+    await page.setInputFiles('#student-photo-input', {
+      name: 'student_chanon.png',
+      mimeType: 'image/png',
+      buffer: photoBuffer
+    });
+
+    const photoPreviewImg = page.locator('#student-photo-preview-img');
+    await expect(photoPreviewImg).toBeVisible();
+    await expect(photoPreviewImg).toHaveAttribute('src', /^blob:/);
+
+    // Verify projectStore state
+    const storePhoto = await page.evaluate(() => window.__WANGWON_STORE__.getState().studentPhoto);
+    expect(storePhoto).not.toBeNull();
+    expect(storePhoto.previewUrl).toContain('blob:');
+
+    // Verify activity images count is still 0 (isolated from studentPhoto)
+    const imagesCount = await page.evaluate(() => window.__WANGWON_STORE__.getState().images.length);
+    expect(imagesCount).toBe(0);
+
+    // 3. Remove student photo
+    const removeBtn = page.locator('#btn-remove-student-photo');
+    await expect(removeBtn).toBeVisible();
+    await removeBtn.click();
+
+    const photoPlaceholder = page.locator('#student-photo-placeholder');
+    await expect(photoPlaceholder).toBeVisible();
+    await expect(photoPreviewImg).not.toBeVisible();
+
+    const storePhotoAfterRemove = await page.evaluate(() => window.__WANGWON_STORE__.getState().studentPhoto);
+    expect(storePhotoAfterRemove).toBeNull();
+  });
+
+  test('44. Student info Summary mode vs Edit mode toggle', async ({ page }) => {
+    await page.goto('/');
+
+    await page.selectOption('#student-prefix', 'ด.ญ.');
+    await page.fill('#student-firstname', 'พิมพ์ชนก');
+    await page.fill('#student-lastname', 'จิตเจริญ');
+    await page.selectOption('#student-grade', 'ประถมศึกษาปีที่ 3');
+    await page.fill('#student-number', '12');
+
+    const editCard = page.locator('#student-edit-card');
+    const summaryCard = page.locator('#student-summary-card');
+    const collapseBtn = page.locator('#btn-collapse-student');
+    const editBtn = page.locator('#btn-edit-student');
+
+    // Collapse to Summary mode
+    await collapseBtn.click();
+    await expect(editCard).not.toBeVisible();
+    await expect(summaryCard).toBeVisible();
+    await expect(summaryCard).toContainText('ด.ญ.พิมพ์ชนก จิตเจริญ');
+    await expect(summaryCard).toContainText('ชั้น ประถมศึกษาปีที่ 3');
+    await expect(summaryCard).toContainText('เลขที่ 12');
+
+    // Switch back to Edit mode
+    await editBtn.click();
+    await expect(summaryCard).not.toBeVisible();
+    await expect(editCard).toBeVisible();
+    await expect(page.locator('#student-firstname')).toHaveValue('พิมพ์ชนก');
+  });
+
+  test('45. Exact student number input preservation (no unwanted zero-padding)', async ({ page }) => {
+    await page.goto('/');
+
+    const numInput = page.locator('#student-number');
+    await numInput.fill('4');
+
+    await expect(numInput).toHaveValue('4');
+    const storeStudent = await page.evaluate(() => window.__WANGWON_STORE__.getState().student);
+    expect(storeStudent.studentNumber).toBe('4');
+  });
+
+  test('46. 2-column desktop layout and reflow behavior', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/');
+
+    const layoutContainer = page.locator('#workspace-layout-container');
+    const workspace = page.locator('#portfolio-workspace');
+    const settingsPanel = page.locator('#settings-panel');
+
+    await expect(layoutContainer).toBeVisible();
+    await expect(workspace).toBeVisible();
+    await expect(settingsPanel).toBeVisible();
+
+    const workspaceBox = await workspace.boundingBox();
+    const settingsBox = await settingsPanel.boundingBox();
+
+    // Verify side-by-side positioning
+    expect(workspaceBox.x + workspaceBox.width).toBeLessThanOrEqual(settingsBox.x + 30);
+    expect(settingsBox.x).toBeGreaterThan(workspaceBox.x);
+  });
+
+  test('47. Watermark UI redesign: Toggle, school preset, custom upload, and opacity slider', async ({ page }) => {
+    await page.goto('/');
+
+    const watermarkToggle = page.locator('#setting-watermark-enabled');
+    const optionsContainer = page.locator('#watermark-options-container');
+
+    // Initially watermark options container is hidden
+    await expect(optionsContainer).not.toBeVisible();
+
+    // Enable watermark
+    await watermarkToggle.click();
+    await expect(optionsContainer).toBeVisible();
+
+    // Preset selection: School emblem
+    const schoolPreset = page.locator('#setting-watermark-school');
+    await schoolPreset.click();
+
+    const watermarkState = await page.evaluate(() => window.__WANGWON_STORE__.getState().watermark);
+    expect(watermarkState.enabled).toBe(true);
+    expect(watermarkState.type).toBe('school');
+
+    // Opacity slider adjustment
+    const slider = page.locator('#watermark-opacity-slider');
+    await slider.fill('25');
+    await slider.dispatchEvent('input');
+
+    const opacityValBadge = page.locator('#watermark-opacity-val');
+    await expect(opacityValBadge).toHaveText('25%');
+
+    const updatedState = await page.evaluate(() => window.__WANGWON_STORE__.getState().watermark);
+    expect(updatedState.opacity).toBe(0.25);
+  });
+
+  test('48. Export button label is "ส่งออก PDF + รูปภาพ"', async ({ page }) => {
+    await page.goto('/');
+
+    const exportBtn = page.locator('#btn-export-zip');
+    await expect(exportBtn).toBeVisible();
+    await expect(exportBtn).toContainText('ส่งออก PDF + รูปภาพ');
+  });
+
+  test('49. Image card quick actions render accessible buttons for Rotate, Delete, and More', async ({ page }) => {
+    await page.goto('/');
+
+    // Import a mock image
+    await page.evaluate(async () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1200;
+      canvas.height = 800;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#10b981';
+      ctx.fillRect(0, 0, 1200, 800);
+      const blob = await new Promise((res) => canvas.toBlob(res, 'image/jpeg'));
+      const file = new File([blob], 'activity_award.jpg', { type: 'image/jpeg', lastModified: 1000 });
+      await window.__WANGWON_IMAGE_MANAGER__.importStudentImages([file]);
+    });
+
+    const imageCard = page.locator('.student-image-card').first();
+    await expect(imageCard).toBeVisible();
+
+    const quickActions = imageCard.locator('.quick-actions-toolbar');
+    await expect(quickActions).toBeVisible();
+
+    const rotateBtn = imageCard.locator('button.btn-rotate');
+    const deleteBtn = imageCard.locator('button.btn-delete');
+    const moreBtn = imageCard.locator('button.btn-more');
+
+    await expect(rotateBtn).toBeVisible();
+    await expect(rotateBtn).toHaveAttribute('aria-label', /หมุน/);
+
+    await expect(deleteBtn).toBeVisible();
+    await expect(deleteBtn).toHaveAttribute('aria-label', /ลบ/);
+
+    await expect(moreBtn).toBeVisible();
+    await expect(moreBtn).toHaveAttribute('aria-label', /เพิ่มเติม/);
+  });
+
+  test('50. Visual QA: Capture 10 Phase 4.5 Screenshots across resolutions and states', async ({ page }) => {
+    // 1. Desktop 1440x900 empty workspace
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/');
+    await page.screenshot({ path: 'tests/screenshots/phase4-5-desktop-workspace-empty.png', fullPage: false });
+
+    // 2. Fill student info and student photo
+    await page.selectOption('#student-prefix', 'ด.ช.');
+    await page.fill('#student-firstname', 'ชานนท์');
+    await page.fill('#student-lastname', 'วัฒนากุลชัย');
+    await page.selectOption('#student-grade', 'ประถมศึกษาปีที่ 1');
+    await page.fill('#student-number', '4');
+
+    const photoPayload = await page.evaluate(async () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 400;
+      canvas.height = 500;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#0284c7';
+      ctx.fillRect(0, 0, 400, 500);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '36px sans-serif';
+      ctx.fillText('รูปนักเรียน', 120, 250);
+      return canvas.toDataURL('image/png');
+    });
+    const photoBuffer = Buffer.from(photoPayload.split(',')[1], 'base64');
+    await page.setInputFiles('#student-photo-input', {
+      name: 'student_chanon.png',
+      mimeType: 'image/png',
+      buffer: photoBuffer
+    });
+
+    // 3. Student photo preview in form
+    await page.locator('#student-photo-preview-wrap').scrollIntoViewIfNeeded();
+    await page.screenshot({ path: 'tests/screenshots/phase4-5-student-photo-preview.png', fullPage: false });
+
+    // 4. Student summary mode
+    await page.click('#btn-collapse-student');
+    await page.locator('#student-summary-card').scrollIntoViewIfNeeded();
+    await page.screenshot({ path: 'tests/screenshots/phase4-5-student-summary-mode.png', fullPage: false });
+
+    // 5. Front cover card with emblem & student photo
+    await page.locator('#front-cover-card').scrollIntoViewIfNeeded();
+    await page.screenshot({ path: 'tests/screenshots/phase4-5-front-cover-card.png', fullPage: false });
+
+    // 6. Import images
+    await page.evaluate(async () => {
+      const canvas1 = document.createElement('canvas');
+      canvas1.width = 1600;
+      canvas1.height = 1200;
+      const ctx1 = canvas1.getContext('2d');
+      ctx1.fillStyle = '#10b981';
+      ctx1.fillRect(0, 0, 1600, 1200);
+      ctx1.fillStyle = '#ffffff';
+      ctx1.font = '48px sans-serif';
+      ctx1.fillText('กิจกรรมลูกเสือ', 100, 200);
+      const blob1 = await new Promise((res) => canvas1.toBlob(res, 'image/jpeg'));
+      const f1 = new File([blob1], 'scout_camp.jpg', { type: 'image/jpeg', lastModified: 1000 });
+
+      const canvas2 = document.createElement('canvas');
+      canvas2.width = 1200;
+      canvas2.height = 1600;
+      const ctx2 = canvas2.getContext('2d');
+      ctx2.fillStyle = '#f59e0b';
+      ctx2.fillRect(0, 0, 1200, 1600);
+      ctx2.fillStyle = '#ffffff';
+      ctx2.font = '48px sans-serif';
+      ctx2.fillText('ผลงานศิลปะ', 100, 200);
+      const blob2 = await new Promise((res) => canvas2.toBlob(res, 'image/jpeg'));
+      const f2 = new File([blob2], 'art_work.jpg', { type: 'image/jpeg', lastModified: 2000 });
+
+      await window.__WANGWON_IMAGE_MANAGER__.importStudentImages([f1, f2]);
+    });
+
+    // 7. Desktop workspace with images
+    await page.locator('#portfolio-workspace').scrollIntoViewIfNeeded();
+    await page.screenshot({ path: 'tests/screenshots/phase4-5-desktop-workspace-with-images.png', fullPage: false });
+
+    // 8. Compact Add Page card
+    await page.locator('#compact-add-page-card').scrollIntoViewIfNeeded();
+    await page.screenshot({ path: 'tests/screenshots/phase4-5-compact-add-page-card.png', fullPage: false });
+
+    // 9. Watermark panel
+    await page.click('#setting-watermark-enabled');
+    await page.locator('#settings-panel').scrollIntoViewIfNeeded();
+    await page.screenshot({ path: 'tests/screenshots/phase4-5-watermark-panel.png', fullPage: false });
+
+    // 10. Tablet 768 reflow
+    await page.setViewportSize({ width: 768, height: 1024 });
+    await page.screenshot({ path: 'tests/screenshots/phase4-5-tablet-768-reflow.png', fullPage: false });
+
+    // 11. Mobile 390 reflow
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.screenshot({ path: 'tests/screenshots/phase4-5-mobile-390-reflow.png', fullPage: false });
+
+    // 12. Duplicate modal
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.evaluate(async () => {
+      const dupModal = document.querySelector('#duplicate-modal');
+      const dupSummary = document.querySelector('#duplicate-summary-text');
+      const dupList = document.querySelector('#duplicate-file-list');
+      if (dupSummary) dupSummary.textContent = 'พบรูปภาพ 1 ภาพที่มีชื่อหรือขนาดตรงกับภาพในระบบแล้ว:';
+      if (dupList) dupList.innerHTML = '<li><strong>scout_camp.jpg</strong> (ตรงกับ: scout_camp.jpg)</li>';
+      window.__WANGWON_MODAL__.openModal(dupModal);
+    });
+    await page.screenshot({ path: 'tests/screenshots/phase4-5-duplicate-modal.png', fullPage: false });
+  });
+
 });
+
 

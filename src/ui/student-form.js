@@ -1,11 +1,9 @@
-/**
- * Student Information Form Component
- * Accessible input form capturing essential student details for cover generation and file naming.
- * Features reactive two-way binding, accessible ARIA validation, and focus management.
- */
-import { projectStore, updateStudentField } from '../portfolio/portfolio-state.js';
+import { projectStore, updateStudentField, updateStudentPhoto, clearStudentPhoto } from '../portfolio/portfolio-state.js';
 import { generatePdfFilename } from '../core/filename-utils.js';
 import { validateStudentInformation } from '../core/student-utils.js';
+import { isSupportedImage } from '../core/file-utils.js';
+import { decodeHeicIfNeeded, getImageDimensions, createPreviewUrl } from '../core/image-utils.js';
+import { showToast } from './notifications.js';
 
 let formInstance = null;
 
@@ -20,6 +18,23 @@ export function initStudentForm(formElement) {
   const numberInput = formElement.querySelector('#student-number');
   const yearInput = formElement.querySelector('#student-year');
   const filenamePreview = document.querySelector('#preview-filename-badge');
+
+  // Student Photo Controls (Located in student-photo-column)
+  const photoInput = document.querySelector('#student-photo-input');
+  const btnUploadPhoto = document.querySelector('#btn-upload-student-photo');
+  const btnRemovePhoto = document.querySelector('#btn-remove-student-photo');
+  const photoPreviewImg = document.querySelector('#student-photo-preview-img');
+  const photoPlaceholder = document.querySelector('#student-photo-placeholder');
+
+  // Summary State Elements
+  const studentSection = document.querySelector('#student-section');
+  const studentEditCard = document.querySelector('#student-edit-card');
+  const studentSummaryCard = document.querySelector('#student-summary-card');
+  const btnEditStudent = document.querySelector('#btn-edit-student');
+  const btnCollapseStudent = document.querySelector('#btn-collapse-student');
+  const summaryPhotoImg = document.querySelector('#summary-student-photo');
+  const summaryName = document.querySelector('#summary-student-name');
+  const summaryDetails = document.querySelector('#summary-student-details');
 
   const fieldMap = {
     prefix: prefixSelect,
@@ -95,6 +110,7 @@ export function initStudentForm(formElement) {
 
     input.addEventListener('input', (e) => {
       clearFieldError(field);
+      // Preserve exact student number input without artificial zero-padding
       updateStudentField(field, e.target.value);
     });
 
@@ -109,9 +125,97 @@ export function initStudentForm(formElement) {
     });
   });
 
-  // Subscribe to store to update form fields (e.g. after reset) and update filename badge
+  // Photo Upload Handler
+  async function handleStudentPhoto(file) {
+    if (!file) return;
+
+    if (!isSupportedImage(file)) {
+      showToast('ไม่รองรับประเภทไฟล์นี้ (รองรับ JPG, PNG, WebP, BMP, HEIC)', 'warning');
+      return;
+    }
+
+    try {
+      const decoded = await decodeHeicIfNeeded(file);
+      const dimensions = await getImageDimensions(decoded.blob);
+      const previewUrl = createPreviewUrl(decoded.blob);
+
+      updateStudentPhoto({
+        file,
+        previewUrl,
+        mimeType: decoded.mimeType,
+        width: dimensions.width,
+        height: dimensions.height
+      });
+
+      showToast('อัปโหลดรูปนักเรียนเรียบร้อย', 'success');
+    } catch (err) {
+      console.error('Student photo error:', err);
+      showToast('ไม่สามารถเปิดไฟล์รูปภาพนักเรียนได้', 'danger');
+    } finally {
+      if (photoInput) photoInput.value = '';
+    }
+  }
+
+  if (btnUploadPhoto && photoInput) {
+    btnUploadPhoto.addEventListener('click', (e) => {
+      e.stopPropagation();
+      photoInput.click();
+    });
+  }
+
+  if (photoInput) {
+    photoInput.addEventListener('change', (e) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        handleStudentPhoto(file);
+      }
+    });
+  }
+
+  if (btnRemovePhoto) {
+    btnRemovePhoto.addEventListener('click', () => {
+      clearStudentPhoto();
+      showToast('ลบรูปนักเรียนเรียบร้อย', 'info');
+    });
+  }
+
+  // Summary State Toggles
+  function showSummaryView() {
+    if (studentEditCard && studentSummaryCard) {
+      studentEditCard.style.display = 'none';
+      studentSummaryCard.style.display = 'flex';
+    }
+  }
+
+  function showEditView() {
+    if (studentEditCard && studentSummaryCard) {
+      studentSummaryCard.style.display = 'none';
+      studentEditCard.style.display = 'block';
+      firstNameInput?.focus();
+    }
+  }
+
+  if (btnCollapseStudent) {
+    btnCollapseStudent.addEventListener('click', () => {
+      const { valid } = validateStudentInformation(projectStore.getState().student);
+      if (valid) {
+        showSummaryView();
+      } else {
+        validateAndHighlightStudentForm();
+      }
+    });
+  }
+
+  if (btnEditStudent) {
+    btnEditStudent.addEventListener('click', () => {
+      showEditView();
+    });
+  }
+
+  // Subscribe to store to update form fields and summary display
   projectStore.subscribe((state) => {
     const student = state.student || {};
+    const photo = state.studentPhoto;
 
     if (prefixSelect && prefixSelect.value !== student.prefix) {
       prefixSelect.value = student.prefix || 'ด.ช.';
@@ -135,10 +239,52 @@ export function initStudentForm(formElement) {
     if (filenamePreview) {
       filenamePreview.textContent = generatePdfFilename(student);
     }
+
+    // Photo preview in edit state
+    if (photo?.previewUrl) {
+      if (photoPreviewImg) {
+        photoPreviewImg.src = photo.previewUrl;
+        photoPreviewImg.style.display = 'block';
+      }
+      if (photoPlaceholder) photoPlaceholder.style.display = 'none';
+      if (btnRemovePhoto) btnRemovePhoto.style.display = 'inline-flex';
+      if (btnUploadPhoto) btnUploadPhoto.textContent = 'เปลี่ยนรูป';
+    } else {
+      if (photoPreviewImg) {
+        photoPreviewImg.removeAttribute('src');
+        photoPreviewImg.style.display = 'none';
+      }
+      if (photoPlaceholder) photoPlaceholder.style.display = 'flex';
+      if (btnRemovePhoto) btnRemovePhoto.style.display = 'none';
+      if (btnUploadPhoto) btnUploadPhoto.textContent = 'เลือกรูปถ่าย';
+    }
+
+    // Photo & info in summary state
+    if (summaryName) {
+      const full = `${student.prefix || ''}${student.firstName || ''} ${student.lastName || ''}`.trim();
+      summaryName.textContent = full || 'ยังไม่ได้ระบุชื่อนักเรียน';
+    }
+    if (summaryDetails) {
+      const parts = [];
+      if (student.grade) parts.push(`ชั้น ${student.grade}`);
+      if (student.studentNumber) parts.push(`เลขที่ ${student.studentNumber}`);
+      if (student.academicYear) parts.push(`ปีการศึกษา ${student.academicYear}`);
+      summaryDetails.textContent = parts.join(' • ') || 'กรุณากรอกข้อมูลนักเรียน';
+    }
+    if (summaryPhotoImg) {
+      if (photo?.previewUrl) {
+        summaryPhotoImg.src = photo.previewUrl;
+        summaryPhotoImg.style.display = 'block';
+      } else {
+        summaryPhotoImg.removeAttribute('src');
+        summaryPhotoImg.style.display = 'none';
+      }
+    }
   });
 
   // Initial populate from store
-  const initialStudent = projectStore.getState().student || {};
+  const initialState = projectStore.getState();
+  const initialStudent = initialState.student || {};
   if (prefixSelect && initialStudent.prefix) prefixSelect.value = initialStudent.prefix;
   if (firstNameInput && initialStudent.firstName) firstNameInput.value = initialStudent.firstName;
   if (lastNameInput && initialStudent.lastName) lastNameInput.value = initialStudent.lastName;

@@ -22,6 +22,9 @@ export function createDefaultProjectState() {
   return {
     student: initialStudent,
 
+    // Dedicated Student Profile Photo (Optional, isolated from images)
+    studentPhoto: null, // { file, previewUrl, mimeType, width, height }
+
     // Page 1: Locked Front Cover
     frontCover: {
       source: 'template', // 'template' | 'custom'
@@ -44,8 +47,11 @@ export function createDefaultProjectState() {
     // Watermark Configuration
     watermark: {
       enabled: false,
+      type: null, // 'school' | 'custom' | null
+      file: null,
+      previewUrl: null,
       image: null,
-      opacity: 0.25,
+      opacity: 0.15,
       size: 30, // percent of page width
       position: 'center', // 'top-left'|'top-center'|'top-right'|'middle-left'|'center'|'middle-right'|'bottom-left'|'bottom-center'|'bottom-right'
       target: 'student-images' // 'all' | 'student-images' | 'exclude-covers'
@@ -98,10 +104,69 @@ export function updateStudent(partial = {}) {
 }
 
 /**
+ * Updates or sets the student's profile photo.
+ * Automatically revokes any previous studentPhoto.previewUrl.
+ * @param {object|null} photoData
+ */
+export function updateStudentPhoto(photoData) {
+  const currentPhoto = projectStore.getState().studentPhoto;
+  if (currentPhoto?.previewUrl && currentPhoto.previewUrl !== photoData?.previewUrl) {
+    if (typeof currentPhoto.previewUrl === 'string' && currentPhoto.previewUrl.startsWith('blob:')) {
+      try {
+        URL.revokeObjectURL(currentPhoto.previewUrl);
+      } catch (e) {
+        // ignore
+      }
+    }
+  }
+
+  projectStore.setState({
+    studentPhoto: photoData || null
+  });
+}
+
+/**
+ * Removes the student's profile photo and revokes previewUrl.
+ */
+export function clearStudentPhoto() {
+  updateStudentPhoto(null);
+}
+
+/**
+ * Updates watermark settings and revokes previous custom watermark URL if replaced.
+ * @param {Partial<object>} watermarkData
+ */
+export function updateWatermark(watermarkData) {
+  projectStore.setState((state) => {
+    if (
+      state.watermark?.previewUrl &&
+      watermarkData?.previewUrl &&
+      state.watermark.previewUrl !== watermarkData.previewUrl &&
+      state.watermark.previewUrl.startsWith('blob:')
+    ) {
+      try {
+        URL.revokeObjectURL(state.watermark.previewUrl);
+      } catch (e) {
+        // ignore
+      }
+    }
+    return {
+      watermark: {
+        ...state.watermark,
+        ...watermarkData
+      }
+    };
+  });
+}
+
+/**
  * Canonical reset function for the entire project state.
  */
 export function resetPortfolioProject() {
-  const currentImages = projectStore.getState().images || [];
+  const currentState = projectStore.getState();
+
+  // Clean up activity image URLs
+  const currentImages = currentState.images || [];
   currentImages.forEach((img) => {
     if (img.previewUrl && typeof img.previewUrl === 'string' && img.previewUrl.startsWith('blob:')) {
       try {
@@ -111,6 +176,25 @@ export function resetPortfolioProject() {
       }
     }
   });
+
+  // Clean up student photo URL
+  if (currentState.studentPhoto?.previewUrl && currentState.studentPhoto.previewUrl.startsWith('blob:')) {
+    try {
+      URL.revokeObjectURL(currentState.studentPhoto.previewUrl);
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  // Clean up custom watermark URL
+  if (currentState.watermark?.previewUrl && currentState.watermark.previewUrl.startsWith('blob:')) {
+    try {
+      URL.revokeObjectURL(currentState.watermark.previewUrl);
+    } catch (e) {
+      // ignore
+    }
+  }
+
   projectStore.reset(createDefaultProjectState());
 }
 

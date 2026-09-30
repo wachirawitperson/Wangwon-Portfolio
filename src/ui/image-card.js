@@ -1,8 +1,5 @@
-/**
- * Image Card UI Component
- * Renders individual student activity/work image with preview, rotation, and removal controls.
- */
 import { rotateStudentImage, removeStudentImage } from '../portfolio/image-manager.js';
+import { icons } from './icons.js';
 
 /**
  * Creates a DOM element for a student image item.
@@ -36,32 +33,40 @@ export function createImageCard(image, displayIndex) {
     </div>
     ${isLowRes ? `
       <div class="warning-badge-area" role="alert" title="${image.qualityWarning || 'ภาพมีความละเอียดต่ำกว่าเกณฑ์มาตรฐาน'}">
-        <span aria-hidden="true">⚠️</span> ความละเอียดต่ำ (${image.width} × ${image.height})
+        <span class="icon-inline" aria-hidden="true">${icons.alertTriangle}</span> ความละเอียดต่ำ (${image.width} × ${image.height})
       </div>
     ` : ''}
-    <div class="card-actions">
+    <div class="card-actions quick-actions-toolbar" aria-label="คำสั่งด่วนสำหรับรูปภาพ">
       <button
         type="button"
         class="btn-icon btn-rotate"
         title="หมุนตามเข็มนาฬิกา 90°"
-        aria-label="หมุนรูปภาพที่ ${displayIndex} 90 องศา"
+        aria-label="หมุนภาพ"
       >
-        <span aria-hidden="true">↻</span>
+        <span class="icon-svg" aria-hidden="true">${icons.rotateCw}</span>
         <span class="btn-text">หมุน</span>
       </button>
       <button
         type="button"
         class="btn-icon btn-delete"
         title="ลบรูปนี้"
-        aria-label="ลบรูปภาพที่ ${displayIndex}"
+        aria-label="ลบรูป"
       >
-        <span aria-hidden="true">✕</span>
+        <span class="icon-svg" aria-hidden="true">${icons.trash2}</span>
         <span class="btn-text">ลบ</span>
+      </button>
+      <button
+        type="button"
+        class="btn-icon btn-more"
+        title="ตัวเลือกเพิ่มเติม"
+        aria-label="เมนูเพิ่มเติม"
+      >
+        <span class="icon-svg" aria-hidden="true">${icons.moreVertical}</span>
       </button>
     </div>
   `;
 
-  // Attach button events
+  // Attach button events (Quick action handlers)
   const rotateBtn = card.querySelector('.btn-rotate');
   rotateBtn.addEventListener('click', () => {
     rotateStudentImage(image.id);

@@ -9,6 +9,7 @@ import { createImageCard } from './image-card.js';
 import { COVER_TEMPLATES, getCoverTemplate } from '../portfolio/cover-manager.js';
 import { showToast } from './notifications.js';
 import { openModal, closeModal } from './modal.js';
+import { icons } from './icons.js';
 
 export function initWorkspace(workspaceElement) {
   if (!workspaceElement) return;
@@ -206,28 +207,37 @@ export function initWorkspace(workspaceElement) {
     const template = getCoverTemplate(state.frontCover.templateId);
     const student = state.student || {};
     const fullName = `${student.prefix || ''}${student.firstName || ''} ${student.lastName || ''}`.trim() || 'ชื่อ-นามสกุล นักเรียน';
+    const studentPhoto = state.studentPhoto;
 
     frontCoverCard.innerHTML = `
       <div class="card-header locked-header">
         <span class="badge badge-locked" title="หน้านี้ถูกล็อคให้อยู่หน้าแรกเสมอ">
-          <span aria-hidden="true">🔒</span> หน้า 1
+          <span class="icon-inline" aria-hidden="true">${icons.lock}</span> หน้า 1
         </span>
-        <span style="font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); color: var(--color-primary);">ปกหน้า</span>
+        <span class="cover-type-label">ปกหน้า</span>
       </div>
       <p class="cover-description">ปกหน้าจะอยู่หน้าแรกเสมอ</p>
       <div class="cover-card-body">
         <div class="cover-visual-preview cover-front-theme" style="--accent: ${template.accentColor}">
           <div class="cover-inner-content">
-            <div class="cover-school-tag">โรงเรียนบ้านวังวน</div>
+            <div class="cover-school-header">
+              <img src="./assets/branding/ban-wangwon-logo.png" alt="ตราโรงเรียนบ้านวังวน" class="cover-school-emblem" id="front-cover-logo" />
+              <div class="cover-school-tag">โรงเรียนบ้านวังวน</div>
+            </div>
             <h3 class="cover-title">แฟ้มสะสมผลงาน</h3>
+            ${studentPhoto?.previewUrl ? `
+              <div class="cover-student-photo-box">
+                <img src="${studentPhoto.previewUrl}" alt="รูปถ่ายนักเรียน" class="cover-photo-img" />
+              </div>
+            ` : ''}
             <div class="cover-student-name">${fullName}</div>
-            <div class="cover-student-sub">${student.grade || 'ระดับชั้น'} | เลขที่ ${student.studentNumber || '-'}</div>
-            <div class="cover-year">ปีการศึกษา ${student.academicYear || '2567'}</div>
+            <div class="cover-student-sub">${student.grade || 'ระดับชั้น'} ${student.studentNumber ? `| เลขที่ ${student.studentNumber}` : ''}</div>
+            <div class="cover-year">ปีการศึกษา ${student.academicYear || '2569'}</div>
           </div>
         </div>
       </div>
       <div class="card-footer locked-footer">
-        <label for="front-template-select" class="form-label" style="font-size: var(--font-size-xs);">เปลี่ยนรูปแบบปก:</label>
+        <label for="front-template-select" class="form-label" style="font-size: var(--font-size-xs);">รูปแบบปกหน้า:</label>
         <select id="front-template-select" class="form-select select-sm" aria-label="เลือกรูปแบบปกหน้า">
           ${COVER_TEMPLATES.map(
             (t) => `<option value="${t.id}" ${t.id === state.frontCover.templateId ? 'selected' : ''}>${t.name}</option>`
@@ -257,22 +267,25 @@ export function initWorkspace(workspaceElement) {
     backCoverCard.innerHTML = `
       <div class="card-header locked-header">
         <span class="badge badge-locked" title="หน้านี้ถูกล็อคให้อยู่หน้าสุดท้ายเสมอ">
-          <span aria-hidden="true">🔒</span> หน้าสุดท้าย
+          <span class="icon-inline" aria-hidden="true">${icons.lock}</span> หน้าสุดท้าย
         </span>
-        <span style="font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); color: var(--color-primary);">ปกหลัง</span>
+        <span class="cover-type-label">ปกหลัง</span>
       </div>
       <p class="cover-description">ปกหลังจะอยู่หน้าสุดท้ายเสมอ</p>
       <div class="cover-card-body">
         <div class="cover-visual-preview cover-back-theme" style="--accent: ${template.accentColor}">
           <div class="cover-inner-content">
+            <div class="cover-school-header">
+              <img src="./assets/branding/ban-wangwon-logo.png" alt="ตราโรงเรียนบ้านวังวน" class="cover-school-emblem" id="back-cover-logo" />
+              <div class="cover-school-tag">โรงเรียนบ้านวังวน</div>
+            </div>
             <div class="back-cover-motto">"เรียนดี มีวินัย ใฝ่เรียนรู้ สู่คุณธรรม"</div>
-            <div class="cover-school-tag">โรงเรียนบ้านวังวน</div>
-            <div class="cover-student-sub" style="margin-top: 4px;">สำนักงานเขตพื้นที่การศึกษาประถมศึกษา</div>
+            <div class="cover-student-sub" style="margin-top: 6px;">สำนักงานเขตพื้นที่การศึกษาประถมศึกษา</div>
           </div>
         </div>
       </div>
       <div class="card-footer locked-footer">
-        <label for="back-template-select" class="form-label" style="font-size: var(--font-size-xs);">เปลี่ยนรูปแบบปก:</label>
+        <label for="back-template-select" class="form-label" style="font-size: var(--font-size-xs);">รูปแบบปกหลัง:</label>
         <select id="back-template-select" class="form-select select-sm" aria-label="เลือกรูปแบบปกหลัง">
           ${COVER_TEMPLATES.map(
             (t) => `<option value="${t.id}" ${t.id === state.backCover.templateId ? 'selected' : ''}>${t.name}</option>`
@@ -307,10 +320,39 @@ export function initWorkspace(workspaceElement) {
 
     if (emptyPlaceholder) emptyPlaceholder.style.display = 'none';
 
+    // Render individual image cards
     images.forEach((img, idx) => {
       const card = createImageCard(img, idx + 1);
       studentImagesContainer.appendChild(card);
     });
+
+    // Render compact "Add Page" card inside grid before back cover
+    const addPageCard = document.createElement('div');
+    addPageCard.id = 'compact-add-page-card';
+    addPageCard.className = 'portfolio-card compact-add-page-card';
+    addPageCard.setAttribute('role', 'button');
+    addPageCard.setAttribute('tabindex', '0');
+    addPageCard.setAttribute('aria-label', 'เพิ่มรูปภาพและหน้าผลงาน');
+    addPageCard.innerHTML = `
+      <div class="compact-add-inner">
+        <div class="compact-add-icon" aria-hidden="true">${icons.plus}</div>
+        <div class="compact-add-title">เพิ่มหน้าผลงาน</div>
+        <div class="compact-add-subtitle">คลิกหรือลากวางรูป</div>
+      </div>
+    `;
+
+    addPageCard.addEventListener('click', () => {
+      if (addImagesInput) addImagesInput.click();
+    });
+
+    addPageCard.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        if (addImagesInput) addImagesInput.click();
+      }
+    });
+
+    studentImagesContainer.appendChild(addPageCard);
   }
 
   // Subscribe to state updates
