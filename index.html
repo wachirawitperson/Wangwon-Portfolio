@@ -293,16 +293,6 @@
           </button>
           <span class="empty-first-page-hint">ภาพแรกที่เพิ่มจะเป็นหน้า 2</span>
           <span class="empty-helper-types">รองรับ JPG, PNG, WebP, BMP และ HEIC</span>
-
-          <!-- Hidden File Upload Input -->
-          <input
-            type="file"
-            id="file-upload-input"
-            multiple
-            accept="image/jpeg,image/png,image/webp,image/bmp,image/heic,image/heif"
-            class="sr-only"
-            aria-hidden="true"
-          />
         </div>
 
         <!-- Locked Back Cover Card (Last Page) -->
@@ -310,6 +300,15 @@
           <!-- Rendered dynamically by workspace.js -->
         </article>
 
+        <!-- Hidden File Upload Input for Workspace Images (Always mounted) -->
+        <input
+          type="file"
+          id="file-upload-input"
+          multiple
+          accept="image/jpeg,image/png,image/webp,image/bmp,image/heic,image/heif"
+          class="sr-only"
+          aria-hidden="true"
+        />
       </div>
     </section>
 

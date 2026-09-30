@@ -2562,6 +2562,116 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
     await page.screenshot({ path: 'tests/screenshots/phase6-cover-preview-modal.png', fullPage: false });
   });
 
+  test('76. Regression Hotfix: Workspace controls and add image buttons remain fully clickable without overlay blocking', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForTimeout(400);
+
+    // 1. Verify modal backdrops are not intercepting clicks (visibility: hidden and pointer-events: none)
+    const modals = [
+      '#help-modal',
+      '#reset-confirm-modal',
+      '#duplicate-modal',
+      '#delete-image-modal',
+      '#image-preview-modal',
+      '#image-details-modal',
+      '#cover-preview-modal'
+    ];
+
+    for (const modalSel of modals) {
+      const modal = page.locator(modalSel);
+      const isVisible = await modal.isVisible();
+      expect(isVisible).toBe(false);
+      const pointerEvents = await modal.evaluate(el => window.getComputedStyle(el).pointerEvents);
+      expect(pointerEvents).toBe('none');
+    }
+
+    // 2. ElementFromPoint Hit Testing for all core workspace controls
+    const hitTest = async (selector) => {
+      const el = page.locator(selector).first();
+      await el.scrollIntoViewIfNeeded();
+      const box = await el.boundingBox();
+      expect(box).not.toBeNull();
+      const cx = box.x + box.width / 2;
+      const cy = box.y + box.height / 2;
+      return page.evaluate(({ x, y }) => {
+        const top = document.elementFromPoint(x, y);
+        return top ? top.tagName : null;
+      }, { x: cx, y: cy });
+    };
+
+    expect(await hitTest('#btn-add-images')).toBe('BUTTON');
+    expect(await hitTest('#btn-empty-add-images')).toBe('BUTTON');
+    expect(await hitTest('#btn-upload-student-photo')).toBe('BUTTON');
+    expect(await hitTest('#btn-help')).toBe('BUTTON');
+    expect(await hitTest('#btn-reset-project')).toBe('BUTTON');
+    expect(await hitTest('#btn-view-large-front')).toBe('BUTTON');
+    expect(await hitTest('#btn-upload-custom-front')).toBe('BUTTON');
+
+    // 3. File Chooser Triggers on Header Add Images Button
+    const [headerChooser] = await Promise.all([
+      page.waitForEvent('filechooser', { timeout: 3000 }),
+      page.click('#btn-add-images')
+    ]);
+    expect(headerChooser).toBeTruthy();
+
+    // 4. File Chooser Triggers on Empty Card Button
+    const [emptyBtnChooser] = await Promise.all([
+      page.waitForEvent('filechooser', { timeout: 3000 }),
+      page.click('#btn-empty-add-images')
+    ]);
+    expect(emptyBtnChooser).toBeTruthy();
+
+    // 5. File Chooser Triggers on Empty Placeholder Card itself
+    const [cardChooser] = await Promise.all([
+      page.waitForEvent('filechooser', { timeout: 3000 }),
+      page.click('#images-empty-placeholder')
+    ]);
+    expect(cardChooser).toBeTruthy();
+
+    // 6. File Chooser Triggers on Student Photo Button
+    const [photoChooser] = await Promise.all([
+      page.waitForEvent('filechooser', { timeout: 3000 }),
+      page.click('#btn-upload-student-photo')
+    ]);
+    expect(photoChooser).toBeTruthy();
+
+    // 7. Visual QA: Screenshot in empty state
+    await page.locator('#portfolio-workspace').scrollIntoViewIfNeeded();
+    await page.screenshot({ path: 'tests/screenshots/hotfix-add-image-empty.png', fullPage: false });
+
+    // 8. Import image and verify compact-add-page-card triggers filechooser
+    await page.evaluate(async () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1600;
+      canvas.height = 1200;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#2563eb';
+      ctx.fillRect(0, 0, 1600, 1200);
+      const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg'));
+      const file = new File([blob], 'hotfix_verify.jpg', { type: 'image/jpeg' });
+      await window.__WANGWON_IMAGE_MANAGER__.importStudentImages([file]);
+    });
+
+    await expect(page.locator('.student-image-card')).toHaveCount(1);
+    await expect(page.locator('#compact-add-page-card')).toBeVisible();
+
+    const [compactChooser] = await Promise.all([
+      page.waitForEvent('filechooser', { timeout: 3000 }),
+      page.click('#compact-add-page-card')
+    ]);
+    expect(compactChooser).toBeTruthy();
+
+    // 9. Visual QA: Screenshot with images state
+    await page.locator('#portfolio-workspace').scrollIntoViewIfNeeded();
+    await page.screenshot({ path: 'tests/screenshots/hotfix-add-image-with-images.png', fullPage: false });
+
+    // 10. Template selector remains fully interactive
+    await page.click('.template-card[data-template-id="colorful-portfolio"]');
+    await expect(page.locator('.template-card[data-template-id="colorful-portfolio"]')).toHaveAttribute('aria-checked', 'true');
+    await page.locator('.cover-template-section').scrollIntoViewIfNeeded();
+    await page.screenshot({ path: 'tests/screenshots/hotfix-cover-selector.png', fullPage: false });
+  });
+
 });
 
 
