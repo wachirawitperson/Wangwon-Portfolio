@@ -24,7 +24,8 @@
         <div class="brand-text-group">
           <h1 class="app-title">Wangwon Portfolio</h1>
           <div class="brand-sub-wrap">
-            <span class="brand-school">โรงเรียนบ้านวังวน • </span>
+            <span class="brand-school">โรงเรียนบ้านวังวน</span>
+            <span class="brand-divider" aria-hidden="true">•</span>
             <span class="app-subtitle">ระบบสร้าง Portfolio นักเรียน</span>
           </div>
         </div>
@@ -115,14 +116,15 @@
                   aria-hidden="true"
                 />
               </div>
-              <span class="form-helper" style="text-align: center;">รองรับ JPG, PNG, HEIC</span>
+              <span class="form-helper photo-helper-text">รองรับ JPG, PNG, HEIC</span>
             </div>
           </div>
 
-          <!-- Form Fields Column -->
+          <!-- Form Fields Column (Row 1: Prefix, First, Last, Grade; Row 2: Number, Year) -->
           <div class="student-fields-column">
-            <form id="student-info-form" class="form-grid" novalidate onsubmit="return false;">
-              <div class="form-group">
+            <form id="student-info-form" class="student-form-grid" novalidate onsubmit="return false;">
+              <!-- Row 1 -->
+              <div class="form-group field-prefix">
                 <label for="student-prefix" class="form-label">
                   คำนำหน้า <span class="required-indicator" aria-hidden="true">*</span>
                 </label>
@@ -134,7 +136,7 @@
                 </select>
               </div>
 
-              <div class="form-group">
+              <div class="form-group field-firstname">
                 <label for="student-firstname" class="form-label">
                   ชื่อ <span class="required-indicator" aria-hidden="true">*</span>
                 </label>
@@ -150,7 +152,7 @@
                 />
               </div>
 
-              <div class="form-group">
+              <div class="form-group field-lastname">
                 <label for="student-lastname" class="form-label">
                   นามสกุล <span class="required-indicator" aria-hidden="true">*</span>
                 </label>
@@ -166,7 +168,7 @@
                 />
               </div>
 
-              <div class="form-group">
+              <div class="form-group field-grade">
                 <label for="student-grade" class="form-label">
                   ชั้น <span class="required-indicator" aria-hidden="true">*</span>
                 </label>
@@ -184,19 +186,20 @@
                 </select>
               </div>
 
-              <div class="form-group">
+              <!-- Row 2 -->
+              <div class="form-group field-number">
                 <label for="student-number" class="form-label">เลขที่</label>
                 <input
                   type="text"
                   id="student-number"
                   name="studentNumber"
                   class="form-input"
-                  placeholder="เช่น 01 หรือ 4"
+                  placeholder="เช่น 1, 2, 4"
                   autocomplete="off"
                 />
               </div>
 
-              <div class="form-group">
+              <div class="form-group field-year">
                 <label for="student-year" class="form-label">
                   ปีการศึกษา <span class="required-indicator" aria-hidden="true">*</span>
                 </label>
@@ -212,13 +215,6 @@
                 />
               </div>
             </form>
-
-            <!-- Live PDF Filename Preview -->
-            <div class="filename-badge-box" aria-live="polite">
-              <span aria-hidden="true">📄</span>
-              <span>ชื่อไฟล์ PDF อัตโนมัติ:</span>
-              <span id="preview-filename-badge" class="filename-badge">portfolio-นักเรียน.pdf</span>
-            </div>
           </div>
         </div>
       </div>
@@ -328,8 +324,10 @@
 
         <div class="sidebar-settings-grid">
           <!-- Group 1: กระดาษ -->
-          <div class="form-group">
-            <label for="setting-orientation" class="form-label">กระดาษ</label>
+          <div class="form-group setting-section">
+            <label for="setting-orientation" class="form-label">
+              <span class="setting-step-num">1</span> กระดาษ
+            </label>
             <select id="setting-orientation" class="form-select">
               <option value="portrait" selected>A4 แนวตั้ง (Portrait)</option>
               <option value="landscape">A4 แนวนอน (Landscape)</option>
@@ -338,8 +336,10 @@
           </div>
 
           <!-- Group 2: การวางภาพ -->
-          <div class="form-group">
-            <label class="form-label">การวางภาพ</label>
+          <div class="form-group setting-section">
+            <label class="form-label">
+              <span class="setting-step-num">2</span> การวางภาพ
+            </label>
             <div class="segmented-control" role="radiogroup" aria-label="การวางภาพ">
               <button
                 type="button"
@@ -365,10 +365,44 @@
             <span class="form-helper">Fit: แสดงรูปครบไม่ตัดขอบ | Fill: ขยายเต็มแผ่น</span>
           </div>
 
-          <!-- Group 3: คุณภาพ (small, balanced [default], high) -->
-          <div class="form-group">
-            <label for="setting-quality" class="form-label">คุณภาพเอกสาร PDF</label>
-            <select id="setting-quality" class="form-select">
+          <!-- Group 3: คุณภาพเอกสาร PDF (Segmented Control + Synced Select) -->
+          <div class="form-group setting-section">
+            <label for="setting-quality" class="form-label">
+              <span class="setting-step-num">3</span> คุณภาพเอกสาร PDF
+            </label>
+            <div class="segmented-control" role="radiogroup" aria-label="คุณภาพเอกสาร PDF">
+              <button
+                type="button"
+                class="segmented-option"
+                role="radio"
+                aria-checked="false"
+                data-setting="quality"
+                data-value="small"
+              >
+                ไฟล์เล็ก
+              </button>
+              <button
+                type="button"
+                class="segmented-option is-active"
+                role="radio"
+                aria-checked="true"
+                data-setting="quality"
+                data-value="balanced"
+              >
+                สมดุล
+              </button>
+              <button
+                type="button"
+                class="segmented-option"
+                role="radio"
+                aria-checked="false"
+                data-setting="quality"
+                data-value="high"
+              >
+                คุณภาพสูง
+              </button>
+            </div>
+            <select id="setting-quality" class="form-select sr-only" aria-label="คุณภาพเอกสาร PDF">
               <option value="small">ไฟล์เล็ก (Small)</option>
               <option value="balanced" selected>สมดุล (Balanced)</option>
               <option value="high">คุณภาพสูง (High)</option>
@@ -376,10 +410,24 @@
             <span class="form-helper">แนะนำ "สมดุล" เพื่อความคมชัดและขนาดไฟล์ที่พอดี</span>
           </div>
 
-          <!-- Group 4: Watermark Redesign -->
-          <div class="form-group watermark-settings-card">
+          <!-- Group 4: ชื่อไฟล์ (Relocated from Student Card) -->
+          <div class="form-group setting-section sidebar-filename-group">
+            <label class="form-label" for="preview-filename-badge">
+              <span class="setting-step-num">4</span> ชื่อไฟล์
+            </label>
+            <div class="sidebar-filename-card" aria-live="polite">
+              <span class="sidebar-filename-icon" aria-hidden="true">📄</span>
+              <span id="preview-filename-badge" class="filename-badge">portfolio-นักเรียน.pdf</span>
+            </div>
+            <span class="form-helper">สร้างชื่อไฟล์อัตโนมัติตามชื่อและชั้นนักเรียน</span>
+          </div>
+
+          <!-- Group 5: Watermark Redesign -->
+          <div class="form-group setting-section watermark-settings-card">
             <div class="watermark-toggle-row">
-              <label class="form-label" for="setting-watermark-enabled" style="margin-bottom: 0;">ลายน้ำ (Watermark)</label>
+              <label class="form-label" for="setting-watermark-enabled" style="margin-bottom: 0;">
+                <span class="setting-step-num">5</span> ลายน้ำ (Watermark)
+              </label>
               <label class="switch-toggle" aria-label="เปิดหรือปิดลายน้ำ">
                 <input type="checkbox" id="setting-watermark-enabled" class="switch-input" />
                 <span class="switch-slider" aria-hidden="true"></span>
@@ -442,17 +490,17 @@
         <span class="toolbar-school-text">โรงเรียนบ้านวังวน • ตรวจสอบความถูกต้องก่อนสร้างเอกสาร</span>
       </div>
       <div class="toolbar-actions">
-        <button type="button" class="btn btn-secondary" id="btn-preview-portfolio">
+        <button type="button" class="btn btn-ghost action-btn-tertiary" id="btn-preview-portfolio">
           <svg class="icon-inline" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>
           ดูตัวอย่าง
         </button>
-        <button type="button" class="btn btn-primary btn-lg" id="btn-export-pdf">
+        <button type="button" class="btn btn-secondary action-btn-secondary" id="btn-export-zip">
+          <svg class="icon-inline" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+          ส่งออก PDF + รูปภาพ
+        </button>
+        <button type="button" class="btn btn-primary btn-lg action-btn-primary" id="btn-export-pdf">
           <svg class="icon-inline" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M12 18v-6"/><path d="m9 15 3 3 3-3"/></svg>
           สร้าง Portfolio PDF
-        </button>
-        <button type="button" class="btn btn-secondary" id="btn-export-zip">
-          <svg class="icon-inline" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
-          ส่งออก PDF + รูปภาพ
         </button>
       </div>
     </div>

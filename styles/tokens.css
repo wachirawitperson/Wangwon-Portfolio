@@ -21,6 +21,7 @@
   --color-primary-subtle: #f0f9ff;     /* Subtle light tint */
 
   /* School Brand Specific Palette (Ban Wangwon School) */
+  --color-brand-navy: #1e3a8a;
   --color-brand-blue: #1d4ed8;
   --color-brand-sky: #e0f2fe;
   --color-brand-sky-light: #f0f9ff;
@@ -36,11 +37,11 @@
   --color-accent-soft: #fef3c7;        /* Soft warm cream highlight */
 
   /* Surfaces & Backgrounds - Soft Workspace */
-  --color-bg: #f8fafc;                 /* Calm, warm-tinted soft neutral background */
-  --color-bg-soft: #f8fafc;
+  --color-bg: #faf8f5;                 /* Warm ivory background (#FAF8F5) */
+  --color-bg-soft: #faf8f5;
   --color-surface: #ffffff;            /* Pure white card / paper surface */
-  --color-surface-alt: #f1f5f9;        /* Secondary panel / neutral fill */
-  --color-surface-hover: #f8fafc;
+  --color-surface-alt: #f8fafc;        /* Secondary panel / neutral fill */
+  --color-surface-hover: #f1f5f9;
 
   /* Typography Colors */
   --color-text: #0f172a;               /* High-contrast slate text */

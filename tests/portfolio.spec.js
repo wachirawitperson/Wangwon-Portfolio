@@ -1880,6 +1880,226 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
     await page.screenshot({ path: 'tests/screenshots/phase5-mobile-menu.png', fullPage: false });
   });
 
+  // =========================================================================
+  // UI Polish Pass Before Phase 6: Wangwon Soft Workspace Visual Refinements
+  // =========================================================================
+
+  test('61. UI Polish Pass: Header branding, Stepper, Student Card form hierarchy, Filename relocated to Settings sidebar, Cover placeholders, and Watermark toggle', async ({ page }) => {
+    await page.goto('/');
+
+    // 1. Header branding & local logo
+    const headerLogo = page.locator('#school-brand-logo');
+    await expect(headerLogo).toBeVisible();
+    await expect(headerLogo).toHaveAttribute('src', /ban-wangwon-logo\.png/);
+    await expect(page.locator('.app-title')).toHaveText('Wangwon Portfolio');
+    await expect(page.locator('.brand-school')).toContainText('โรงเรียนบ้านวังวน');
+    await expect(page.locator('.app-subtitle')).toHaveText('ระบบสร้าง Portfolio นักเรียน');
+    await expect(page.locator('.privacy-badge')).toBeVisible();
+
+    // 2. 3-Step Navigator
+    await expect(page.locator('#step-nav-1')).toHaveClass(/is-active/);
+    await expect(page.locator('#step-nav-1')).toContainText('ข้อมูลนักเรียน');
+    await expect(page.locator('#step-nav-2')).toContainText('เพิ่มรูปภาพและจัดหน้า');
+    await expect(page.locator('#step-nav-3')).toContainText('ตั้งค่าและสร้างไฟล์');
+
+    // 3. Filename is moved to Settings Sidebar and removed from Student Card
+    await expect(page.locator('#student-edit-card .filename-badge-box')).toHaveCount(0);
+    const sidebarFilename = page.locator('#settings-panel #preview-filename-badge');
+    await expect(sidebarFilename).toBeVisible();
+    await expect(sidebarFilename).toHaveText('portfolio-นักเรียน.pdf');
+
+    // Live update in sidebar when student name changes
+    await page.fill('#student-firstname', 'กิตติพัฒน์');
+    await page.fill('#student-lastname', 'วัฒนากุลชัย');
+    await expect(sidebarFilename).toHaveText('ด.ช.กิตติพัฒน์_วัฒนากุลชัย.pdf');
+
+    // 4. Student number exact input preservation
+    await page.fill('#student-number', '4');
+    await expect(page.locator('#student-number')).toHaveValue('4');
+
+    // 5. Front cover placeholder without student photo shows clean portrait placeholder
+    const frontCover = page.locator('#front-cover-card');
+    await expect(frontCover).toContainText('PORTFOLIO');
+    await expect(frontCover).toContainText('แฟ้มสะสมผลงานนักเรียน');
+    await expect(frontCover.locator('#front-cover-logo')).toBeVisible();
+    await expect(frontCover.locator('.cover-student-photo-placeholder')).toBeVisible();
+
+    // 6. Back cover placeholder shows branding & motto
+    const backCover = page.locator('#back-cover-card');
+    await expect(backCover.locator('#back-cover-logo')).toBeVisible();
+    await expect(backCover).toContainText('โรงเรียนบ้านวังวน');
+    await expect(backCover).toContainText('เรียนดี มีวินัย ใฝ่เรียนรู้ สู่คุณธรรม');
+
+    // 7. Student photo upload displays photo in student card AND front cover placeholder
+    await page.evaluate(async () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 400;
+      canvas.height = 500;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#f43f5e';
+      ctx.fillRect(0, 0, 400, 500);
+      const blob = await new Promise((r) => canvas.toBlob(r, 'image/jpeg'));
+      const file = new File([blob], 'student_avatar.jpg', { type: 'image/jpeg', lastModified: 1000 });
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      const input = document.querySelector('#student-photo-input');
+      input.files = dt.files;
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+
+    await expect(page.locator('#student-photo-preview-img')).toBeVisible();
+    await expect(frontCover.locator('.cover-student-photo-box img')).toBeVisible();
+    await expect(frontCover.locator('.cover-student-photo-placeholder')).toHaveCount(0);
+
+    // 8. Settings Sidebar hierarchy: Quality segmented control & values
+    await expect(page.locator('[data-setting="quality"][data-value="balanced"]')).toHaveClass(/is-active/);
+    await page.click('[data-setting="quality"][data-value="high"]');
+    await expect(page.locator('#setting-quality')).toHaveValue('high');
+    await expect(page.locator('[data-setting="quality"][data-value="high"]')).toHaveClass(/is-active/);
+
+    // 9. Watermark toggle expands and collapses options container
+    const wmOptions = page.locator('#watermark-options-container');
+    await expect(wmOptions).toBeHidden();
+    await page.locator('label.switch-toggle').click();
+    await expect(wmOptions).toBeVisible();
+    await page.locator('label.switch-toggle').click();
+    await expect(wmOptions).toBeHidden();
+
+    // 10. Action Bar Hierarchy
+    const previewBtn = page.locator('#btn-preview-portfolio');
+    const zipBtn = page.locator('#btn-export-zip');
+    const pdfBtn = page.locator('#btn-export-pdf');
+    await expect(previewBtn).toBeVisible();
+    await expect(zipBtn).toBeVisible();
+    await expect(pdfBtn).toBeVisible();
+    await expect(pdfBtn).toHaveClass(/action-btn-primary/);
+  });
+
+  test('62. UI Polish Pass: Responsive layout and zero horizontal overflow across Desktop, Tablet, and Mobile', async ({ page }) => {
+    await page.goto('/');
+
+    const viewports = [
+      { name: 'Desktop 1440', width: 1440, height: 900 },
+      { name: 'Tablet 768', width: 768, height: 1024 },
+      { name: 'Mobile 390', width: 390, height: 844 },
+      { name: 'Mobile 375', width: 375, height: 667 }
+    ];
+
+    for (const vp of viewports) {
+      await page.setViewportSize({ width: vp.width, height: vp.height });
+      const { hasOverflow, overflowingElements } = await page.evaluate(() => {
+        const docW = window.innerWidth;
+        const over = [];
+        document.querySelectorAll('*').forEach((el) => {
+          const r = el.getBoundingClientRect();
+          if (r.right > docW + 1) {
+            over.push(`${el.tagName}.${el.className} [width: ${r.width}, right: ${r.right}, docW: ${docW}]`);
+          }
+        });
+        return {
+          hasOverflow: document.documentElement.scrollWidth > window.innerWidth,
+          overflowingElements: over.slice(0, 5)
+        };
+      });
+      expect(hasOverflow, `Horizontal overflow detected at ${vp.name}: ${overflowingElements.join(' | ')}`).toBe(false);
+    }
+  });
+
+  test('63. UI Polish Pass: Capture 9 Visual QA Screenshots', async ({ page }) => {
+    await page.goto('/');
+
+    // 1. ui-polish-header.png
+    await page.setViewportSize({ width: 1440, height: 900 });
+    const header = page.locator('header.app-header');
+    await header.scrollIntoViewIfNeeded();
+    await header.screenshot({ path: 'tests/screenshots/ui-polish-header.png' });
+
+    // 2. ui-polish-student-card.png (Empty student info card)
+    const studentCard = page.locator('#student-section');
+    await studentCard.scrollIntoViewIfNeeded();
+    await studentCard.screenshot({ path: 'tests/screenshots/ui-polish-student-card.png' });
+
+    // 3. ui-polish-desktop-empty.png (Full page view of empty workspace)
+    await page.screenshot({ path: 'tests/screenshots/ui-polish-desktop-empty.png', fullPage: true });
+
+    // 4. Fill student info and upload student photo
+    await page.fill('#student-firstname', 'กิตติพัฒน์');
+    await page.fill('#student-lastname', 'วัฒนากุลชัย');
+    await page.selectOption('#student-grade', 'ประถมศึกษาปีที่ 4');
+    await page.fill('#student-number', '12');
+    await page.fill('#student-year', '2569');
+
+    await page.evaluate(async () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 400;
+      canvas.height = 500;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#3b82f6';
+      ctx.fillRect(0, 0, 400, 500);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '24px sans-serif';
+      ctx.fillText('รูปถ่ายนักเรียน', 120, 260);
+      const blob = await new Promise((r) => canvas.toBlob(r, 'image/jpeg'));
+      const file = new File([blob], 'student_kittipat.jpg', { type: 'image/jpeg', lastModified: 1000 });
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      const input = document.querySelector('#student-photo-input');
+      input.files = dt.files;
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+
+    await expect(page.locator('#student-photo-preview-img')).toBeVisible();
+
+    // 5. ui-polish-desktop-student-photo.png (Desktop with student photo uploaded)
+    await page.screenshot({ path: 'tests/screenshots/ui-polish-desktop-student-photo.png', fullPage: false });
+
+    // 6. Import student activity images
+    await page.evaluate(async () => {
+      const colors = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'];
+      const files = [];
+      for (let i = 0; i < 4; i++) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 1600;
+        canvas.height = 1200;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = colors[i];
+        ctx.fillRect(0, 0, 1600, 1200);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '40px sans-serif';
+        ctx.fillText(`ผลงานนักเรียนที่ ${i + 1}`, 100, 150);
+        const blob = await new Promise((r) => canvas.toBlob(r, 'image/jpeg'));
+        files.push(new File([blob], `work_0${i + 1}.jpg`, { type: 'image/jpeg', lastModified: (i + 1) * 1000 }));
+      }
+      await window.__WANGWON_IMAGE_MANAGER__.importStudentImages(files);
+    });
+
+    await expect(page.locator('.student-image-card')).toHaveCount(4);
+
+    // 7. ui-polish-desktop-images.png (Workspace with images populated)
+    await page.locator('#portfolio-workspace').scrollIntoViewIfNeeded();
+    await page.screenshot({ path: 'tests/screenshots/ui-polish-desktop-images.png', fullPage: false });
+
+    // 8. ui-polish-settings.png (Settings panel view)
+    const settingsPanel = page.locator('#settings-panel');
+    await settingsPanel.scrollIntoViewIfNeeded();
+    await settingsPanel.screenshot({ path: 'tests/screenshots/ui-polish-settings.png' });
+
+    // 9. ui-polish-watermark-open.png (Watermark options expanded)
+    await page.locator('label.switch-toggle').click();
+    await expect(page.locator('#watermark-options-container')).toBeVisible();
+    await settingsPanel.scrollIntoViewIfNeeded();
+    await page.screenshot({ path: 'tests/screenshots/ui-polish-watermark-open.png' });
+
+    // 10. ui-polish-tablet.png (Tablet 768px layout)
+    await page.setViewportSize({ width: 768, height: 1024 });
+    await page.screenshot({ path: 'tests/screenshots/ui-polish-tablet.png', fullPage: false });
+
+    // 11. ui-polish-mobile.png (Mobile 390px layout)
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.screenshot({ path: 'tests/screenshots/ui-polish-mobile.png', fullPage: false });
+  });
+
 });
+
 
 

@@ -227,12 +227,18 @@ export function initWorkspace(workspaceElement) {
               <img src="./assets/branding/ban-wangwon-logo.png" alt="ตราโรงเรียนบ้านวังวน" class="cover-school-emblem" id="front-cover-logo" />
               <div class="cover-school-tag">โรงเรียนบ้านวังวน</div>
             </div>
-            <h3 class="cover-title">แฟ้มสะสมผลงาน</h3>
+            <div class="cover-category-badge" aria-hidden="true">PORTFOLIO</div>
+            <h3 class="cover-title">แฟ้มสะสมผลงานนักเรียน</h3>
             ${studentPhoto?.previewUrl ? `
               <div class="cover-student-photo-box">
                 <img src="${studentPhoto.previewUrl}" alt="รูปถ่ายนักเรียน" class="cover-photo-img" />
               </div>
-            ` : ''}
+            ` : `
+              <div class="cover-student-photo-placeholder" aria-label="พื้นที่รูปถ่ายนักเรียน">
+                <svg class="cover-photo-placeholder-icon" xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/></svg>
+                <span class="cover-photo-placeholder-text">พื้นที่รูปถ่าย</span>
+              </div>
+            `}
             <div class="cover-student-name">${fullName}</div>
             <div class="cover-student-sub">${student.grade || 'ระดับชั้น'} ${student.studentNumber ? `| เลขที่ ${student.studentNumber}` : ''}</div>
             <div class="cover-year">ปีการศึกษา ${student.academicYear || '2569'}</div>
@@ -266,11 +272,12 @@ export function initWorkspace(workspaceElement) {
   function renderBackCover(state, totalPages) {
     if (!backCoverCard) return;
     const template = getCoverTemplate(state.backCover.templateId);
+    const finalPageText = totalPages ? `หน้า ${totalPages} (หน้าสุดท้าย)` : 'หน้าสุดท้าย';
 
     backCoverCard.innerHTML = `
       <div class="card-header locked-header">
         <span class="badge badge-locked" title="หน้านี้ถูกล็อคให้อยู่หน้าสุดท้ายเสมอ">
-          <span class="icon-inline" aria-hidden="true">${icons.lock}</span> หน้าสุดท้าย
+          <span class="icon-inline" aria-hidden="true">${icons.lock}</span> ${finalPageText}
         </span>
         <span class="cover-type-label">ปกหลัง</span>
       </div>
@@ -284,6 +291,7 @@ export function initWorkspace(workspaceElement) {
             </div>
             <div class="back-cover-motto">"เรียนดี มีวินัย ใฝ่เรียนรู้ สู่คุณธรรม"</div>
             <div class="cover-student-sub" style="margin-top: 6px;">สำนักงานเขตพื้นที่การศึกษาประถมศึกษา</div>
+            <div class="back-cover-accent-line" aria-hidden="true"></div>
           </div>
         </div>
       </div>
@@ -613,8 +621,8 @@ export function initWorkspace(workspaceElement) {
     addPageCard.innerHTML = `
       <div class="compact-add-inner">
         <div class="compact-add-icon" aria-hidden="true">${icons.plus}</div>
-        <div class="compact-add-title">เพิ่มหน้าผลงาน</div>
-        <div class="compact-add-subtitle">คลิกหรือลากวางรูป</div>
+        <div class="compact-add-title">เพิ่มรูปภาพ</div>
+        <div class="compact-add-subtitle">ลากรูปมาวาง หรือคลิกเพื่อเลือก</div>
       </div>
     `;
 
