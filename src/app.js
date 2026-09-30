@@ -180,4 +180,14 @@ document.addEventListener('DOMContentLoaded', () => {
       updateWatermark: stateModule.updateWatermark
     };
   });
+
+  Promise.all([
+    import('./portfolio/pdf-generator.js'),
+    import('./portfolio/page-renderer.js')
+  ]).then(([pdfGen, pageRenderer]) => {
+    window.__WANGWON_PDF_GENERATOR__ = {
+      ...pdfGen,
+      ...pageRenderer
+    };
+  });
 });
