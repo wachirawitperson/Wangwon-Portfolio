@@ -162,4 +162,22 @@ document.addEventListener('DOMContentLoaded', () => {
       resetCoverToGenerated: m.resetCoverToGenerated
     };
   });
+
+  Promise.all([
+    import('./portfolio/watermark-renderer.js'),
+    import('./portfolio/watermark.js'),
+    import('./portfolio/portfolio-state.js')
+  ]).then(([renderer, wmConstants, stateModule]) => {
+    window.__WANGWON_WATERMARK__ = {
+      ...renderer,
+      ...wmConstants,
+      setWatermarkEnabled: stateModule.setWatermarkEnabled,
+      setWatermarkSourceType: stateModule.setWatermarkSourceType,
+      setCustomWatermark: stateModule.setCustomWatermark,
+      replaceCustomWatermark: stateModule.replaceCustomWatermark,
+      removeCustomWatermark: stateModule.removeCustomWatermark,
+      updateWatermarkSettings: stateModule.updateWatermarkSettings,
+      updateWatermark: stateModule.updateWatermark
+    };
+  });
 });

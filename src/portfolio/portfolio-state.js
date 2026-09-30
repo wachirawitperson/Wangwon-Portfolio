@@ -48,17 +48,21 @@ export function createDefaultProjectState() {
       isLocked: true
     },
 
-    // Watermark Configuration
+    // Watermark Configuration (Phase 8)
     watermark: {
       enabled: false,
-      type: null, // 'school' | 'custom' | null
-      file: null,
-      previewUrl: null,
-      image: null,
-      opacity: 0.15,
-      size: 30, // percent of page width
-      position: 'center', // 'top-left'|'top-center'|'top-right'|'middle-left'|'center'|'middle-right'|'bottom-left'|'bottom-center'|'bottom-right'
-      target: 'student-images' // 'all' | 'student-images' | 'exclude-covers'
+      sourceType: 'none', // 'none' | 'school-logo' | 'custom'
+      custom: {
+        file: null,
+        previewUrl: null,
+        mimeType: null,
+        width: null,
+        height: null
+      },
+      opacity: 0.18,            // 18% default (0.05–0.80 range)
+      scale: 0.18,              // 18% of page width (0.08–0.40 range)
+      position: 'bottom-right', // 9-position grid
+      applyTo: 'activity-only'  // 'all-pages' | 'activity-only' | 'exclude-covers'
     },
 
     // PDF Configuration
@@ -137,30 +141,121 @@ export function clearStudentPhoto() {
 }
 
 /**
- * Updates watermark settings and revokes previous custom watermark URL if replaced.
- * @param {Partial<object>} watermarkData
+ * Enables watermark and optionally auto-selects school-logo source.
+ * @param {boolean} enabled
  */
-export function updateWatermark(watermarkData) {
+export function setWatermarkEnabled(enabled) {
   projectStore.setState((state) => {
-    if (
-      state.watermark?.previewUrl &&
-      watermarkData?.previewUrl &&
-      state.watermark.previewUrl !== watermarkData.previewUrl &&
-      state.watermark.previewUrl.startsWith('blob:')
-    ) {
-      try {
-        URL.revokeObjectURL(state.watermark.previewUrl);
-      } catch (e) {
-        // ignore
-      }
+    const wm = { ...state.watermark, enabled };
+    // On first enable with no source selected, auto-select school-logo
+    if (enabled && state.watermark.sourceType === 'none') {
+      wm.sourceType = 'school-logo';
+    }
+    // When disabling, set sourceType to 'none'
+    if (!enabled) {
+      wm.sourceType = 'none';
+    }
+    return { watermark: wm };
+  });
+}
+
+/**
+ * Sets the watermark source type (school-logo or custom).
+ * Does not affect custom image data.
+ * @param {'none'|'school-logo'|'custom'} sourceType
+ */
+export function setWatermarkSourceType(sourceType) {
+  projectStore.setState((state) => ({
+    watermark: { ...state.watermark, sourceType }
+  }));
+}
+
+/**
+ * Sets a custom watermark image. Revokes any previous custom preview URL.
+ * @param {File} file
+ * @param {string} previewUrl - blob: URL
+ * @param {string} mimeType
+ * @param {number} width
+ * @param {number} height
+ */
+export function setCustomWatermark(file, previewUrl, mimeType, width, height) {
+  projectStore.setState((state) => {
+    // Revoke previous custom URL if exists
+    const prevUrl = state.watermark?.custom?.previewUrl;
+    if (prevUrl && typeof prevUrl === 'string' && prevUrl.startsWith('blob:')) {
+      try { URL.revokeObjectURL(prevUrl); } catch (e) { /* ignore */ }
     }
     return {
       watermark: {
         ...state.watermark,
-        ...watermarkData
+        sourceType: 'custom',
+        custom: { file, previewUrl, mimeType, width, height }
       }
     };
   });
+}
+
+/**
+ * Replaces the current custom watermark with a new one.
+ * Alias for setCustomWatermark — revokes old URL automatically.
+ */
+export function replaceCustomWatermark(file, previewUrl, mimeType, width, height) {
+  setCustomWatermark(file, previewUrl, mimeType, width, height);
+}
+
+/**
+ * Removes the custom watermark image and falls back:
+ * - If watermark is still enabled → fall back to 'school-logo'
+ * - If watermark is disabled → sourceType = 'none'
+ */
+export function removeCustomWatermark() {
+  projectStore.setState((state) => {
+    const prevUrl = state.watermark?.custom?.previewUrl;
+    if (prevUrl && typeof prevUrl === 'string' && prevUrl.startsWith('blob:')) {
+      try { URL.revokeObjectURL(prevUrl); } catch (e) { /* ignore */ }
+    }
+    const fallbackSource = state.watermark.enabled ? 'school-logo' : 'none';
+    return {
+      watermark: {
+        ...state.watermark,
+        sourceType: fallbackSource,
+        custom: { file: null, previewUrl: null, mimeType: null, width: null, height: null }
+      }
+    };
+  });
+}
+
+/**
+ * Updates watermark presentation settings (opacity, scale, position, applyTo).
+ * Never revokes custom watermark URLs.
+ * @param {object} settings - Partial: { opacity?, scale?, position?, applyTo? }
+ */
+export function updateWatermarkSettings(settings) {
+  const allowed = ['opacity', 'scale', 'position', 'applyTo'];
+  const filtered = {};
+  for (const key of allowed) {
+    if (settings[key] !== undefined) {
+      filtered[key] = settings[key];
+    }
+  }
+  projectStore.setState((state) => ({
+    watermark: { ...state.watermark, ...filtered }
+  }));
+}
+
+/**
+ * Legacy-compatible convenience: Updates watermark state with a partial object.
+ * Used by existing code. Delegates to specific functions where possible.
+ * @param {Partial<object>} watermarkData
+ * @deprecated Prefer explicit lifecycle functions (setWatermarkEnabled, setCustomWatermark, etc.)
+ */
+export function updateWatermark(watermarkData) {
+  projectStore.setState((state) => ({
+    watermark: {
+      ...state.watermark,
+      ...watermarkData
+    }
+  }));
 }
 
 /**
@@ -272,9 +367,9 @@ export function resetPortfolioProject() {
   }
 
   // Clean up custom watermark URL
-  if (currentState.watermark?.previewUrl && currentState.watermark.previewUrl.startsWith('blob:')) {
+  if (currentState.watermark?.custom?.previewUrl && currentState.watermark.custom.previewUrl.startsWith('blob:')) {
     try {
-      URL.revokeObjectURL(currentState.watermark.previewUrl);
+      URL.revokeObjectURL(currentState.watermark.custom.previewUrl);
     } catch (e) {
       // ignore
     }
