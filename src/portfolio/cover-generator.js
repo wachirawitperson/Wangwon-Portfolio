@@ -695,13 +695,21 @@ export async function generateCoverCanvas(options = {}) {
   } = options;
 
   const isLandscape = orientation === 'landscape';
-  const width = isLandscape ? A4_LANDSCAPE_WIDTH : A4_PORTRAIT_WIDTH;
-  const height = isLandscape ? A4_LANDSCAPE_HEIGHT : A4_PORTRAIT_HEIGHT;
+  const baseWidth = isLandscape ? A4_LANDSCAPE_WIDTH : A4_PORTRAIT_WIDTH;
+  const baseHeight = isLandscape ? A4_LANDSCAPE_HEIGHT : A4_PORTRAIT_HEIGHT;
+
+  const targetWidth = Math.round(options.width || baseWidth);
+  const targetHeight = Math.round(options.height || baseHeight);
 
   const canvas = document.createElement('canvas');
-  canvas.width = width;
-  canvas.height = height;
+  canvas.width = targetWidth;
+  canvas.height = targetHeight;
   const ctx = canvas.getContext('2d');
+
+  const scaleFactor = targetWidth / baseWidth;
+  if (scaleFactor !== 1) {
+    ctx.scale(scaleFactor, scaleFactor);
+  }
 
   // Load required assets in parallel
   const [schoolLogoImg, studentPhotoImg] = await Promise.all([
@@ -715,30 +723,30 @@ export async function generateCoverCanvas(options = {}) {
     schoolLogoImg
   };
 
-  // Dispatch to template renderer
+  // Dispatch to template renderer using baseWidth and baseHeight coordinate system
   switch (templateId) {
     case 'colorful-portfolio':
       if (type === 'front') {
-        await renderColorfulPortfolioFront(ctx, width, height, renderData);
+        await renderColorfulPortfolioFront(ctx, baseWidth, baseHeight, renderData);
       } else {
-        await renderColorfulPortfolioBack(ctx, width, height, renderData);
+        await renderColorfulPortfolioBack(ctx, baseWidth, baseHeight, renderData);
       }
       break;
 
     case 'modern-academic':
       if (type === 'front') {
-        await renderModernAcademicFront(ctx, width, height, renderData);
+        await renderModernAcademicFront(ctx, baseWidth, baseHeight, renderData);
       } else {
-        await renderModernAcademicBack(ctx, width, height, renderData);
+        await renderModernAcademicBack(ctx, baseWidth, baseHeight, renderData);
       }
       break;
 
     case 'minimal-school':
     default:
       if (type === 'front') {
-        await renderMinimalSchoolFront(ctx, width, height, renderData);
+        await renderMinimalSchoolFront(ctx, baseWidth, baseHeight, renderData);
       } else {
-        await renderMinimalSchoolBack(ctx, width, height, renderData);
+        await renderMinimalSchoolBack(ctx, baseWidth, baseHeight, renderData);
       }
       break;
   }

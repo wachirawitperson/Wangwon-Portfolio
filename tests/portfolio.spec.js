@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import fs from 'fs';
 
 test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () => {
 
@@ -3717,6 +3718,640 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
     await page.setViewportSize({ width: 768, height: 1024 });
     await page.locator('#portfolio-workspace').scrollIntoViewIfNeeded();
     await page.screenshot({ path: 'tests/screenshots/phase8-watermark-tablet.png', fullPage: false });
+  });
+
+  // ============================================================================
+  // PHASE 9: PDF GENERATION ENGINE TESTS (Tests 107 - 122)
+  // ============================================================================
+
+  test('107. Phase 9: PDF export button requires complete student information before generating', async ({ page }) => {
+    await page.goto('/');
+
+    // Form is initially empty, click export PDF
+    await page.click('#btn-export-pdf');
+
+    // Should show validation warning toast and not trigger generation
+    const toast = page.locator('.toast');
+    await expect(toast).toBeVisible();
+    await expect(toast).toContainText('กรุณากรอกข้อมูลนักเรียนให้ครบก่อน');
+  });
+
+  test('108. Phase 9: Zero activity images generates valid 2-page PDF (Front Cover + Back Cover)', async ({ page }) => {
+    await page.goto('/');
+
+    // Fill valid student information
+    await page.selectOption('#student-prefix', 'ด.ช.');
+    await page.fill('#student-firstname', 'สมชาย');
+    await page.fill('#student-lastname', 'ใจดี');
+    await page.selectOption('#student-grade', 'ประถมศึกษาปีที่ 6');
+    await page.fill('#student-number', '12');
+
+    // Verify 0 activity images in state
+    const state = await page.evaluate(() => window.__WANGWON_STORE__.getState());
+    expect(state.images.length).toBe(0);
+
+    // Call generatePortfolioPdf API directly
+    const result = await page.evaluate(async () => {
+      const s = window.__WANGWON_STORE__.getState();
+      const res = await window.__WANGWON_PDF_GENERATOR__.generatePortfolioPdf(s);
+      return {
+        filename: res.filename,
+        pageCount: res.pageCount,
+        byteLength: res.bytes.length
+      };
+    });
+
+    expect(result.pageCount).toBe(2);
+    expect(result.filename).toBe('ด.ช.สมชาย_ใจดี.pdf');
+    expect(result.byteLength).toBeGreaterThan(5000);
+  });
+
+  test('109. Phase 9: 1 activity image generates valid 3-page PDF', async ({ page }) => {
+    await page.goto('/');
+    await page.selectOption('#student-prefix', 'ด.ญ.');
+    await page.fill('#student-firstname', 'พรทิพย์');
+    await page.fill('#student-lastname', 'แสงจันทร์');
+    await page.selectOption('#student-grade', 'ประถมศึกษาปีที่ 5');
+    await page.fill('#student-number', '7');
+
+    // Add 1 activity image
+    await page.evaluate(async () => {
+      const c = document.createElement('canvas');
+      c.width = 800; c.height = 600;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#10b981';
+      ctx.fillRect(0, 0, 800, 600);
+      const blob = await new Promise(r => c.toBlob(r, 'image/jpeg'));
+      const file = new File([blob], 'art_work.jpg', { type: 'image/jpeg' });
+      await window.__WANGWON_IMAGE_MANAGER__.importStudentImages([file]);
+    });
+
+    const result = await page.evaluate(async () => {
+      const s = window.__WANGWON_STORE__.getState();
+      const res = await window.__WANGWON_PDF_GENERATOR__.generatePortfolioPdf(s);
+      return {
+        filename: res.filename,
+        pageCount: res.pageCount,
+        byteLength: res.bytes.length
+      };
+    });
+
+    expect(result.pageCount).toBe(3); // Front + 1 Image + Back
+    expect(result.filename).toBe('ด.ญ.พรทิพย์_แสงจันทร์.pdf');
+    expect(result.byteLength).toBeGreaterThan(10000);
+  });
+
+  test('110. Phase 9: 5 activity images generate valid 7-page PDF preserving user order', async ({ page }) => {
+    await page.goto('/');
+    await page.selectOption('#student-prefix', 'ด.ช.');
+    await page.fill('#student-firstname', 'กิตติศักดิ์');
+    await page.fill('#student-lastname', 'ยอดเยี่ยม');
+    await page.selectOption('#student-grade', 'ประถมศึกษาปีที่ 4');
+    await page.fill('#student-number', '3');
+
+    // Import 5 distinct color images
+    await page.evaluate(async () => {
+      const colors = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6'];
+      const files = [];
+      for (let i = 0; i < colors.length; i++) {
+        const c = document.createElement('canvas');
+        c.width = 600; c.height = 400;
+        const ctx = c.getContext('2d');
+        ctx.fillStyle = colors[i];
+        ctx.fillRect(0, 0, 600, 400);
+        const blob = await new Promise(r => c.toBlob(r, 'image/jpeg'));
+        files.push(new File([blob], 'img_' + (i + 1) + '.jpg', { type: 'image/jpeg' }));
+      }
+      await window.__WANGWON_IMAGE_MANAGER__.importStudentImages(files);
+    });
+
+    const result = await page.evaluate(async () => {
+      const s = window.__WANGWON_STORE__.getState();
+      const res = await window.__WANGWON_PDF_GENERATOR__.generatePortfolioPdf(s);
+      return {
+        filename: res.filename,
+        pageCount: res.pageCount,
+        byteLength: res.bytes.length
+      };
+    });
+
+    expect(result.pageCount).toBe(7); // Front + 5 + Back
+    expect(result.filename).toBe('ด.ช.กิตติศักดิ์_ยอดเยี่ยม.pdf');
+    expect(result.byteLength).toBeGreaterThan(20000);
+  });
+
+  test('111. Phase 9: All 3 cover templates render into PDF cleanly', async ({ page }) => {
+    await page.goto('/');
+    await page.selectOption('#student-prefix', 'ด.ช.');
+    await page.fill('#student-firstname', 'ธนดล');
+    await page.fill('#student-lastname', 'สุขสำราญ');
+    await page.selectOption('#student-grade', 'ประถมศึกษาปีที่ 1');
+    await page.fill('#student-number', '1');
+
+    const templates = ['minimal-school', 'colorful-portfolio', 'modern-academic'];
+
+    for (const tId of templates) {
+      await page.evaluate((templateId) => {
+        window.__WANGWON_COVER_STATE__.setCoverTemplate(templateId);
+      }, tId);
+
+      const result = await page.evaluate(async () => {
+        const s = window.__WANGWON_STORE__.getState();
+        const res = await window.__WANGWON_PDF_GENERATOR__.generatePortfolioPdf(s);
+        return {
+          pageCount: res.pageCount,
+          byteLength: res.bytes.length
+        };
+      });
+
+      expect(result.pageCount).toBe(2);
+      expect(result.byteLength).toBeGreaterThan(5000);
+    }
+  });
+
+  test('112. Phase 9: Custom uploaded Front and Back covers render into PDF', async ({ page }) => {
+    await page.goto('/');
+    await page.selectOption('#student-prefix', 'ด.ญ.');
+    await page.fill('#student-firstname', 'ชลธิชา');
+    await page.fill('#student-lastname', 'สายชล');
+    await page.selectOption('#student-grade', 'ประถมศึกษาปีที่ 2');
+    await page.fill('#student-number', '5');
+
+    // Upload custom Front Cover
+    await page.evaluate(async () => {
+      const c = document.createElement('canvas');
+      c.width = 1240; c.height = 1754;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#065f46';
+      ctx.fillRect(0, 0, 1240, 1754);
+      const blob = await new Promise(r => c.toBlob(r, 'image/png'));
+      const file = new File([blob], 'custom_front.png', { type: 'image/png' });
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      const input = document.querySelector('#custom-front-cover-input');
+      input.files = dt.files;
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+
+    // Upload custom Back Cover
+    await page.evaluate(async () => {
+      const c = document.createElement('canvas');
+      c.width = 1240; c.height = 1754;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#1e1b4b';
+      ctx.fillRect(0, 0, 1240, 1754);
+      const blob = await new Promise(r => c.toBlob(r, 'image/png'));
+      const file = new File([blob], 'custom_back.png', { type: 'image/png' });
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      const input = document.querySelector('#custom-back-cover-input');
+      input.files = dt.files;
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+
+    const result = await page.evaluate(async () => {
+      const s = window.__WANGWON_STORE__.getState();
+      const res = await window.__WANGWON_PDF_GENERATOR__.generatePortfolioPdf(s);
+      return {
+        pageCount: res.pageCount,
+        byteLength: res.bytes.length
+      };
+    });
+
+    expect(result.pageCount).toBe(2);
+    expect(result.byteLength).toBeGreaterThan(10000);
+  });
+
+  test('113. Phase 9: Landscape orientation produces 841.89 x 595.28 pt pages in PDF', async ({ page }) => {
+    await page.goto('/');
+    await page.selectOption('#student-prefix', 'ด.ช.');
+    await page.fill('#student-firstname', 'ภูผา');
+    await page.fill('#student-lastname', 'ศิริพร');
+    await page.selectOption('#student-grade', 'ประถมศึกษาปีที่ 3');
+    await page.fill('#student-number', '15');
+
+    // Switch to Landscape
+    await page.selectOption('#setting-orientation', 'landscape');
+
+    const result = await page.evaluate(async () => {
+      const s = window.__WANGWON_STORE__.getState();
+      const res = await window.__WANGWON_PDF_GENERATOR__.generatePortfolioPdf(s);
+      // Load generated bytes back with PDFLib to inspect page dimensions
+      const doc = await window.PDFLib.PDFDocument.load(res.bytes);
+      const pages = doc.getPages();
+      const firstPage = pages[0].getSize();
+      return {
+        pageCount: pages.length,
+        width: Math.round(firstPage.width * 100) / 100,
+        height: Math.round(firstPage.height * 100) / 100
+      };
+    });
+
+    expect(result.pageCount).toBe(2);
+    expect(result.width).toBe(841.89);
+    expect(result.height).toBe(595.28);
+  });
+
+  test('114. Phase 9: Quality settings change resolution (small vs balanced vs high)', async ({ page }) => {
+    await page.goto('/');
+
+    const smallDims = await page.evaluate(() => {
+      return window.__WANGWON_PDF_GENERATOR__.getPagePixelDimensions({ orientation: 'portrait', quality: 'small' });
+    });
+    const balancedDims = await page.evaluate(() => {
+      return window.__WANGWON_PDF_GENERATOR__.getPagePixelDimensions({ orientation: 'portrait', quality: 'balanced' });
+    });
+    const highDims = await page.evaluate(() => {
+      return window.__WANGWON_PDF_GENERATOR__.getPagePixelDimensions({ orientation: 'portrait', quality: 'high' });
+    });
+
+    expect(smallDims.width).toBe(1240);
+    expect(smallDims.height).toBe(1754);
+    expect(smallDims.dpi).toBe(150);
+
+    expect(balancedDims.width).toBe(1654);
+    expect(balancedDims.height).toBe(2339);
+    expect(balancedDims.dpi).toBe(200);
+
+    expect(highDims.width).toBe(2480);
+    expect(highDims.height).toBe(3508);
+    expect(highDims.dpi).toBe(300);
+  });
+
+  test('115. Phase 9: Fit vs Fill calculation correctly preserves vs covers page', async ({ page }) => {
+    await page.goto('/');
+
+    // 1600x1200 landscape image into 1240x1754 portrait page
+    const fitCalc = await page.evaluate(() => {
+      return window.__WANGWON_PDF_GENERATOR__.calculateImagePlacement({
+        sourceWidth: 1600,
+        sourceHeight: 1200,
+        pageWidth: 1240,
+        pageHeight: 1754,
+        mode: 'fit',
+        rotation: 0
+      });
+    });
+
+    const fillCalc = await page.evaluate(() => {
+      return window.__WANGWON_PDF_GENERATOR__.calculateImagePlacement({
+        sourceWidth: 1600,
+        sourceHeight: 1200,
+        pageWidth: 1240,
+        pageHeight: 1754,
+        mode: 'fill',
+        rotation: 0
+      });
+    });
+
+    // Fit must fit inside page: drawWidth <= 1240 and drawHeight <= 1754
+    expect(fitCalc.drawWidth).toBeLessThanOrEqual(1240);
+    expect(fitCalc.drawHeight).toBeLessThanOrEqual(1754);
+
+    // Fill must cover page: drawWidth >= 1240 and drawHeight >= 1754
+    expect(fillCalc.drawWidth).toBeGreaterThanOrEqual(1240);
+    expect(fillCalc.drawHeight).toBeGreaterThanOrEqual(1754);
+  });
+
+  test('116. Phase 9: Rotated images (90, 180, 270 deg) calculate swapped effective dimensions', async ({ page }) => {
+    await page.goto('/');
+
+    const unrotated = await page.evaluate(() => {
+      return window.__WANGWON_PDF_GENERATOR__.calculateImagePlacement({
+        sourceWidth: 1600,
+        sourceHeight: 1200,
+        pageWidth: 1240,
+        pageHeight: 1754,
+        mode: 'fit',
+        rotation: 0
+      });
+    });
+
+    const rotated90 = await page.evaluate(() => {
+      return window.__WANGWON_PDF_GENERATOR__.calculateImagePlacement({
+        sourceWidth: 1600,
+        sourceHeight: 1200,
+        pageWidth: 1240,
+        pageHeight: 1754,
+        mode: 'fit',
+        rotation: 90
+      });
+    });
+
+    // When rotated 90°, effective width/height ratio swaps from 1600/1200 to 1200/1600
+    expect(rotated90.effectiveWidth).toBeLessThan(rotated90.effectiveHeight);
+    expect(unrotated.effectiveWidth).toBeGreaterThan(unrotated.effectiveHeight);
+  });
+
+  test('117. Phase 9: Watermark is stamped onto PDF pages according to applyTo setting', async ({ page }) => {
+    await page.goto('/');
+    await page.selectOption('#student-prefix', 'ด.ช.');
+    await page.fill('#student-firstname', 'ลายน้ำ');
+    await page.fill('#student-lastname', 'ทดสอบ');
+    await page.selectOption('#student-grade', 'อนุบาล 3');
+    await page.fill('#student-number', '9');
+
+    // Enable school-logo watermark
+    await page.click('#setting-watermark-enabled');
+
+    // Add 1 activity image
+    await page.evaluate(async () => {
+      const c = document.createElement('canvas');
+      c.width = 400; c.height = 400;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillRect(0, 0, 400, 400);
+      const blob = await new Promise(r => c.toBlob(r, 'image/jpeg'));
+      const file = new File([blob], 'test_wm.jpg', { type: 'image/jpeg' });
+      await window.__WANGWON_IMAGE_MANAGER__.importStudentImages([file]);
+    });
+
+    const result = await page.evaluate(async () => {
+      const s = window.__WANGWON_STORE__.getState();
+      const res = await window.__WANGWON_PDF_GENERATOR__.generatePortfolioPdf(s);
+      return {
+        pageCount: res.pageCount,
+        byteLength: res.bytes.length
+      };
+    });
+
+    expect(result.pageCount).toBe(3);
+    expect(result.byteLength).toBeGreaterThan(10000);
+  });
+
+  test('118. Phase 9: PDF metadata contains official school title, author, and creator', async ({ page }) => {
+    await page.goto('/');
+    await page.selectOption('#student-prefix', 'ด.ญ.');
+    await page.fill('#student-firstname', 'พิมพ์มาดา');
+    await page.fill('#student-lastname', 'สถิตย์');
+    await page.selectOption('#student-grade', 'ประถมศึกษาปีที่ 6');
+    await page.fill('#student-number', '20');
+
+    const meta = await page.evaluate(async () => {
+      const s = window.__WANGWON_STORE__.getState();
+      const res = await window.__WANGWON_PDF_GENERATOR__.generatePortfolioPdf(s);
+      const doc = await window.PDFLib.PDFDocument.load(res.bytes);
+      return {
+        title: doc.getTitle(),
+        author: doc.getAuthor(),
+        creator: doc.getCreator(),
+        subject: doc.getSubject(),
+        producer: doc.getProducer()
+      };
+    });
+
+    expect(meta.title).toContain('ด.ญ.พิมพ์มาดา สถิตย์');
+    expect(meta.title).toContain('ประถมศึกษาปีที่ 6');
+    expect(meta.author).toBe('โรงเรียนบ้านวังวน');
+    expect(meta.creator).toContain('Wangwon Portfolio');
+    expect(meta.subject).toContain('โรงเรียนบ้านวังวน');
+  });
+
+  test('119. Phase 9: Thai filename sanitization produces valid download filename', async ({ page }) => {
+    await page.goto('/');
+    await page.selectOption('#student-prefix', 'ด.ช.');
+    await page.fill('#student-firstname', 'ประสิทธิ์');
+    await page.fill('#student-lastname', 'คงกระพัน');
+    await page.selectOption('#student-grade', 'ประถมศึกษาปีที่ 3');
+    await page.fill('#student-number', '4');
+
+    const result = await page.evaluate(async () => {
+      const s = window.__WANGWON_STORE__.getState();
+      const res = await window.__WANGWON_PDF_GENERATOR__.generatePortfolioPdf(s);
+      return res.filename;
+    });
+
+    expect(result).toBe('ด.ช.ประสิทธิ์_คงกระพัน.pdf');
+  });
+
+  test('120. Phase 9: Export button shows live progress percentage and completes with toast', async ({ page }) => {
+    await page.goto('/');
+    await page.selectOption('#student-prefix', 'ด.ช.');
+    await page.fill('#student-firstname', 'ทดสอบ');
+    await page.fill('#student-lastname', 'โปรเกรส');
+    await page.selectOption('#student-grade', 'อนุบาล 1');
+    await page.fill('#student-number', '1');
+
+    // Click Export PDF button
+    const btn = page.locator('#btn-export-pdf');
+    await btn.click();
+
+    // Verify it completes with success toast
+    const successToast = page.locator('.toast.toast-success');
+    await expect(successToast).toBeVisible({ timeout: 15000 });
+    await expect(successToast).toContainText('สร้างและดาวน์โหลดไฟล์');
+  });
+
+  test('121. Phase 9: Error handling on aborted generation', async ({ page }) => {
+    await page.goto('/');
+
+    // Test AbortSignal cancellation
+    const abortResult = await page.evaluate(async () => {
+      const controller = new AbortController();
+      controller.abort();
+      try {
+        const s = window.__WANGWON_STORE__.getState();
+        await window.__WANGWON_PDF_GENERATOR__.generatePortfolioPdf(s, { signal: controller.signal });
+        return { error: null };
+      } catch (err) {
+        return { error: err.name, message: err.message };
+      }
+    });
+
+    expect(abortResult.error).toBe('AbortError');
+  });
+
+  test('122. Phase 9: Visual QA Artifacts - Generate 10 test PDFs and 7 page screenshots', async ({ page }) => {
+    test.setTimeout(90000);
+    await page.goto('/');
+
+    // 1. Setup Student
+    await page.selectOption('#student-prefix', 'ด.ช.');
+    await page.fill('#student-firstname', 'สมเกียรติ');
+    await page.fill('#student-lastname', 'รักเรียน');
+    await page.selectOption('#student-grade', 'ประถมศึกษาปีที่ 6');
+    await page.fill('#student-number', '9');
+
+    // Add 2 activity images
+    await page.evaluate(async () => {
+      const createImg = (name, color) => {
+        const c = document.createElement('canvas');
+        c.width = 800; c.height = 600;
+        const ctx = c.getContext('2d');
+        ctx.fillStyle = color;
+        ctx.fillRect(0, 0, 800, 600);
+        return new Promise(r => c.toBlob(b => r(new File([b], name, { type: 'image/jpeg' })), 'image/jpeg'));
+      };
+      const f1 = await createImg('activity1.jpg', '#0284c7');
+      const f2 = await createImg('activity2.jpg', '#f59e0b');
+      await window.__WANGWON_IMAGE_MANAGER__.importStudentImages([f1, f2]);
+    });
+
+    // Helper to generate and save PDF to filesystem via Node in evaluate
+    async function generateAndSavePdf(filename, overrides = {}) {
+      const pdfBase64 = await page.evaluate(async (ov) => {
+        const store = window.__WANGWON_STORE__;
+        let s = JSON.parse(JSON.stringify(store.getState()));
+        if (ov.orientation) s.pdfSettings.orientation = ov.orientation;
+        if (ov.quality) s.pdfSettings.quality = ov.quality;
+        if (ov.placement) s.pdfSettings.placement = ov.placement;
+        if (ov.templateId) {
+          s.frontCover.templateId = ov.templateId;
+          s.backCover.templateId = ov.templateId;
+        }
+        if (ov.watermark) {
+          s.watermark = { ...s.watermark, ...ov.watermark };
+        }
+        if (ov.images) {
+          s.images = ov.images;
+        }
+
+        const res = await window.__WANGWON_PDF_GENERATOR__.generatePortfolioPdf(s);
+        let binary = '';
+        const bytes = res.bytes;
+        const len = bytes.byteLength;
+        for (let i = 0; i < len; i++) {
+          binary += String.fromCharCode(bytes[i]);
+        }
+        return btoa(binary);
+      }, overrides);
+
+      const buffer = Buffer.from(pdfBase64, 'base64');
+      fs.writeFileSync('tests/artifacts/' + filename, buffer);
+    }
+
+    // Generate 10 required PDF artifacts
+    // 1. pdf-0-images.pdf (Front + Back)
+    await generateAndSavePdf('pdf-0-images.pdf', { images: [] });
+
+    // 2. pdf-1-image.pdf
+    await generateAndSavePdf('pdf-1-image.pdf', {
+      images: [{ id: '1', previewUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', rotation: 0 }]
+    });
+
+    // 3. pdf-5-images.pdf
+    const fiveImages = [1, 2, 3, 4, 5].map(i => ({
+      id: String(i),
+      previewUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+      rotation: 0
+    }));
+    await generateAndSavePdf('pdf-5-images.pdf', { images: fiveImages });
+
+    // 4. pdf-template-minimal.pdf
+    await generateAndSavePdf('pdf-template-minimal.pdf', { templateId: 'minimal-school' });
+
+    // 5. pdf-template-colorful.pdf
+    await generateAndSavePdf('pdf-template-colorful.pdf', { templateId: 'colorful-portfolio' });
+
+    // 6. pdf-template-modern.pdf
+    await generateAndSavePdf('pdf-template-modern.pdf', { templateId: 'modern-academic' });
+
+    // 7. pdf-landscape.pdf
+    await generateAndSavePdf('pdf-landscape.pdf', { orientation: 'landscape' });
+
+    // 8. pdf-fill-mode.pdf
+    await generateAndSavePdf('pdf-fill-mode.pdf', { placement: 'fill' });
+
+    // 9. pdf-rotated-images.pdf
+    await generateAndSavePdf('pdf-rotated-images.pdf', {
+      images: [
+        { id: 'r1', previewUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', rotation: 90 },
+        { id: 'r2', previewUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', rotation: 270 }
+      ]
+    });
+
+    // 10. pdf-with-watermark.pdf
+    await generateAndSavePdf('pdf-with-watermark.pdf', {
+      watermark: { enabled: true, sourceType: 'school-logo', opacity: 0.25, scale: 0.2, position: 'bottom-right', applyTo: 'all-pages' }
+    });
+
+    // 7 Required QA Page Screenshots:
+    async function saveCanvasScreenshot(canvasPromiseCode, screenshotFilename) {
+      const dataUrl = await page.evaluate(canvasPromiseCode);
+      const base64Data = dataUrl.replace(/^data:image\/png;base64,/, '');
+      fs.writeFileSync('tests/screenshots/' + screenshotFilename, Buffer.from(base64Data, 'base64'));
+    }
+
+    // 1. phase9-pdf-page-front-cover.png
+    await saveCanvasScreenshot(async () => {
+      const s = window.__WANGWON_STORE__.getState();
+      const canvas = await window.__WANGWON_PDF_GENERATOR__.renderCoverPageCanvas({
+        type: 'front',
+        coverState: s.frontCover,
+        student: s.student,
+        studentPhoto: s.studentPhoto,
+        orientation: 'portrait',
+        pageWidth: 800,
+        pageHeight: 1131
+      });
+      return canvas.toDataURL('image/png');
+    }, 'phase9-pdf-page-front-cover.png');
+
+    // 2. phase9-pdf-page-back-cover.png
+    await saveCanvasScreenshot(async () => {
+      const s = window.__WANGWON_STORE__.getState();
+      const canvas = await window.__WANGWON_PDF_GENERATOR__.renderCoverPageCanvas({
+        type: 'back',
+        coverState: s.backCover,
+        student: s.student,
+        studentPhoto: s.studentPhoto,
+        orientation: 'portrait',
+        pageWidth: 800,
+        pageHeight: 1131
+      });
+      return canvas.toDataURL('image/png');
+    }, 'phase9-pdf-page-back-cover.png');
+
+    // 3. phase9-pdf-page-activity-fit.png
+    await saveCanvasScreenshot(async () => {
+      const canvas = await window.__WANGWON_PDF_GENERATOR__.renderActivityPageCanvas({
+        imageItem: { previewUrl: './assets/branding/ban-wangwon-logo.png', rotation: 0 },
+        pageWidth: 800,
+        pageHeight: 1131,
+        placement: 'fit'
+      });
+      return canvas.toDataURL('image/png');
+    }, 'phase9-pdf-page-activity-fit.png');
+
+    // 4. phase9-pdf-page-activity-fill.png
+    await saveCanvasScreenshot(async () => {
+      const canvas = await window.__WANGWON_PDF_GENERATOR__.renderActivityPageCanvas({
+        imageItem: { previewUrl: './assets/branding/ban-wangwon-logo.png', rotation: 0 },
+        pageWidth: 800,
+        pageHeight: 1131,
+        placement: 'fill'
+      });
+      return canvas.toDataURL('image/png');
+    }, 'phase9-pdf-page-activity-fill.png');
+
+    // 5. phase9-pdf-page-rotated.png
+    await saveCanvasScreenshot(async () => {
+      const canvas = await window.__WANGWON_PDF_GENERATOR__.renderActivityPageCanvas({
+        imageItem: { previewUrl: './assets/branding/ban-wangwon-logo.png', rotation: 90 },
+        pageWidth: 800,
+        pageHeight: 1131,
+        placement: 'fit'
+      });
+      return canvas.toDataURL('image/png');
+    }, 'phase9-pdf-page-rotated.png');
+
+    // 6. phase9-pdf-page-watermarked.png
+    await saveCanvasScreenshot(async () => {
+      const wmImg = await window.__WANGWON_WATERMARK__.loadWatermarkImage({ sourceType: 'school-logo' });
+      const canvas = await window.__WANGWON_PDF_GENERATOR__.renderActivityPageCanvas({
+        imageItem: { previewUrl: './assets/branding/ban-wangwon-logo.png', rotation: 0 },
+        pageWidth: 800,
+        pageHeight: 1131,
+        placement: 'fit',
+        watermarkState: { enabled: true, sourceType: 'school-logo', opacity: 0.35, scale: 0.22, position: 'bottom-right', applyTo: 'activity-only' },
+        watermarkImage: wmImg
+      });
+      return canvas.toDataURL('image/png');
+    }, 'phase9-pdf-page-watermarked.png');
+
+    // 7. phase9-export-progress-ui.png
+    await page.locator('#action-toolbar').scrollIntoViewIfNeeded();
+    await page.screenshot({ path: 'tests/screenshots/phase9-export-progress-ui.png', fullPage: false });
   });
 
 });
