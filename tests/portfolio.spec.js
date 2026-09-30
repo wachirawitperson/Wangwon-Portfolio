@@ -1924,11 +1924,13 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
     await expect(frontCover.locator('#front-cover-logo')).toBeVisible();
     await expect(frontCover.locator('.cover-student-photo-placeholder')).toBeVisible();
 
-    // 6. Back cover placeholder shows branding & motto
+    // 6. Back cover placeholder shows verified branding & decorative school-brand graphic
     const backCover = page.locator('#back-cover-card');
     await expect(backCover.locator('#back-cover-logo')).toBeVisible();
     await expect(backCover).toContainText('โรงเรียนบ้านวังวน');
-    await expect(backCover).toContainText('เรียนดี มีวินัย ใฝ่เรียนรู้ สู่คุณธรรม');
+    await expect(backCover.locator('.back-cover-accent-line')).toBeVisible();
+    await expect(backCover).not.toContainText('เรียนดี มีวินัย');
+    await expect(backCover).not.toContainText('สำนักงานเขตพื้นที่การศึกษา');
 
     // 7. Student photo upload displays photo in student card AND front cover placeholder
     await page.evaluate(async () => {

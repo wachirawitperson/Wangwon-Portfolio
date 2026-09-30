@@ -289,8 +289,6 @@ export function initWorkspace(workspaceElement) {
               <img src="./assets/branding/ban-wangwon-logo.png" alt="ตราโรงเรียนบ้านวังวน" class="cover-school-emblem" id="back-cover-logo" />
               <div class="cover-school-tag">โรงเรียนบ้านวังวน</div>
             </div>
-            <div class="back-cover-motto">"เรียนดี มีวินัย ใฝ่เรียนรู้ สู่คุณธรรม"</div>
-            <div class="cover-student-sub" style="margin-top: 6px;">สำนักงานเขตพื้นที่การศึกษาประถมศึกษา</div>
             <div class="back-cover-accent-line" aria-hidden="true"></div>
           </div>
         </div>
