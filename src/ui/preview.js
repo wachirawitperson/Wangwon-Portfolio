@@ -5,19 +5,30 @@ import { generatePortfolioPdf, downloadGeneratedPdf } from '../portfolio/pdf-gen
 import { generatePortfolioPackage, downloadPortfolioPackage } from '../portfolio/package-exporter.js';
 
 export function initPreviewActions(container) {
-  if (!container) return;
-
-  const btnPreview = container.querySelector('#btn-preview-portfolio');
-  const btnExportPdf = container.querySelector('#btn-export-pdf');
-  const btnExportZip = container.querySelector('#btn-export-zip');
+  // Support both toolbar and Section 3 export buttons
+  const btnPreview = document.querySelector('#btn-preview-portfolio');
+  const btnExportPdfList = [
+    document.querySelector('#btn-export-pdf'),
+    document.querySelector('#btn-section3-export-pdf')
+  ].filter(Boolean);
+  const btnExportZipList = [
+    document.querySelector('#btn-export-zip'),
+    document.querySelector('#btn-section3-export-zip')
+  ].filter(Boolean);
 
   // Shared transient export lock to prevent concurrent heavy operations
   let currentExportTask = null; // null | 'pdf' | 'package'
   let activeAbortController = null;
 
   function checkValidation() {
-    const { valid } = validateAndHighlightStudentForm();
+    if (window.__WANGWON_NAVIGATION__?.getCurrentSection() !== 1) {
+      window.__WANGWON_NAVIGATION__?.goToSection(1, { skipValidation: true });
+    }
+    const { valid, firstInvalidElement } = validateAndHighlightStudentForm();
     if (!valid) {
+      if (firstInvalidElement && typeof firstInvalidElement.focus === 'function') {
+        firstInvalidElement.focus();
+      }
       showToast('กรุณากรอกข้อมูลนักเรียนให้ครบก่อน', 'warning');
       return false;
     }
@@ -41,7 +52,7 @@ export function initPreviewActions(container) {
     });
   }
 
-  if (btnExportPdf) {
+  btnExportPdfList.forEach((btnExportPdf) => {
     const defaultHtml = btnExportPdf.innerHTML;
 
     btnExportPdf.addEventListener('click', async () => {
@@ -53,10 +64,12 @@ export function initPreviewActions(container) {
       activeAbortController = new AbortController();
 
       // UI visual feedback & lock both export buttons
-      btnExportPdf.disabled = true;
-      btnExportPdf.classList.add('is-loading');
-      btnExportPdf.setAttribute('aria-busy', 'true');
-      if (btnExportZip) btnExportZip.disabled = true;
+      btnExportPdfList.forEach((btn) => {
+        btn.disabled = true;
+        btn.classList.add('is-loading');
+        btn.setAttribute('aria-busy', 'true');
+      });
+      btnExportZipList.forEach((btn) => { btn.disabled = true; });
 
       showToast('กำลังเตรียมสร้าง Portfolio PDF...', 'info');
 
@@ -64,7 +77,9 @@ export function initPreviewActions(container) {
         const result = await generatePortfolioPdf(state, {
           signal: activeAbortController.signal,
           onProgress: ({ phase, percent, current, total, message }) => {
-            btnExportPdf.innerHTML = `${spinnerSvg} กำลังสร้าง (${percent}%)`;
+            btnExportPdfList.forEach((btn) => {
+              btn.innerHTML = `${spinnerSvg} กำลังสร้าง (${percent}%)`;
+            });
           }
         });
 
@@ -85,16 +100,18 @@ export function initPreviewActions(container) {
       } finally {
         currentExportTask = null;
         activeAbortController = null;
-        btnExportPdf.disabled = false;
-        btnExportPdf.classList.remove('is-loading');
-        btnExportPdf.removeAttribute('aria-busy');
-        btnExportPdf.innerHTML = defaultHtml;
-        if (btnExportZip) btnExportZip.disabled = false;
+        btnExportPdfList.forEach((btn) => {
+          btn.disabled = false;
+          btn.classList.remove('is-loading');
+          btn.removeAttribute('aria-busy');
+          btn.innerHTML = defaultHtml;
+        });
+        btnExportZipList.forEach((btn) => { btn.disabled = false; });
       }
     });
-  }
+  });
 
-  if (btnExportZip) {
+  btnExportZipList.forEach((btnExportZip) => {
     const defaultHtml = btnExportZip.innerHTML;
 
     btnExportZip.addEventListener('click', async () => {
@@ -111,19 +128,23 @@ export function initPreviewActions(container) {
       activeAbortController = new AbortController();
 
       // UI visual feedback & lock both export buttons
-      btnExportZip.disabled = true;
-      btnExportZip.classList.add('is-loading');
-      btnExportZip.setAttribute('aria-busy', 'true');
-      if (btnExportPdf) btnExportPdf.disabled = true;
+      btnExportZipList.forEach((btn) => {
+        btn.disabled = true;
+        btn.classList.add('is-loading');
+        btn.setAttribute('aria-busy', 'true');
+        btn.innerHTML = `${spinnerSvg} กำลังเตรียมไฟล์ (0%)`;
+      });
+      btnExportPdfList.forEach((btn) => { btn.disabled = true; });
 
-      btnExportZip.innerHTML = `${spinnerSvg} กำลังเตรียมไฟล์ (0%)`;
       showToast('กำลังเตรียมส่งออก PDF + รูปภาพ...', 'info');
 
       try {
         const result = await generatePortfolioPackage(state, {
           signal: activeAbortController.signal,
           onProgress: ({ percent, stage, message }) => {
-            btnExportZip.innerHTML = `${spinnerSvg} กำลังส่งออก (${percent}%)`;
+            btnExportZipList.forEach((btn) => {
+              btn.innerHTML = `${spinnerSvg} กำลังส่งออก (${percent}%)`;
+            });
           }
         });
 
@@ -146,13 +167,15 @@ export function initPreviewActions(container) {
       } finally {
         currentExportTask = null;
         activeAbortController = null;
-        btnExportZip.disabled = false;
-        btnExportZip.classList.remove('is-loading');
-        btnExportZip.removeAttribute('aria-busy');
-        btnExportZip.innerHTML = defaultHtml;
-        if (btnExportPdf) btnExportPdf.disabled = false;
+        btnExportZipList.forEach((btn) => {
+          btn.disabled = false;
+          btn.classList.remove('is-loading');
+          btn.removeAttribute('aria-busy');
+          btn.innerHTML = defaultHtml;
+        });
+        btnExportPdfList.forEach((btn) => { btn.disabled = false; });
       }
     });
-  }
+  });
 }
 

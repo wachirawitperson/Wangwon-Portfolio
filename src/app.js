@@ -18,6 +18,8 @@ import { initStudentForm, clearAllFormValidationErrors, validateAndHighlightStud
 import { initWorkspace } from './ui/workspace.js';
 import { initSettingsPanel } from './ui/settings-panel.js';
 import { initPreviewActions } from './ui/preview.js';
+import { initNavigation, getCurrentSection, goToSection, nextSection, prevSection } from './ui/navigation.js';
+import { initDocumentPreview } from './ui/document-preview.js';
 import { openModal, closeModal } from './ui/modal.js';
 import { showToast } from './ui/notifications.js';
 import {
@@ -92,6 +94,13 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initialize Preview & Export action buttons
   const actionToolbar = document.querySelector('#action-toolbar');
   initPreviewActions(actionToolbar);
+
+  // Initialize Section 3 Document Preview
+  const documentPreviewPane = document.querySelector('#document-preview-pane');
+  initDocumentPreview(documentPreviewPane);
+
+  // Initialize 3-Section Step Navigation
+  initNavigation();
 
   // Initialize Autosave Status Indicator (Phase 12)
   const autosaveIndicator = document.querySelector('#autosave-status-indicator');
@@ -170,6 +179,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Expose store & helpers for testing & development
   window.__WANGWON_STORE__ = projectStore;
+  window.__WANGWON_NAVIGATION__ = {
+    getCurrentSection,
+    goToSection,
+    nextSection,
+    prevSection
+  };
+  import('./ui/document-preview.js').then((dp) => {
+    window.__WANGWON_DOCUMENT_PREVIEW__ = dp;
+  });
   window.__WANGWON_MODAL__ = { openModal, closeModal };
   window.__WANGWON_TOAST__ = { showToast };
   window.__WANGWON_DRAFT_STORAGE__ = {

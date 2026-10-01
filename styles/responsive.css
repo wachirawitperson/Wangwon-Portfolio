@@ -156,38 +156,73 @@ html, body {
 }
 
 /* Compact Mobile Screens (375px - 390px e.g. iPhone SE, iPhone 12/13/14) */
+/* Section 3 Desktop/Tablet Layout Adjustment */
+@media (max-width: 1024px) {
+  .section-3-grid-layout {
+    grid-template-columns: 1fr;
+    gap: var(--space-5);
+  }
+
+  .document-preview-pane {
+    position: static;
+  }
+}
+
+/* Tablet Portrait & Large Phones (<= 768px) */
+@media (max-width: 768px) {
+  .section-3-grid-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .document-preview-pane {
+    position: static;
+  }
+
+  .document-canvas-stage {
+    min-height: 340px;
+    max-height: 50vh;
+    padding: var(--space-2);
+  }
+
+  .document-preview-canvas {
+    max-height: 45vh;
+  }
+
+  .workspace-scroll-container {
+    max-height: 60vh;
+  }
+}
+
+/* Compact Mobile Screens (320px - 480px: iPhone SE, iPhone 12/13/14, Galaxy)
+   CRITICAL PRODUCT REQUIREMENT: EXACTLY 3 ACTIVITY/PAGE CARDS PER ROW. */
 @media (max-width: 480px) {
   .main-content {
-    padding: var(--space-3) var(--space-3) var(--space-12);
+    padding: var(--space-2) var(--space-2) var(--space-12);
   }
 
   .app-section {
-    padding: var(--space-4) var(--space-3);
+    padding: var(--space-3) var(--space-2);
     border-radius: var(--radius-md);
   }
 
   .brand-logo-icon {
-    width: 38px;
-    height: 38px;
-    font-size: 1.25rem;
+    width: 36px;
+    height: 36px;
+    font-size: 1.15rem;
   }
 
   .app-title {
-    font-size: var(--font-size-lg);
+    font-size: var(--font-size-md);
   }
 
   .app-subtitle {
     font-size: var(--font-size-xs);
   }
 
-  .privacy-badge {
-    font-size: 0.7rem;
-    padding: 3px var(--space-2);
-  }
-
+  .privacy-badge,
   .autosave-badge {
-    font-size: 0.7rem;
-    padding: 3px var(--space-2);
+    font-size: 0.68rem;
+    padding: 2px var(--space-2);
   }
 
   .student-form-grid {
@@ -204,19 +239,201 @@ html, body {
     max-width: 100%;
   }
 
+  /* CRITICAL REQUIREMENT: Exactly 3 page cards per row on mobile phones */
   .workspace-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+    align-items: stretch;
+  }
+
+  .workspace-scroll-container {
+    max-height: 58vh;
+    padding: 2px;
   }
 
   .portfolio-card {
-    min-height: 340px;
+    min-height: unset;
+    border-radius: var(--radius-sm);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+  }
+
+  /* Compact Mobile Card Design: Hide verbose actions row, use More (...) */
+  .student-image-card .card-header {
+    padding: 3px 4px;
+    gap: 2px;
+  }
+
+  .student-image-card .card-header-left {
+    gap: 2px;
+  }
+
+  .student-image-card .drag-handle {
+    display: none; /* Mobile uses Move Earlier / Move Later fallback in More menu */
+  }
+
+  .student-image-card .page-badge {
+    font-size: 9px;
+    padding: 1px 4px;
+    line-height: 1.2;
+  }
+
+  .student-image-card .image-name {
+    font-size: 8px;
+    max-width: 48px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .student-image-card .card-preview {
+    min-height: unset;
+    aspect-ratio: 3 / 4;
+    height: auto;
+    background-color: var(--color-surface-alt);
+    position: relative;
+    cursor: pointer;
+  }
+
+  .student-image-card .card-preview img {
+    width: 100%;
+    height: 100%;
+    max-height: unset;
+    object-fit: cover;
+  }
+
+  .student-image-card .warning-badge-area {
+    font-size: 8px;
+    padding: 2px 3px;
+  }
+
+  /* In 3-column mobile view, keep More button compact and hide full-text quick buttons */
+  .student-image-card .card-actions {
+    padding: 2px;
+    gap: 2px;
+    justify-content: flex-end;
+  }
+
+  .student-image-card .quick-actions-toolbar .btn-rotate,
+  .student-image-card .quick-actions-toolbar .btn-delete {
+    display: none; /* Accessible inside More (...) menu */
+  }
+
+  .student-image-card .quick-actions-toolbar .btn-more {
+    width: 100%;
+    height: 22px;
+    font-size: 11px;
+    padding: 0 4px;
+    border-radius: var(--radius-xs);
+  }
+
+  /* Compact Locked Covers on Mobile 3-Column */
+  .cover-card.locked-cover {
+    min-height: unset;
+  }
+
+  .cover-card.locked-cover .card-header {
+    padding: 3px 4px;
+  }
+
+  .cover-card.locked-cover .cover-visual-preview {
+    min-height: unset;
+    aspect-ratio: 3 / 4;
+    padding: 4px;
+  }
+
+  .cover-school-emblem {
+    width: 22px;
+    height: 22px;
+  }
+
+  .cover-school-tag,
+  .cover-category-badge,
+  .cover-title,
+  .cover-student-sub,
+  .cover-year,
+  .back-cover-motto {
+    display: none; /* Hide heavy text lines on 3-col micro-cover */
+  }
+
+  .cover-student-photo-box,
+  .cover-student-photo-placeholder {
+    width: 28px;
+    height: 35px;
+    margin: 2px auto;
+  }
+
+  .cover-student-name {
+    font-size: 8px;
+    max-width: 60px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .cover-description {
+    display: none;
+  }
+
+  .cover-card-actions {
+    padding: 2px 4px;
+  }
+
+  .cover-card-actions .cover-action-btn {
+    font-size: 8px;
+    padding: 2px;
   }
 
   .empty-images-card {
-    min-height: 300px;
-    padding: var(--space-4);
+    min-height: 140px;
+    padding: var(--space-2);
+    grid-column: span 1;
   }
 
+  .empty-icon-wrap {
+    width: 32px;
+    height: 32px;
+    font-size: 1rem;
+    margin-bottom: 4px;
+  }
+
+  .empty-title {
+    font-size: 11px;
+  }
+
+  .empty-subtitle,
+  .empty-first-page-hint,
+  .empty-helper-types {
+    display: none;
+  }
+
+  .empty-images-card .btn {
+    font-size: 10px;
+    padding: 2px 6px;
+  }
+
+  /* Compact Add Page Card */
+  .compact-add-page-card {
+    min-height: unset;
+    aspect-ratio: 3 / 4;
+  }
+
+  .compact-add-inner {
+    padding: 4px;
+  }
+
+  .compact-add-icon {
+    font-size: 16px;
+  }
+
+  .compact-add-title {
+    font-size: 10px;
+  }
+
+  .compact-add-subtitle {
+    display: none;
+  }
+
+  /* Modals */
   .modal-dialog {
     margin: var(--space-2);
     max-height: calc(100vh - 24px);
@@ -227,5 +444,21 @@ html, body {
   .modal-body,
   .modal-footer {
     padding: var(--space-4);
+  }
+}
+
+/* Micro screens (320px - 360px e.g. iPhone 5/SE1 or narrow containers) */
+@media (max-width: 360px) {
+  .workspace-grid {
+    gap: 4px !important;
+  }
+
+  .student-image-card .card-header {
+    padding: 2px;
+  }
+
+  .student-image-card .page-badge {
+    font-size: 8px;
+    padding: 1px 2px;
   }
 }

@@ -486,3 +486,222 @@
               border-color var(--duration-base) var(--ease-standard),
               color var(--duration-base) var(--ease-standard);
 }
+
+/* ==========================================================================
+   Wizard Workflow & Step Navigation Additions
+   ========================================================================== */
+.step-item[role="button"] {
+  cursor: pointer;
+  user-select: none;
+}
+
+.step-item[role="button"]:hover:not(.is-active) {
+  background-color: var(--color-surface-hover, #f8fafc);
+  border-color: var(--color-border-strong);
+}
+
+.step-item:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.wizard-section-nav {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  padding: var(--space-4) 0 var(--space-2);
+  margin-top: var(--space-4);
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+.wizard-nav-section-2 {
+  justify-content: space-between;
+}
+
+.wizard-nav-section-3 {
+  justify-content: flex-start;
+}
+
+/* ==========================================================================
+   Section 3: Document Preview & Settings Grid Layout
+   ========================================================================== */
+.section-review-export {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.section-3-grid-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(320px, 1fr);
+  gap: var(--space-6);
+  align-items: start;
+}
+
+/* Left Column: Document Preview Pane */
+.document-preview-pane {
+  background-color: var(--card-bg, #ffffff);
+  border: 1px solid var(--card-border, #e2e8f0);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  position: sticky;
+  top: 72px;
+}
+
+.preview-pane-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--color-border-subtle);
+  flex-wrap: wrap;
+}
+
+.preview-page-indicator-wrap {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+}
+
+.preview-page-nav-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* Canvas Stage */
+.document-canvas-stage {
+  background-color: #334155;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+  background-size: 16px 16px;
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 440px;
+  max-height: 65vh;
+  overflow: hidden;
+}
+
+.document-preview-canvas {
+  max-width: 100%;
+  max-height: 58vh;
+  object-fit: contain;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
+  border-radius: 2px;
+  background-color: #ffffff;
+  transition: transform var(--transition-fast);
+}
+
+/* Thumbnail Strip */
+.preview-thumbnail-strip-wrap {
+  overflow-x: auto;
+  padding: 4px 2px;
+  overscroll-behavior: contain;
+}
+
+.preview-thumbnail-strip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+}
+
+.preview-thumb-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  height: 52px;
+  padding: 4px 6px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--color-border);
+  background-color: var(--color-surface);
+  color: var(--color-text-soft);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.preview-thumb-btn:hover {
+  border-color: var(--color-primary);
+  color: var(--color-text);
+  background-color: var(--color-surface-hover, #f1f5f9);
+}
+
+.preview-thumb-btn.is-active {
+  border-color: var(--color-primary);
+  background-color: var(--color-primary-soft, #eff6ff);
+  color: var(--color-primary);
+  font-weight: var(--font-weight-bold);
+  box-shadow: 0 1px 4px rgba(29, 78, 216, 0.2);
+}
+
+.preview-thumb-btn .thumb-page-num {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.preview-thumb-btn .thumb-page-name {
+  font-size: 9px;
+  white-space: nowrap;
+}
+
+/* Right Column: Settings & Export Card */
+.section-3-settings-column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.section-3-settings-column .settings-sidebar {
+  border: 1px solid var(--card-border, #e2e8f0);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  box-shadow: var(--shadow-sm);
+  background: var(--card-bg, #ffffff);
+}
+
+.section-3-export-card {
+  background: var(--card-bg, #ffffff);
+  border: 1px solid var(--card-border, #e2e8f0);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.export-card-title {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+}
+
+.export-card-desc {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.export-card-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.w-full {
+  width: 100%;
+}

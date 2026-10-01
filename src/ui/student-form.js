@@ -18,7 +18,7 @@ export function initStudentForm(formElement) {
   const gradeSelect = formElement.querySelector('#student-grade');
   const numberInput = formElement.querySelector('#student-number');
   const yearInput = formElement.querySelector('#student-year');
-  const filenamePreview = document.querySelector('#preview-filename-badge');
+  const filenamePreviews = document.querySelectorAll('#preview-filename-badge, #preview-filename-badge-settings');
 
   // Student Photo Controls (Located in student-photo-column)
   const photoInput = document.querySelector('#student-photo-input');
@@ -239,9 +239,7 @@ export function initStudentForm(formElement) {
       yearInput.value = student.academicYear || '';
     }
 
-    if (filenamePreview) {
-      filenamePreview.textContent = generatePdfFilename(student);
-    }
+    filenamePreviews.forEach((el) => { el.textContent = generatePdfFilename(student); });
 
     // Photo preview in edit state
     if (photo?.previewUrl) {
@@ -295,9 +293,7 @@ export function initStudentForm(formElement) {
   if (numberInput && initialStudent.studentNumber) numberInput.value = initialStudent.studentNumber;
   if (yearInput && initialStudent.academicYear) yearInput.value = initialStudent.academicYear;
 
-  if (filenamePreview) {
-    filenamePreview.textContent = generatePdfFilename(initialStudent);
-  }
+  filenamePreviews.forEach((el) => { el.textContent = generatePdfFilename(initialStudent); });
 }
 
 /**
@@ -355,7 +351,10 @@ export function validateAndHighlightStudentForm() {
     firstInvalidElement.focus();
   }
 
-  return result;
+  return {
+    ...result,
+    firstInvalidElement
+  };
 }
 
 /**

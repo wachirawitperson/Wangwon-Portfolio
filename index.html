@@ -88,17 +88,17 @@
 
   <!-- Compact 3-Step Navigator -->
   <nav class="step-navigator" id="step-navigator" aria-label="ขั้นตอนการสร้าง Portfolio">
-    <div class="step-item is-active" id="step-nav-1">
+    <div class="step-item is-active" id="step-nav-1" data-step="1" role="button" tabindex="0" aria-label="ขั้นตอนที่ 1 ข้อมูลนักเรียน" aria-current="step">
       <span class="step-number">1</span>
       <span class="step-label">ข้อมูลนักเรียน</span>
     </div>
     <div class="step-divider" aria-hidden="true"></div>
-    <div class="step-item" id="step-nav-2">
+    <div class="step-item" id="step-nav-2" data-step="2" role="button" tabindex="0" aria-label="ขั้นตอนที่ 2 เพิ่มรูปภาพและจัดหน้า">
       <span class="step-number">2</span>
       <span class="step-label">เพิ่มรูปภาพและจัดหน้า</span>
     </div>
     <div class="step-divider" aria-hidden="true"></div>
-    <div class="step-item" id="step-nav-3">
+    <div class="step-item" id="step-nav-3" data-step="3" role="button" tabindex="0" aria-label="ขั้นตอนที่ 3 ตั้งค่าและสร้างไฟล์">
       <span class="step-number">3</span>
       <span class="step-label">ตั้งค่าและสร้างไฟล์</span>
     </div>
@@ -275,17 +275,36 @@
           </button>
         </div>
       </div>
+
+            <!-- Section 1 Live Filename Preview Badge -->
+      <div class="student-filename-preview-bar" style="margin-top: 1rem; margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; padding: 0.75rem 1rem; background: var(--color-surface, #ffffff); border: 1px solid var(--color-border, #e2e8f0); border-radius: var(--radius-md, 8px);">
+        <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: var(--color-text-secondary, #64748b); font-weight: 500;">
+          <span aria-hidden="true">📄</span>
+          <span>ตัวอย่างชื่อไฟล์:</span>
+        </div>
+        <div class="sidebar-filename-card" aria-live="polite" style="margin: 0; padding: 0;">
+          <span id="preview-filename-badge" class="filename-badge">portfolio-นักเรียน.pdf</span>
+        </div>
+      </div>
+
+      <!-- Section 1 Wizard Navigation -->
+      <div class="wizard-section-nav wizard-nav-section-1">
+        <button type="button" class="btn btn-primary btn-lg" id="btn-step1-next" aria-label="ไปยังขั้นตอนที่ 2 เพิ่มรูปภาพและจัดหน้า">
+          ถัดไป (เพิ่มรูปภาพและจัดหน้า)
+          <svg class="icon-inline" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </button>
+      </div>
     </section>
 
     <!-- Workspace Layout Container (Desktop 2-Column: Workspace 72% + Settings Sidebar 28%) -->
     <div class="workspace-layout-container" id="workspace-layout-container">
 
       <!-- Section 2: Portfolio Workspace Shell -->
-      <section class="app-section workspace-section" id="portfolio-workspace" aria-labelledby="heading-workspace">
+      <section class="app-section workspace-section" id="portfolio-workspace" aria-labelledby="heading-workspace" hidden>
         <div class="section-header">
           <div>
             <h2 class="section-title" id="heading-workspace">
-              <span class="section-step-badge">2</span> จัดหน้า Portfolio
+              <span class="section-step-badge">2</span> เพิ่มรูปภาพและจัดหน้า
             </h2>
             <p class="section-subtitle">เพิ่มรูปภาพ จัดเรียงหน้า และจัดทำ Portfolio ของนักเรียน</p>
           </div>
@@ -297,53 +316,131 @@
           </div>
         </div>
 
-      <!-- Workspace Cards Container -->
-      <div class="workspace-grid" id="workspace-grid" role="list" aria-label="ลำดับหน้าของแฟ้มสะสมงาน">
-        
-        <!-- Locked Front Cover Card (Page 1) -->
-        <article class="portfolio-card cover-card locked-cover" id="front-cover-card" role="listitem">
-          <!-- Rendered dynamically by workspace.js -->
-        </article>
-
-        <!-- Dynamic Middle Student Images Container -->
-        <div id="student-images-container" style="display: contents;"></div>
-
-        <!-- Empty Student Image Area (Between Front Cover and Back Cover) -->
-        <div
-          class="empty-images-card"
-          id="images-empty-placeholder"
-          role="region"
-          tabindex="0"
-          aria-label="พื้นที่เพิ่มรูปภาพผลงานนักเรียน"
-        >
-          <div class="empty-icon-wrap" aria-hidden="true">🖼️</div>
-          <h3 class="empty-title">เพิ่มภาพผลงานนักเรียน</h3>
-          <p class="empty-subtitle">ลากรูปภาพมาวาง หรือเลือกหลายภาพพร้อมกัน</p>
-          <button type="button" class="btn btn-primary" id="btn-empty-add-images">
-            <span aria-hidden="true">➕</span> เพิ่มรูปภาพ
-          </button>
-          <span class="empty-first-page-hint">ภาพแรกที่เพิ่มจะเป็นหน้า 2</span>
-          <span class="empty-helper-types">รองรับ JPG, PNG, WebP, BMP และ HEIC</span>
+        <!-- Sticky Workspace Quick Toolbar -->
+        <div class="workspace-sticky-toolbar" id="workspace-sticky-toolbar" aria-label="แถบเครื่องมือด่วนรูปภาพ">
+          <div class="sticky-toolbar-left">
+            <span class="toolbar-hint-text">จัดเรียง ลำดับหน้า หมุน หรือแทนที่ภาพผลงาน</span>
+          </div>
+          <div class="sticky-toolbar-right">
+            <button type="button" class="btn btn-primary btn-sm" id="btn-sticky-add-images" aria-label="เพิ่มรูปภาพผลงาน">
+              <svg class="icon-inline" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              เพิ่มรูปภาพ
+            </button>
+          </div>
         </div>
 
-        <!-- Locked Back Cover Card (Last Page) -->
-        <article class="portfolio-card cover-card locked-cover" id="back-cover-card" role="listitem">
-          <!-- Rendered dynamically by workspace.js -->
-        </article>
+        <!-- Scrollable Workspace Cards Container (Max ~65vh on desktop, internal scroll) -->
+        <div class="workspace-scroll-container" id="workspace-scroll-area" tabindex="0" role="region" aria-label="พื้นที่จัดเรียงหน้าเอกสารที่สามารถเลื่อนได้">
+          <div class="workspace-grid" id="workspace-grid" role="list" aria-label="ลำดับหน้าของแฟ้มสะสมงาน">
+            
+            <!-- Locked Front Cover Card (Page 1) -->
+            <article class="portfolio-card cover-card locked-cover" id="front-cover-card" role="listitem">
+              <!-- Rendered dynamically by workspace.js -->
+            </article>
 
-        <!-- Hidden File Upload Input for Workspace Images (Always mounted) -->
-        <input
-          type="file"
-          id="file-upload-input"
-          multiple
-          accept="image/jpeg,image/png,image/webp,image/bmp,image/heic,image/heif"
-          class="sr-only"
-          aria-hidden="true"
-        />
+            <!-- Dynamic Middle Student Images Container -->
+            <div id="student-images-container" style="display: contents;"></div>
+
+            <!-- Empty Student Image Area (Between Front Cover and Back Cover) -->
+            <div
+              class="empty-images-card"
+              id="images-empty-placeholder"
+              role="region"
+              tabindex="0"
+              aria-label="พื้นที่เพิ่มรูปภาพผลงานนักเรียน"
+            >
+              <div class="empty-icon-wrap" aria-hidden="true">🖼️</div>
+              <h3 class="empty-title">เพิ่มภาพผลงานนักเรียน</h3>
+              <p class="empty-subtitle">ลากรูปภาพมาวาง หรือเลือกหลายภาพพร้อมกัน</p>
+              <button type="button" class="btn btn-primary" id="btn-empty-add-images">
+                <span aria-hidden="true">➕</span> เพิ่มรูปภาพ
+              </button>
+              <span class="empty-first-page-hint">ภาพแรกที่เพิ่มจะเป็นหน้า 2</span>
+              <span class="empty-helper-types">รองรับ JPG, PNG, WebP, BMP และ HEIC</span>
+            </div>
+
+            <!-- Locked Back Cover Card (Last Page) -->
+            <article class="portfolio-card cover-card locked-cover" id="back-cover-card" role="listitem">
+              <!-- Rendered dynamically by workspace.js -->
+            </article>
+
+            <!-- Hidden File Upload Input for Workspace Images (Always mounted) -->
+            <input
+              type="file"
+              id="file-upload-input"
+              multiple
+              accept="image/jpeg,image/png,image/webp,image/bmp,image/heic,image/heif"
+              class="sr-only"
+              aria-hidden="true"
+            />
+          </div>
+        </div>
+
+        <!-- Section 2 Wizard Navigation [ย้อนกลับ] [ถัดไป] -->
+        <div class="wizard-section-nav wizard-nav-section-2">
+          <button type="button" class="btn btn-secondary btn-lg" id="btn-step2-prev" aria-label="ย้อนกลับไปแก้ไขข้อมูลนักเรียน">
+            <svg class="icon-inline" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+            ย้อนกลับ
+          </button>
+          <button type="button" class="btn btn-primary btn-lg" id="btn-step2-next" aria-label="ไปยังขั้นตอนที่ 3 ตั้งค่าและสร้างไฟล์">
+            ถัดไป (ตั้งค่าและสร้างไฟล์)
+            <svg class="icon-inline" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+          </button>
+        </div>
+      </section>
+
+      
+
+    </div>
+
+
+    <!-- Section 3: Document Settings & Live Preview & Export -->
+    <section class="app-section section-review-export" id="section-review-export" aria-labelledby="heading-review-export" hidden>
+      <div class="section-header">
+        <div>
+          <h2 class="section-title" id="heading-review-export">
+            <span class="section-step-badge">3</span> ตั้งค่าและสร้างไฟล์
+          </h2>
+          <p class="section-subtitle">ตรวจสอบตัวอย่างเอกสารจริง ปรับแต่งการตั้งค่า และส่งออกไฟล์</p>
+        </div>
       </div>
-    </section>
 
-      <!-- Section 3: Settings Sidebar ("ตั้งค่า Portfolio") -->
+      <div class="section-3-grid-layout" id="section-3-grid-layout">
+        <!-- Left Column: Live Document Preview -->
+        <div class="document-preview-pane" id="document-preview-pane" role="region" aria-label="ตัวอย่างเอกสาร Portfolio จริง">
+          <div class="preview-pane-header">
+            <div class="preview-page-indicator-wrap">
+              <span class="preview-indicator-icon" aria-hidden="true">📖</span>
+              <span id="preview-page-indicator" class="preview-page-indicator-text" aria-live="polite">หน้า 1 / 2 • ปกหน้า</span>
+            </div>
+            <div class="preview-page-nav-controls" role="group" aria-label="การเปลี่ยนหน้าตัวอย่าง">
+              <button type="button" class="btn btn-secondary btn-sm" id="btn-preview-page-prev" aria-label="หน้าก่อนหน้า" disabled>
+                <svg class="icon-inline" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+                ก่อนหน้า
+              </button>
+              <button type="button" class="btn btn-secondary btn-sm" id="btn-preview-page-next" aria-label="หน้าถัดไป">
+                ถัดไป
+                <svg class="icon-inline" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Document Canvas Stage -->
+          <div class="document-canvas-stage" id="document-canvas-stage" data-orientation="portrait">
+            <canvas id="document-preview-canvas" class="document-preview-canvas" width="842" height="1191" aria-label="แผ่นเอกสารตัวอย่างจริง"></canvas>
+          </div>
+
+          <!-- Thumbnail Strip Navigation -->
+          <div class="preview-thumbnail-strip-wrap" aria-label="แถบเลือกหน้าเอกสาร">
+            <div class="preview-thumbnail-strip" id="preview-thumbnail-strip" role="tablist">
+              <!-- Dynamically populated thumbnail buttons -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Settings Panel & Export Controls -->
+        <div class="section-3-settings-column">
+<!-- Section 3: Settings Sidebar ("ตั้งค่า Portfolio") -->
       <aside class="app-section settings-sidebar" id="settings-panel" aria-labelledby="heading-settings">
         <div class="sidebar-header">
           <h2 class="section-title" id="heading-settings">
@@ -523,7 +620,7 @@
             </label>
             <div class="sidebar-filename-card" aria-live="polite">
               <span class="sidebar-filename-icon" aria-hidden="true">📄</span>
-              <span id="preview-filename-badge" class="filename-badge">portfolio-นักเรียน.pdf</span>
+              <span id="preview-filename-badge-settings" class="filename-badge">portfolio-นักเรียน.pdf</span>
             </div>
             <span class="form-helper">สร้างชื่อไฟล์อัตโนมัติตามชื่อและชั้นนักเรียน</span>
           </div>
@@ -619,7 +716,34 @@
         </div>
       </aside>
 
-    </div>
+          <!-- Final Export Actions Card (Integrated directly in Section 3) -->
+          <div class="section-3-export-card" id="section-3-export-card">
+            <div class="export-card-header">
+              <h3 class="export-card-title">สร้างไฟล์เอกสาร</h3>
+              <p class="export-card-desc">ตรวจสอบตัวอย่างทางซ้ายให้เรียบร้อยก่อนกดสร้างไฟล์</p>
+            </div>
+            <div class="export-card-actions">
+              <button type="button" class="btn btn-secondary action-btn-secondary w-full" id="btn-section3-export-zip">
+                <svg class="icon-inline" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+                ส่งออก PDF + รูปภาพ
+              </button>
+              <button type="button" class="btn btn-primary btn-lg action-btn-primary w-full" id="btn-section3-export-pdf">
+                <svg class="icon-inline" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M12 18v-6"/><path d="m9 15 3 3 3-3"/></svg>
+                สร้าง Portfolio PDF
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 3 Wizard Navigation [ย้อนกลับ] -->
+      <div class="wizard-section-nav wizard-nav-section-3">
+        <button type="button" class="btn btn-secondary btn-lg" id="btn-step3-prev" aria-label="ย้อนกลับไปแก้ไขรูปภาพและจัดหน้า">
+          <svg class="icon-inline" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+          ย้อนกลับไปจัดหน้า
+        </button>
+      </div>
+    </section>
 
   </main>
 

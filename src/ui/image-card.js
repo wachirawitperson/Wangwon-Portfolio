@@ -123,6 +123,10 @@ export function createImageCard(image, displayIndex, totalImages = 1) {
 
     <!-- Contextual More Menu -->
     <div class="card-context-menu" role="menu" aria-label="เมนูจัดการรูปภาพหน้า ${pageNum}" hidden>
+      <button type="button" class="menu-item" role="menuitem" data-action="rotate">
+        <span class="menu-icon" aria-hidden="true">${icons.rotateCw}</span>
+        <span>หมุนภาพ 90°</span>
+      </button>
       <button type="button" class="menu-item" role="menuitem" data-action="view-large">
         <span class="menu-icon" aria-hidden="true">${icons.maximize2}</span>
         <span>ดูรูปขนาดใหญ่</span>
@@ -147,6 +151,10 @@ export function createImageCard(image, displayIndex, totalImages = 1) {
       <button type="button" class="menu-item" role="menuitem" data-action="details">
         <span class="menu-icon" aria-hidden="true">${icons.info}</span>
         <span>ดูรายละเอียดรูป</span>
+      </button>
+      <button type="button" class="menu-item menu-item-danger" role="menuitem" data-action="delete">
+        <span class="menu-icon" aria-hidden="true">${icons.trash2}</span>
+        <span>ลบรูปภาพ</span>
       </button>
     </div>
   `;
@@ -205,6 +213,19 @@ export function createImageCard(image, displayIndex, totalImages = 1) {
 
     const action = item.dataset.action;
     switch (action) {
+      case 'rotate':
+        rotateStudentImage(image.id);
+        break;
+
+      case 'delete':
+        card.dispatchEvent(
+          new CustomEvent('wangwon:delete-image', {
+            bubbles: true,
+            detail: { image, triggerButton: btnMore }
+          })
+        );
+        break;
+
       case 'view-large':
         card.dispatchEvent(
           new CustomEvent('wangwon:view-large', {
@@ -248,6 +269,21 @@ export function createImageCard(image, displayIndex, totalImages = 1) {
         break;
     }
   });
+
+  // Tap image thumbnail to view large preview
+  const previewArea = card.querySelector('.card-preview');
+  if (previewArea) {
+    previewArea.addEventListener('click', (e) => {
+      // If clicking inside menu or buttons, ignore
+      if (e.target.closest('button') || e.target.closest('.card-context-menu')) return;
+      card.dispatchEvent(
+        new CustomEvent('wangwon:view-large', {
+          bubbles: true,
+          detail: { image, index: displayIndex - 1, triggerButton: previewArea }
+        })
+      );
+    });
+  }
 
   // HTML5 Drag Events on Card
   card.addEventListener('dragstart', (e) => {

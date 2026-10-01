@@ -1215,3 +1215,59 @@
   border-color: var(--color-border);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
+
+/* ==========================================================================
+   Section 2 Scrollable Workspace & Sticky Toolbar Additions
+   ========================================================================== */
+.workspace-sticky-toolbar {
+  position: sticky;
+  top: 60px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+  background-color: var(--card-bg, #ffffff);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 2px 4px rgba(15, 23, 42, 0.04);
+}
+
+.sticky-toolbar-left .toolbar-hint-text {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+/* Dedicated internal scroll area for workspace cards */
+.workspace-scroll-container {
+  max-height: 65vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 4px;
+  border-radius: var(--radius-md);
+  outline: none;
+}
+
+.workspace-scroll-container:focus-visible {
+  box-shadow: 0 0 0 2px var(--color-primary);
+}
+
+/* Custom subtle scrollbar */
+.workspace-scroll-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.workspace-scroll-container::-webkit-scrollbar-track {
+  background: var(--color-surface-alt, #f1f5f9);
+  border-radius: 4px;
+}
+
+.workspace-scroll-container::-webkit-scrollbar-thumb {
+  background: var(--color-border-strong, #cbd5e1);
+  border-radius: 4px;
+}
+
+.workspace-scroll-container::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-muted, #94a3b8);
+}

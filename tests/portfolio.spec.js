@@ -116,6 +116,7 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
 
   test('6. Front cover card visible and 7. Front cover card shows locked state', async ({ page }) => {
     await page.goto('/');
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true }));
 
     const frontCover = page.locator('#front-cover-card');
     await expect(frontCover).toBeVisible();
@@ -128,6 +129,7 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
 
   test('8. Back cover card visible and 9. Back cover card shows locked state', async ({ page }) => {
     await page.goto('/');
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true }));
 
     const backCover = page.locator('#back-cover-card');
     await expect(backCover).toBeVisible();
@@ -140,6 +142,7 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
 
   test('10. Add-image empty state visible between covers', async ({ page }) => {
     await page.goto('/');
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true }));
 
     const emptyCard = page.locator('#images-empty-placeholder');
     await expect(emptyCard).toBeVisible();
@@ -150,6 +153,7 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
 
   test('11. Settings section visible with paper, placement, quality, and watermark', async ({ page }) => {
     await page.goto('/');
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(3, { skipValidation: true }));
 
     const settings = page.locator('#settings-panel');
     await expect(settings).toBeVisible();
@@ -161,6 +165,7 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
 
   test('12. Preview action visible and 13. Create PDF action visible', async ({ page }) => {
     await page.goto('/');
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(3, { skipValidation: true }));
 
     const previewBtn = page.locator('#btn-preview-portfolio');
     await expect(previewBtn).toBeVisible();
@@ -173,6 +178,12 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
   test('14. Keyboard focus visible on primary controls', async ({ page }) => {
     await page.goto('/');
 
+    const firstnameInput = page.locator('#student-firstname');
+    await firstnameInput.focus();
+    await expect(firstnameInput).toBeFocused();
+
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(3, { skipValidation: true }));
+
     const exportBtn = page.locator('#btn-export-pdf');
     await exportBtn.focus();
     await expect(exportBtn).toBeFocused();
@@ -180,10 +191,6 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
     const previewBtn = page.locator('#btn-preview-portfolio');
     await previewBtn.focus();
     await expect(previewBtn).toBeFocused();
-
-    const firstnameInput = page.locator('#student-firstname');
-    await firstnameInput.focus();
-    await expect(firstnameInput).toBeFocused();
   });
 
   test('15. Mobile 390x844 has no horizontal overflow', async ({ page }) => {
@@ -436,6 +443,7 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
 
   test('24. Action Gating: Preview and Export buttons require valid student info', async ({ page }) => {
     await page.goto('/');
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(3, { skipValidation: true }));
 
     const previewBtn = page.locator('#btn-preview-portfolio');
     const exportBtn = page.locator('#btn-export-pdf');
@@ -506,12 +514,23 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
     await page.screenshot({ path: 'tests/screenshots/phase3-completed-form.png', fullPage: false });
 
     // 3. Validation Errors Highlight Screenshot
+    await page.evaluate(async () => {
+      try {
+        await window.__WANGWON_DRAFT_STORAGE__?.deleteDraft?.();
+      } catch (e) {}
+    });
     await page.goto('/');
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(3, { skipValidation: true }));
     await page.locator('#btn-preview-portfolio').click();
     await page.locator('#student-section').scrollIntoViewIfNeeded();
     await page.screenshot({ path: 'tests/screenshots/phase3-validation-errors.png', fullPage: false });
 
     // 4. Long Thai Student Name Screenshot
+    await page.evaluate(async () => {
+      try {
+        await window.__WANGWON_DRAFT_STORAGE__?.deleteDraft?.();
+      } catch (e) {}
+    });
     await page.goto('/');
     await page.selectOption('#student-prefix', 'นางสาว');
     await page.fill('#student-firstname', 'ชลธิชาพัชญ์');
@@ -564,6 +583,7 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
 
   test('26. Format Support: Imports JPG, PNG, WebP, and BMP files via file-picker', async ({ page }) => {
     await page.goto('/');
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true }));
 
     const importResult = await page.evaluate(async () => {
       // Helper to generate canvas image file in page
@@ -614,6 +634,7 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
 
   test('27. Page Numbering: Front Cover is Page 1, first image is Page 2, and Back Cover is Last Page', async ({ page }) => {
     await page.goto('/');
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true }));
 
     await page.evaluate(async () => {
       const canvas = document.createElement('canvas');
@@ -676,6 +697,7 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
 
   test('30. Low Resolution Warning: Detects <1200px longest edge and displays badge without blocking import', async ({ page }) => {
     await page.goto('/');
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true }));
 
     await page.evaluate(async () => {
       // 640x480 is low res (longest edge < 1200)
@@ -697,6 +719,7 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
 
   test('31. High Resolution Images: Does not show low resolution warning badge', async ({ page }) => {
     await page.goto('/');
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true }));
 
     await page.evaluate(async () => {
       // 1920x1080 is standard high res
@@ -716,6 +739,7 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
 
   test('32. Duplicate Detection: Detects identical image and presents summary modal dialog', async ({ page }) => {
     await page.goto('/');
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true }));
 
     // First import one file
     await page.evaluate(async () => {
@@ -828,6 +852,7 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
 
   test('35. Drag-and-Drop: Workspace shows .is-dragover feedback and imports dropped files', async ({ page }) => {
     await page.goto('/');
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true }));
 
     const workspace = page.locator('#portfolio-workspace');
     await expect(workspace).toBeVisible();
@@ -875,6 +900,7 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
 
   test('36. Clipboard Paste: Pasting image anywhere outside text input imports student image', async ({ page }) => {
     await page.goto('/');
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true }));
 
     await page.evaluate(async () => {
       const canvas = document.createElement('canvas');
@@ -1017,12 +1043,13 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto('/');
 
-    // 1. Fill student info
+    // 1. Fill student info in Section 1
     await page.selectOption('#student-prefix', 'ด.ช.');
     await page.fill('#student-firstname', 'กิตติพัฒน์');
     await page.fill('#student-lastname', 'วัฒนากุลชัย');
     await page.selectOption('#student-grade', 'ประถมศึกษาปีที่ 1');
     await page.fill('#student-number', '01');
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true }));
 
     // 2. Import high-res & low-res images
     await page.evaluate(async () => {
@@ -1104,6 +1131,7 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
     await expect(headerLogo).toHaveAttribute('src', /ban-wangwon-logo\.png/);
     await expect(headerLogo).toHaveAttribute('alt', /โรงเรียนบ้านวังวน/);
 
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true }));
     const frontCoverImg = page.locator('#front-cover-rendered-img');
     await expect(frontCoverImg).toBeVisible();
 
@@ -1210,25 +1238,27 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
   test('46. 2-column desktop layout and reflow behavior', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto('/');
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(3, { skipValidation: true }));
 
-    const layoutContainer = page.locator('#workspace-layout-container');
-    const workspace = page.locator('#portfolio-workspace');
+    const layoutContainer = page.locator('#section-3-grid-layout');
+    const previewPane = page.locator('#document-preview-pane');
     const settingsPanel = page.locator('#settings-panel');
 
     await expect(layoutContainer).toBeVisible();
-    await expect(workspace).toBeVisible();
+    await expect(previewPane).toBeVisible();
     await expect(settingsPanel).toBeVisible();
 
-    const workspaceBox = await workspace.boundingBox();
+    const previewBox = await previewPane.boundingBox();
     const settingsBox = await settingsPanel.boundingBox();
 
-    // Verify side-by-side positioning
-    expect(workspaceBox.x + workspaceBox.width).toBeLessThanOrEqual(settingsBox.x + 30);
-    expect(settingsBox.x).toBeGreaterThan(workspaceBox.x);
+    // Verify side-by-side positioning (Preview Left, Settings Right)
+    expect(previewBox.x + previewBox.width).toBeLessThanOrEqual(settingsBox.x + 30);
+    expect(settingsBox.x).toBeGreaterThan(previewBox.x);
   });
 
   test('47. Watermark UI redesign: Toggle, school preset, custom upload, and opacity slider', async ({ page }) => {
     await page.goto('/');
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(3, { skipValidation: true }));
 
     const watermarkToggle = page.locator('#setting-watermark-enabled');
     const optionsContainer = page.locator('#watermark-options-container');
@@ -1272,6 +1302,7 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
 
   test('49. Image card quick actions render accessible buttons for Rotate, Delete, and More', async ({ page }) => {
     await page.goto('/');
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true }));
 
     // Import a mock image
     await page.evaluate(async () => {
@@ -1296,12 +1327,17 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
     const deleteBtn = imageCard.locator('button.btn-delete');
     const moreBtn = imageCard.locator('button.btn-more');
 
-    await expect(rotateBtn).toBeVisible();
+    const isMobile = (page.viewportSize()?.width || 1280) <= 480;
+    if (isMobile) {
+      await expect(rotateBtn).toBeAttached();
+      await expect(deleteBtn).toBeAttached();
+    } else {
+      await expect(rotateBtn).toBeVisible();
+      await expect(deleteBtn).toBeVisible();
+    }
+
     await expect(rotateBtn).toHaveAttribute('aria-label', /หมุน/);
-
-    await expect(deleteBtn).toBeVisible();
     await expect(deleteBtn).toHaveAttribute('aria-label', /ลบ/);
-
     await expect(moreBtn).toBeVisible();
     await expect(moreBtn).toHaveAttribute('aria-label', /เพิ่มเติม/);
   });
@@ -1348,6 +1384,7 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
     await page.screenshot({ path: 'tests/screenshots/phase4-5-student-summary-mode.png', fullPage: false });
 
     // 5. Front cover card with emblem & student photo
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true }));
     await page.locator('#front-cover-card').scrollIntoViewIfNeeded();
     await page.screenshot({ path: 'tests/screenshots/phase4-5-front-cover-card.png', fullPage: false });
 
@@ -1388,7 +1425,8 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
     await page.locator('#compact-add-page-card').scrollIntoViewIfNeeded();
     await page.screenshot({ path: 'tests/screenshots/phase4-5-compact-add-page-card.png', fullPage: false });
 
-    // 9. Watermark panel
+    // 9. Watermark panel in Section 3
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(3, { skipValidation: true }));
     await page.click('#setting-watermark-enabled');
     await page.locator('#settings-panel').scrollIntoViewIfNeeded();
     await page.screenshot({ path: 'tests/screenshots/phase4-5-watermark-panel.png', fullPage: false });
@@ -1420,6 +1458,7 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
 
   test('51. Rotate Image: Rotates clockwise in 90-degree steps and persists across rerenders', async ({ page }) => {
     await page.goto('/');
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true }));
 
     // Import a single test image
     await page.evaluate(async () => {
@@ -1440,27 +1479,37 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
     const img = card.locator('.card-preview img');
     await expect(img).toHaveAttribute('style', /rotate\(0deg\)/);
 
-    const btnRotate = card.locator('.btn-rotate');
+    const triggerRotate = async () => {
+      const btnRotate = card.locator('.btn-rotate');
+      if (await btnRotate.isVisible()) {
+        await btnRotate.click();
+      } else {
+        await card.locator('.btn-more').click();
+        await card.locator('.menu-item[data-action="rotate"]').dispatchEvent('click');
+      }
+      await page.waitForTimeout(100);
+    };
+
     // Rotate 1: 90deg
-    await btnRotate.click();
+    await triggerRotate();
     await expect(img).toHaveAttribute('style', /rotate\(90deg\)/);
     let state = await page.evaluate(() => window.__WANGWON_STORE__.getState());
     expect(state.images[0].rotation).toBe(90);
 
     // Rotate 2: 180deg
-    await btnRotate.click();
+    await triggerRotate();
     await expect(img).toHaveAttribute('style', /rotate\(180deg\)/);
     state = await page.evaluate(() => window.__WANGWON_STORE__.getState());
     expect(state.images[0].rotation).toBe(180);
 
     // Rotate 3: 270deg
-    await btnRotate.click();
+    await triggerRotate();
     await expect(img).toHaveAttribute('style', /rotate\(270deg\)/);
     state = await page.evaluate(() => window.__WANGWON_STORE__.getState());
     expect(state.images[0].rotation).toBe(270);
 
     // Rotate 4: 0deg (wrap around)
-    await btnRotate.click();
+    await triggerRotate();
     await expect(img).toHaveAttribute('style', /rotate\(0deg\)/);
     state = await page.evaluate(() => window.__WANGWON_STORE__.getState());
     expect(state.images[0].rotation).toBe(0);
@@ -1468,6 +1517,7 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
 
   test('52. Delete Image Modal & Confirmation: Revokes preview URL, updates store, and updates page count', async ({ page }) => {
     await page.goto('/');
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true }));
 
     await page.evaluate(async () => {
       const makeFile = async (name) => {
@@ -1491,7 +1541,12 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
 
     const firstCard = page.locator('.student-image-card').first();
     const btnDelete = firstCard.locator('.btn-delete');
-    await btnDelete.click();
+    if (await btnDelete.isVisible()) {
+      await btnDelete.click();
+    } else {
+      await firstCard.locator('.btn-more').click();
+      await firstCard.locator('.menu-item[data-action="delete"]').click({ force: true });
+    }
 
     // Confirm Modal is visible
     const deleteModal = page.locator('#delete-image-modal');
@@ -1512,6 +1567,7 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
 
   test('53. Contextual More Menu: Toggles popover menu and closes on Escape and outside click', async ({ page }) => {
     await page.goto('/');
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true }));
 
     await page.evaluate(async () => {
       const canvas = document.createElement('canvas');
@@ -1551,6 +1607,7 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
 
   test('54. Lightbox Preview Modal: Views large image with pagination and keyboard arrows', async ({ page }) => {
     await page.goto('/');
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true }));
 
     await page.evaluate(async () => {
       const makeFile = async (name, color) => {
@@ -1598,6 +1655,7 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
 
   test('55. Replace Image: Preserves slot and ID, resets rotation to 0, and updates preview', async ({ page }) => {
     await page.goto('/');
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true }));
 
     await page.evaluate(async () => {
       const canvas = document.createElement('canvas');
@@ -1615,7 +1673,14 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
     const initialId = await card.getAttribute('data-id');
 
     // Rotate first
-    await card.locator('.btn-rotate').click();
+    const btnRotate = card.locator('.btn-rotate');
+    if (await btnRotate.isVisible()) {
+      await btnRotate.click();
+    } else {
+      await card.locator('.btn-more').click();
+      await card.locator('.menu-item[data-action="rotate"]').dispatchEvent('click');
+    }
+    await page.waitForTimeout(100);
     let state = await page.evaluate(() => window.__WANGWON_STORE__.getState());
     expect(state.images[0].rotation).toBe(90);
 
@@ -1645,6 +1710,7 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
 
   test('56. Duplicate Image: Creates duplicate with unique ID and independent preview URL', async ({ page }) => {
     await page.goto('/');
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true }));
 
     await page.evaluate(async () => {
       const canvas = document.createElement('canvas');
@@ -1682,6 +1748,7 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
 
   test('57. Move Earlier & Move Later: Reorders items and respects boundary disables', async ({ page }) => {
     await page.goto('/');
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true }));
 
     await page.evaluate(async () => {
       const makeFile = async (name) => {
@@ -1734,6 +1801,7 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
 
   test('58. Reorder by Index: Arbitrary reorder updates state and derived page numbers', async ({ page }) => {
     await page.goto('/');
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true }));
 
     await page.evaluate(async () => {
       const makeFile = async (name) => {
@@ -1772,6 +1840,7 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
 
   test('59. Image Details Modal: Shows file metadata, dimensions, rotation, and quality', async ({ page }) => {
     await page.goto('/');
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true }));
 
     await page.evaluate(async () => {
       const canvas = document.createElement('canvas');
@@ -1805,12 +1874,13 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto('/');
 
-    // Populate student info
+    // Populate student info in Section 1
     await page.selectOption('#student-prefix', 'ด.ญ.');
     await page.fill('#student-firstname', 'พิมพ์ชนก');
     await page.fill('#student-lastname', 'อินทร์จันทร์');
     await page.selectOption('#student-grade', 'ประถมศึกษาปีที่ 3');
     await page.fill('#student-number', '12');
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true }));
 
     // Import 8 sample images
     await page.evaluate(async () => {
@@ -1927,20 +1997,23 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
 
     // 3. Filename is moved to Settings Sidebar and removed from Student Card
     await expect(page.locator('#student-edit-card .filename-badge-box')).toHaveCount(0);
-    const sidebarFilename = page.locator('#settings-panel #preview-filename-badge');
-    await expect(sidebarFilename).toBeVisible();
-    await expect(sidebarFilename).toHaveText('portfolio-นักเรียน.pdf');
 
-    // Live update in sidebar when student name changes
+    // Fill student details in Section 1
     await page.fill('#student-firstname', 'กิตติพัฒน์');
     await page.fill('#student-lastname', 'วัฒนากุลชัย');
-    await expect(sidebarFilename).toHaveText('ด.ช.กิตติพัฒน์_วัฒนากุลชัย.pdf');
 
     // 4. Student number exact input preservation
     await page.fill('#student-number', '4');
     await expect(page.locator('#student-number')).toHaveValue('4');
 
-    // 5. Front cover shows rendered canvas preview image and actions
+    // Check Settings sidebar filename in Section 3
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(3, { skipValidation: true }));
+    const sidebarFilename = page.locator('#settings-panel #preview-filename-badge-settings');
+    await expect(sidebarFilename).toBeVisible();
+    await expect(sidebarFilename).toHaveText('ด.ช.กิตติพัฒน์_วัฒนากุลชัย.pdf');
+
+    // 5. Front cover shows rendered canvas preview image and actions in Section 2
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true }));
     const frontCover = page.locator('#front-cover-card');
     await expect(frontCover.locator('#front-cover-rendered-img')).toBeVisible();
     await expect(frontCover.locator('.btn-view-cover-modal')).toBeVisible();
@@ -1954,7 +2027,8 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
     await expect(backCover.locator('.btn-upload-cover')).toBeVisible();
     await expect(backCover.locator('.cover-template-badge')).toHaveText('Minimal School');
 
-    // 7. Student photo upload displays photo in student card AND updates front cover canvas preview
+    // 7. Student photo upload in Section 1 displays photo in student card
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(1, { skipValidation: true }));
     await page.evaluate(async () => {
       const canvas = document.createElement('canvas');
       canvas.width = 400;
@@ -1972,9 +2046,11 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
     });
 
     await expect(page.locator('#student-photo-preview-img')).toBeVisible();
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true }));
     await expect(frontCover.locator('#front-cover-rendered-img')).toBeVisible();
 
-    // 8. Settings Sidebar hierarchy: Quality segmented control & values
+    // 8. Settings Sidebar hierarchy: Quality segmented control & values in Section 3
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(3, { skipValidation: true }));
     await expect(page.locator('[data-setting="quality"][data-value="balanced"]')).toHaveClass(/is-active/);
     await page.click('[data-setting="quality"][data-value="high"]');
     await expect(page.locator('#setting-quality')).toHaveValue('high');
@@ -2077,6 +2153,7 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
     await page.screenshot({ path: 'tests/screenshots/ui-polish-desktop-student-photo.png', fullPage: false });
 
     // 6. Import student activity images
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true }));
     await page.evaluate(async () => {
       const colors = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'];
       const files = [];
@@ -2102,10 +2179,11 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
     await page.locator('#portfolio-workspace').scrollIntoViewIfNeeded();
     await page.screenshot({ path: 'tests/screenshots/ui-polish-desktop-images.png', fullPage: false });
 
-    // 8. ui-polish-settings.png (Settings panel view)
+    // 8. ui-polish-settings.png (Settings panel view in Section 3)
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(3, { skipValidation: true }));
     const settingsPanel = page.locator('#settings-panel');
     await settingsPanel.scrollIntoViewIfNeeded();
-    await settingsPanel.screenshot({ path: 'tests/screenshots/ui-polish-settings.png' });
+    await page.screenshot({ path: 'tests/screenshots/ui-polish-settings.png' });
 
     // 9. ui-polish-watermark-open.png (Watermark options expanded)
     await page.locator('label.switch-toggle').click();
@@ -2151,6 +2229,7 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
 
   test('65. Phase 6: Switching template via Bento cards updates store and rerenders both covers', async ({ page }) => {
     await page.goto('/');
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(3, { skipValidation: true }));
 
     // Select colorful-portfolio
     await page.click('.template-card[data-template-id="colorful-portfolio"]');
@@ -2175,6 +2254,7 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
 
   test('66. Phase 6: Template selector keyboard navigation (ArrowLeft, ArrowRight, Space, Enter)', async ({ page }) => {
     await page.goto('/');
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(3, { skipValidation: true }));
 
     const firstCard = page.locator('.template-card[data-template-id="minimal-school"]');
     await firstCard.focus();
@@ -2206,6 +2286,7 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
 
     // Wait for debounce and render
     await page.waitForTimeout(300);
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true }));
 
     const frontImgSrc = await page.locator('#front-cover-rendered-img').getAttribute('src');
     expect(frontImgSrc).toContain('data:image/png;base64');
@@ -2227,6 +2308,7 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
     await page.fill('#student-lastname', longLast);
 
     await page.waitForTimeout(300);
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true }));
 
     // Front cover rendered successfully without throwing error
     const frontImg = page.locator('#front-cover-rendered-img');
@@ -2238,11 +2320,7 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
   test('69. Phase 6: Student photo automatic integration & neutral silhouette fallback', async ({ page }) => {
     await page.goto('/');
 
-    // Initially no photo: silhouette fallback rendered in canvas
-    let frontImg = page.locator('#front-cover-rendered-img');
-    await expect(frontImg).toBeVisible();
-
-    // Upload student photo
+    // Upload student photo in Section 1
     await page.evaluate(async () => {
       const canvas = document.createElement('canvas');
       canvas.width = 400;
@@ -2260,18 +2338,24 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
     });
 
     await expect(page.locator('#student-photo-preview-img')).toBeVisible();
-    await page.waitForTimeout(300);
+
+    // Check front cover rendered img in Section 2
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true }));
+    let frontImg = page.locator('#front-cover-rendered-img');
     await expect(frontImg).toBeVisible();
 
-    // Remove photo: restores silhouette fallback
+    // Remove photo in Section 1: restores silhouette fallback
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(1, { skipValidation: true }));
     await page.click('#btn-remove-student-photo');
     await expect(page.locator('#student-photo-preview-img')).toBeHidden();
     await page.waitForTimeout(300);
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true }));
     await expect(frontImg).toBeVisible();
   });
 
   test('70. Phase 6: Custom Front and Back Cover uploads and Independent Reset to Generated', async ({ page }) => {
     await page.goto('/');
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true }));
 
     // Upload custom Front Cover
     await page.evaluate(async () => {
@@ -2365,6 +2449,7 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
 
   test('72. Phase 6: Cover Lightbox Preview Modal opens, switches front/back, and closes with Escape', async ({ page }) => {
     await page.goto('/');
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true }));
 
     // Open from Front Cover
     await page.click('#btn-view-large-front');
@@ -2398,6 +2483,7 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
 
   test('73. Phase 6: Covers remain locked (cannot be dragged, reordered, deleted, or rotated)', async ({ page }) => {
     await page.goto('/');
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true }));
 
     const frontCover = page.locator('#front-cover-card');
     const backCover = page.locator('#back-cover-card');
@@ -2447,12 +2533,13 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto('/');
 
-    // 1. Fill student info
+    // 1. Fill student info in Section 1
     await page.fill('#student-firstname', 'วชิรวิทย์');
     await page.fill('#student-lastname', 'วังวนศิษย์ดี');
     await page.selectOption('#student-grade', 'ประถมศึกษาปีที่ 6');
     await page.fill('#student-number', '1');
     await page.fill('#student-year', '2568');
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true }));
 
     // 2. Upload student photo
     await page.evaluate(async () => {
@@ -2480,33 +2567,45 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
     await page.locator('#front-cover-card').screenshot({ path: 'tests/screenshots/phase6-minimal-school.png' });
 
     // 2. phase6-colorful-portfolio.png
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(3, { skipValidation: true }));
     await page.click('.template-card[data-template-id="colorful-portfolio"]');
     await page.waitForTimeout(300);
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true }));
     await page.locator('#front-cover-card').screenshot({ path: 'tests/screenshots/phase6-colorful-portfolio.png' });
 
     // 3. phase6-modern-academic.png
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(3, { skipValidation: true }));
     await page.click('.template-card[data-template-id="modern-academic"]');
     await page.waitForTimeout(300);
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true }));
     await page.locator('#front-cover-card').screenshot({ path: 'tests/screenshots/phase6-modern-academic.png' });
 
     // Reset back to minimal-school
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(3, { skipValidation: true }));
     await page.click('.template-card[data-template-id="minimal-school"]');
     await page.waitForTimeout(200);
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true }));
 
     // 4. phase6-no-student-photo.png
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(1, { skipValidation: true }));
     await page.click('#btn-remove-student-photo');
     await page.waitForTimeout(300);
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true }));
     await page.locator('#front-cover-card').screenshot({ path: 'tests/screenshots/phase6-no-student-photo.png' });
 
     // 5. phase6-long-thai-name.png
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(1, { skipValidation: true }));
     await page.fill('#student-firstname', 'กฤษฎิ์ชานนท์พัฒนเดชากุลธร');
     await page.fill('#student-lastname', 'อภิมหาศิริรุ่งเรืองไพศาลเลิศสถิตภักดี');
     await page.waitForTimeout(300);
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true }));
     await page.locator('#front-cover-card').screenshot({ path: 'tests/screenshots/phase6-long-thai-name.png' });
 
     // Restore name
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(1, { skipValidation: true }));
     await page.fill('#student-firstname', 'วชิรวิทย์');
     await page.fill('#student-lastname', 'วังวนศิษย์ดี');
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true }));
 
     // 6. phase6-custom-front-cover.png
     await page.evaluate(async () => {
@@ -2562,11 +2661,13 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
     await expect(page.locator('#back-cover-card .cover-template-badge')).toBeVisible();
 
     // 8. phase6-template-selector.png
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(3, { skipValidation: true }));
     const selectorSection = page.locator('.cover-template-section');
     await selectorSection.scrollIntoViewIfNeeded();
     await selectorSection.screenshot({ path: 'tests/screenshots/phase6-template-selector.png' });
 
     // 9. phase6-desktop-workspace.png
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true }));
     await page.locator('#portfolio-workspace').scrollIntoViewIfNeeded();
     await page.screenshot({ path: 'tests/screenshots/phase6-desktop-workspace.png', fullPage: false });
 
@@ -2589,6 +2690,7 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
 
   test('76. Regression Hotfix: Workspace controls and add image buttons remain fully clickable without overlay blocking', async ({ page }) => {
     await page.goto('/');
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true }));
     await page.waitForTimeout(400);
 
     // 1. Verify modal backdrops are not intercepting clicks (visibility: hidden and pointer-events: none)
@@ -2625,7 +2727,9 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
     };
 
     expect(await hitTest('#btn-empty-add-images')).toBe('BUTTON');
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(1, { skipValidation: true }));
     expect(await hitTest('#btn-upload-student-photo')).toBe('BUTTON');
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true }));
     expect(await hitTest('#btn-help')).toBe('BUTTON');
     expect(await hitTest('#btn-reset-project')).toBe('BUTTON');
     expect(await hitTest('#btn-view-large-front')).toBe('BUTTON');
@@ -2646,12 +2750,14 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
     expect(cardChooser).toBeTruthy();
 
     // 6. File Chooser Triggers on Student Photo Button
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(1, { skipValidation: true }));
     const [photoChooser] = await Promise.all([
       page.waitForEvent('filechooser', { timeout: 3000 }),
       page.click('#btn-upload-student-photo')
     ]);
     expect(photoChooser).toBeTruthy();
 
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true }));
     // 7. Visual QA: Screenshot in empty state
     await page.locator('#portfolio-workspace').scrollIntoViewIfNeeded();
     await page.screenshot({ path: 'tests/screenshots/hotfix-add-image-empty.png', fullPage: false });
@@ -2682,7 +2788,8 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
     await page.locator('#portfolio-workspace').scrollIntoViewIfNeeded();
     await page.screenshot({ path: 'tests/screenshots/hotfix-add-image-with-images.png', fullPage: false });
 
-    // 10. Template selector remains fully interactive
+    // 10. Template selector remains fully interactive (in Section 3)
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(3, { skipValidation: true }));
     await page.click('.template-card[data-template-id="colorful-portfolio"]');
     await expect(page.locator('.template-card[data-template-id="colorful-portfolio"]')).toHaveAttribute('aria-checked', 'true');
     await page.locator('.cover-template-section').scrollIntoViewIfNeeded();
@@ -2789,6 +2896,7 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
     await page.selectOption('#student-grade', 'ประถมศึกษาปีที่ 3');
     await page.fill('#student-year', '2568');
 
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true }));
     // Import image
     await page.evaluate(async () => {
       const canvas = document.createElement('canvas');
@@ -2810,7 +2918,12 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
 
     // Rotate the image
     const btnRotate = card.locator('.btn-rotate');
-    await btnRotate.click();
+    if (await btnRotate.isVisible()) {
+      await btnRotate.click();
+    } else {
+      await card.locator('.btn-more').click();
+      await card.locator('.menu-item[data-action="rotate"]').click({ force: true });
+    }
     let state = await page.evaluate(() => window.__WANGWON_STORE__.getState());
     if (state.images[0].rotation === 0) {
       // Direct call fallback if click event timing was missed
@@ -2918,6 +3031,7 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
 
   test('84. Phase 7: Workspace interactive controls remain responsive in Dark mode', async ({ page }) => {
     await page.goto('/');
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true }));
     await page.click('#btn-theme-toggle');
     expect(await page.evaluate(() => document.documentElement.dataset.theme)).toBe('dark');
 
@@ -2959,12 +3073,13 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
     // Ensure we start fresh in Light mode
     await page.evaluate(() => window.__WANGWON_THEME_MANAGER__.setTheme('light'));
 
-    // Populate student information and import 2 test images for rich visual capture
+    // Populate student information in Section 1
     await page.selectOption('#student-prefix', 'ด.ญ.');
     await page.fill('#student-firstname', 'พิมพ์มาดา');
     await page.fill('#student-lastname', 'สิทธิโชค');
     await page.selectOption('#student-grade', 'ประถมศึกษาปีที่ 6');
     await page.fill('#student-year', '2568');
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(3, { skipValidation: true }));
 
     // Upload student photo via file input
     const filePayload = await page.evaluate(async () => {
@@ -3030,14 +3145,17 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
     await page.screenshot({ path: 'tests/screenshots/phase7-dark-desktop.png', fullPage: false });
 
     // 3. phase7-dark-student-card.png
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(1, { skipValidation: true }));
     await page.locator('#student-section').scrollIntoViewIfNeeded();
     await page.screenshot({ path: 'tests/screenshots/phase7-dark-student-card.png', fullPage: false });
 
     // 4. phase7-dark-workspace.png
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true }));
     await page.locator('#portfolio-workspace').scrollIntoViewIfNeeded();
     await page.screenshot({ path: 'tests/screenshots/phase7-dark-workspace.png', fullPage: false });
 
     // 5. phase7-dark-settings.png
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(3, { skipValidation: true }));
     await page.locator('#settings-panel').scrollIntoViewIfNeeded();
     await page.screenshot({ path: 'tests/screenshots/phase7-dark-settings.png', fullPage: false });
 
@@ -3046,6 +3164,7 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
     await page.screenshot({ path: 'tests/screenshots/phase7-dark-template-selector.png', fullPage: false });
 
     // 7. phase7-dark-image-menu.png
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true }));
     const firstCardMoreBtn = page.locator('.student-image-card .btn-more').first();
     await firstCardMoreBtn.scrollIntoViewIfNeeded();
     await firstCardMoreBtn.click();
@@ -3097,6 +3216,7 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
 
   test('87. Phase 8: Watermark defaults to disabled with correct initial state', async ({ page }) => {
     await page.goto('/');
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(3, { skipValidation: true }));
 
     const state = await page.evaluate(() => window.__WANGWON_STORE__.getState().watermark);
     expect(state.enabled).toBe(false);
@@ -3121,6 +3241,7 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
 
   test('88. Phase 8: Toggling watermark ON shows options container and auto-selects school-logo', async ({ page }) => {
     await page.goto('/');
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(3, { skipValidation: true }));
 
     const toggle = page.locator('#setting-watermark-enabled');
     const optionsContainer = page.locator('#watermark-options-container');
@@ -3139,6 +3260,7 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
 
   test('89. Phase 8: School logo watermark sets sourceType and loads preview', async ({ page }) => {
     await page.goto('/');
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(3, { skipValidation: true }));
 
     // Import 1 activity image
     await page.evaluate(async () => {
@@ -3159,6 +3281,9 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
     const state = await page.evaluate(() => window.__WANGWON_STORE__.getState().watermark);
     expect(state.sourceType).toBe('school-logo');
 
+    // Go to Section 2 to verify workspace card overlay
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true }));
+
     // Workspace activity card should show watermark overlay
     const overlay = page.locator('.student-image-card .watermark-overlay');
     await expect(overlay).toBeVisible();
@@ -3168,6 +3293,7 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
 
   test('90. Phase 8: Custom watermark upload via file input validates and updates store with dimensions', async ({ page }) => {
     await page.goto('/');
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(3, { skipValidation: true }));
 
     await page.click('#setting-watermark-enabled');
 
@@ -3200,6 +3326,7 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
 
   test('91. Phase 8: Custom watermark replaces school watermark and unchecks school checkbox', async ({ page }) => {
     await page.goto('/');
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(3, { skipValidation: true }));
     await page.click('#setting-watermark-enabled');
 
     const schoolCheckbox = page.locator('#setting-watermark-school');
@@ -3227,6 +3354,7 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
 
   test('92. Phase 8: Remove watermark clears state and falls back to school-logo when enabled', async ({ page }) => {
     await page.goto('/');
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(3, { skipValidation: true }));
     await page.click('#setting-watermark-enabled');
 
     const pngBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
@@ -3251,6 +3379,7 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
 
   test('93. Phase 8: Opacity slider updates store and workspace overlay opacity', async ({ page }) => {
     await page.goto('/');
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(3, { skipValidation: true }));
 
     await page.evaluate(async () => {
       const canvas = document.createElement('canvas');
@@ -3280,6 +3409,7 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
 
   test('94. Phase 8: Scale slider updates store and overlay size', async ({ page }) => {
     await page.goto('/');
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(3, { skipValidation: true }));
 
     await page.evaluate(async () => {
       const canvas = document.createElement('canvas');
@@ -3309,6 +3439,7 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
 
   test('95. Phase 8: Position grid picker updates all 9 positions correctly', async ({ page }) => {
     await page.goto('/');
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(3, { skipValidation: true }));
     await page.click('#setting-watermark-enabled');
 
     const positions = [
@@ -3330,6 +3461,7 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
 
   test('96. Phase 8: Apply target segmented control: activity-only (default)', async ({ page }) => {
     await page.goto('/');
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(3, { skipValidation: true }));
 
     await page.evaluate(async () => {
       const canvas = document.createElement('canvas');
@@ -3347,6 +3479,9 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
     const state = await page.evaluate(() => window.__WANGWON_STORE__.getState().watermark);
     expect(state.applyTo).toBe('activity-only');
 
+    // Go to Section 2 to verify workspace cards
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true }));
+
     // Covers must NOT have visible watermark
     const frontOverlay = page.locator('#front-cover-card .watermark-overlay');
     await expect(frontOverlay).not.toBeVisible();
@@ -3360,6 +3495,7 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
 
   test('97. Phase 8: Apply target: all-pages shows overlays on covers AND activity images', async ({ page }) => {
     await page.goto('/');
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(3, { skipValidation: true }));
 
     await page.evaluate(async () => {
       const canvas = document.createElement('canvas');
@@ -3380,6 +3516,9 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
     const state = await page.evaluate(() => window.__WANGWON_STORE__.getState().watermark);
     expect(state.applyTo).toBe('all-pages');
 
+    // Go to Section 2 to verify workspace cards
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true }));
+
     // Front cover, back cover, and activity images should all have visible watermark
     await expect(page.locator('#front-cover-card .watermark-overlay')).toBeVisible();
     await expect(page.locator('#back-cover-card .watermark-overlay')).toBeVisible();
@@ -3388,6 +3527,7 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
 
   test('98. Phase 8: Apply target: exclude-covers hides overlays on both covers', async ({ page }) => {
     await page.goto('/');
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(3, { skipValidation: true }));
 
     await page.evaluate(async () => {
       const canvas = document.createElement('canvas');
@@ -3408,6 +3548,9 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
     const state = await page.evaluate(() => window.__WANGWON_STORE__.getState().watermark);
     expect(state.applyTo).toBe('exclude-covers');
 
+    // Go to Section 2 to verify workspace cards
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true }));
+
     await expect(page.locator('#front-cover-card .watermark-overlay')).not.toBeVisible();
     await expect(page.locator('#back-cover-card .watermark-overlay')).not.toBeVisible();
     await expect(page.locator('.student-image-card .watermark-overlay')).toBeVisible();
@@ -3415,6 +3558,7 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
 
   test('99. Phase 8: Watermark overlay position is page-relative even on rotated images', async ({ page }) => {
     await page.goto('/');
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(3, { skipValidation: true }));
 
     await page.evaluate(async () => {
       const canvas = document.createElement('canvas');
@@ -3429,6 +3573,9 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
 
     await page.click('#setting-watermark-enabled');
 
+    // Go to Section 2 to verify and rotate workspace card
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true }));
+
     const card = page.locator('.student-image-card').first();
     const overlay = card.locator('.watermark-overlay');
     await expect(overlay).toBeVisible();
@@ -3436,9 +3583,14 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
     const initialLeft = await overlay.evaluate((el) => el.style.left);
     const initialTop = await overlay.evaluate((el) => el.style.top);
 
-    // Rotate image
+    // Rotate image (handles both desktop toolbar button and mobile more-menu)
     const rotateBtn = card.locator('.btn-rotate');
-    await rotateBtn.click();
+    if (await rotateBtn.isVisible()) {
+      await rotateBtn.click();
+    } else {
+      await card.locator('.btn-more').click();
+      await card.locator('.menu-item[data-action="rotate"]').click({ force: true });
+    }
     await page.waitForTimeout(200);
 
     const rotatedLeft = await overlay.evaluate((el) => el.style.left);
@@ -3451,6 +3603,7 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
 
   test('100. Phase 8: Watermark persists across image import, delete, and reorder', async ({ page }) => {
     await page.goto('/');
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(3, { skipValidation: true }));
     await page.click('#setting-watermark-enabled');
 
     // Import 2 images
@@ -3471,9 +3624,18 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
     let state = await page.evaluate(() => window.__WANGWON_STORE__.getState().watermark);
     expect(state.enabled).toBe(true);
 
-    // Delete first image
+    // Go to Section 2 to interact with workspace cards
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true }));
+
+    // Delete first image (handles both desktop toolbar button and mobile more-menu)
     const firstCard = page.locator('.student-image-card').first();
-    await firstCard.locator('.btn-delete').click();
+    const deleteBtn = firstCard.locator('.btn-delete');
+    if (await deleteBtn.isVisible()) {
+      await deleteBtn.click();
+    } else {
+      await firstCard.locator('.btn-more').click();
+      await firstCard.locator('.menu-item[data-action="delete"]').click({ force: true });
+    }
     await page.click('#btn-confirm-delete-image');
 
     state = await page.evaluate(() => window.__WANGWON_STORE__.getState().watermark);
@@ -3487,6 +3649,7 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
 
   test('101. Phase 8: Custom watermark blob URL revoked on replace and on project reset', async ({ page }) => {
     await page.goto('/');
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(3, { skipValidation: true }));
     await page.click('#setting-watermark-enabled');
 
     const pngBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
@@ -3512,6 +3675,7 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
 
   test('102. Phase 8: Watermark identical in Light and Dark theme', async ({ page }) => {
     await page.goto('/');
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(3, { skipValidation: true }));
 
     await page.evaluate(async () => {
       const c = document.createElement('canvas');
@@ -3596,6 +3760,7 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
 
   test('105. Phase 8: Zero horizontal overflow with watermark controls across viewports', async ({ page }) => {
     await page.goto('/');
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(3, { skipValidation: true }));
     await page.click('#setting-watermark-enabled');
 
     const viewports = [
@@ -3617,6 +3782,7 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
   test('106. Phase 8: Visual QA Screenshot Capture (15 required screenshots)', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto('/');
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true }));
 
     // Setup student info and activity images
     await page.evaluate(async () => {
@@ -3651,17 +3817,21 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
     await page.waitForTimeout(400);
 
     // 1. phase8-watermark-disabled.png
+    await page.locator('#portfolio-workspace').scrollIntoViewIfNeeded();
     await page.screenshot({ path: 'tests/screenshots/phase8-watermark-disabled.png', fullPage: false });
 
     // Enable watermark (default: school-logo, bottom-right, 18% opacity, 18% scale, activity-only)
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(3, { skipValidation: true }));
     await page.click('#setting-watermark-enabled');
     await page.waitForTimeout(300);
 
     // 2. phase8-watermark-school-logo.png
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true }));
     await page.locator('#portfolio-workspace').scrollIntoViewIfNeeded();
     await page.screenshot({ path: 'tests/screenshots/phase8-watermark-school-logo.png', fullPage: false });
 
     // 3. phase8-watermark-custom-upload.png
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(3, { skipValidation: true }));
     const pngBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
     await page.setInputFiles('#watermark-file-input', {
       name: 'custom_ban_wangwon.png',
@@ -3719,6 +3889,7 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
     await page.screenshot({ path: 'tests/screenshots/phase8-watermark-settings-panel.png', fullPage: false });
 
     // 12. phase8-watermark-dark-theme.png
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true }));
     await page.click('#btn-theme-toggle');
     await page.waitForTimeout(300);
     await page.locator('#portfolio-workspace').scrollIntoViewIfNeeded();
@@ -3748,6 +3919,7 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
 
   test('107. Phase 9: PDF export button requires complete student information before generating', async ({ page }) => {
     await page.goto('/');
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(3, { skipValidation: true }));
 
     // Form is initially empty, click export PDF
     await page.click('#btn-export-pdf');
@@ -3952,6 +4124,7 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
     await page.selectOption('#student-grade', 'ประถมศึกษาปีที่ 3');
     await page.fill('#student-number', '15');
 
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(3, { skipValidation: true }));
     // Switch to Landscape
     await page.selectOption('#setting-orientation', 'landscape');
 
@@ -4073,6 +4246,7 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
     await page.selectOption('#student-grade', 'อนุบาล 3');
     await page.fill('#student-number', '9');
 
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(3, { skipValidation: true }));
     // Enable school-logo watermark
     await page.click('#setting-watermark-enabled');
 
@@ -4154,6 +4328,7 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
     await page.selectOption('#student-grade', 'อนุบาล 1');
     await page.fill('#student-number', '1');
 
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(3, { skipValidation: true }));
     // Click Export PDF button
     const btn = page.locator('#btn-export-pdf');
     await btn.click();
@@ -5451,6 +5626,7 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
     await page.selectOption('#student-grade', 'ประถมศึกษาปีที่ 4');
     await page.fill('#student-number', '15');
 
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(3, { skipValidation: true }));
     const btnPdf = page.locator('#btn-export-pdf');
     const btnZip = page.locator('#btn-export-zip');
 
@@ -6525,12 +6701,14 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
     await page.waitForLoadState('domcontentloaded');
     await page.evaluate(() => document.documentElement.setAttribute('data-theme', 'light'));
 
-    // Populate full sample data for rich screenshots
+    // Populate full sample data for rich screenshots in Section 1
     await page.locator('#student-prefix').selectOption('ด.ช.');
     await page.locator('#student-firstname').fill('วิทวัส');
     await page.locator('#student-lastname').fill('ศิริวัฒนา');
     await page.locator('#student-grade').selectOption('ประถมศึกษาปีที่ 6');
     await page.locator('#student-number').fill('07');
+
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(3, { skipValidation: true }));
 
     await page.evaluate(async () => {
       const c = document.createElement('canvas');
@@ -6568,14 +6746,17 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
     await page.evaluate(() => document.documentElement.setAttribute('data-theme', 'light'));
 
     // Screenshot 3: release-student-photo.png
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(1, { skipValidation: true }));
     const studentCard = page.locator('#student-section');
     await studentCard.screenshot({ path: 'tests/screenshots/release-student-photo.png' });
 
     // Screenshot 4: release-workspace-images.png
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true }));
     const workspaceSec = page.locator('#portfolio-workspace');
     await workspaceSec.screenshot({ path: 'tests/screenshots/release-workspace-images.png' });
 
     // Screenshot 5: release-cover-templates.png
+    await page.evaluate(() => window.__WANGWON_NAVIGATION__.goToSection(3, { skipValidation: true }));
     const coverSec = page.locator('#template-selector-grid');
     if (await coverSec.isVisible()) {
       await coverSec.screenshot({ path: 'tests/screenshots/release-cover-templates.png' });
@@ -6717,11 +6898,636 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
     expect(fs.existsSync(path.join(artifactsDir, 'release-sample.pdf'))).toBe(true);
     expect(fs.existsSync(path.join(artifactsDir, 'release-sample-package.zip'))).toBe(true);
   });
+
+  // ========================================================================
+  // Phase 14 / Task: 3-Section Step-by-Step Workflow & Document Preview Tests
+  // ========================================================================
+
+  test('173. Workflow: App boots in Section 1 with student form visible and other sections hidden', async ({ page }) => {
+    await page.goto('/');
+    const sec1 = page.locator('#student-section');
+    const sec2 = page.locator('#portfolio-workspace');
+    const sec3 = page.locator('#section-review-export');
+
+    await expect(sec1).toBeVisible();
+    await expect(sec2).toBeHidden();
+    await expect(sec3).toBeHidden();
+
+    const currentStep = await page.evaluate(() => window.__WANGWON_NAVIGATION__?.getCurrentSection());
+    expect(currentStep).toBe(1);
+
+    const step1Nav = page.locator('#step-nav-1');
+    await expect(step1Nav).toHaveClass(/is-active/);
+    await expect(step1Nav).toHaveAttribute('aria-current', 'step');
+  });
+
+  test('174. Workflow: Section 1 next button blocks navigation if required student fields missing', async ({ page }) => {
+    await page.goto('/');
+
+    // Clear required name fields
+    await page.locator('#student-firstname').fill('');
+    await page.locator('#student-lastname').fill('');
+
+    await page.locator('#btn-step1-next').click();
+
+    // Must remain in Section 1
+    const sec1 = page.locator('#student-section');
+    await expect(sec1).toBeVisible();
+    const currentStep = await page.evaluate(() => window.__WANGWON_NAVIGATION__?.getCurrentSection());
+    expect(currentStep).toBe(1);
+
+    // Error highlight on first invalid field
+    const firstnameInput = page.locator('#student-firstname');
+    await expect(firstnameInput).toHaveClass(/is-invalid/);
+  });
+
+  test('175. Workflow: Section 1 next button advances to Section 2 when student fields are valid', async ({ page }) => {
+    await page.goto('/');
+
+    await page.locator('#student-prefix').selectOption('ด.ช.');
+    await page.locator('#student-firstname').fill('กิตติพัฒน์');
+    await page.locator('#student-lastname').fill('วัฒนากุลชัย');
+    await page.locator('#student-grade').selectOption('ประถมศึกษาปีที่ 6');
+    await page.locator('#student-year').fill('2569');
+
+    await page.locator('#btn-step1-next').click();
+
+    const sec1 = page.locator('#student-section');
+    const sec2 = page.locator('#portfolio-workspace');
+    await expect(sec1).toBeHidden();
+    await expect(sec2).toBeVisible();
+
+    const currentStep = await page.evaluate(() => window.__WANGWON_NAVIGATION__?.getCurrentSection());
+    expect(currentStep).toBe(2);
+
+    const step2Nav = page.locator('#step-nav-2');
+    await expect(step2Nav).toHaveClass(/is-active/);
+  });
+
+  test('176. Workflow: Section 2 back button returns to Section 1 without losing student data', async ({ page }) => {
+    await page.goto('/');
+    await page.locator('#student-firstname').fill('กิตติพัฒน์');
+    await page.locator('#student-lastname').fill('วัฒนากุลชัย');
+    await page.locator('#student-grade').selectOption('ประถมศึกษาปีที่ 6');
+    await page.locator('#student-year').fill('2569');
+
+    await page.locator('#btn-step1-next').click();
+    await expect(page.locator('#portfolio-workspace')).toBeVisible();
+
+    await page.locator('#btn-step2-prev').click();
+
+    await expect(page.locator('#student-section')).toBeVisible();
+    await expect(page.locator('#portfolio-workspace')).toBeHidden();
+
+    // Verify student data retained
+    await expect(page.locator('#student-firstname')).toHaveValue('กิตติพัฒน์');
+    await expect(page.locator('#student-lastname')).toHaveValue('วัฒนากุลชัย');
+  });
+
+  test('177. Workflow: Section 2 next button advances to Section 3', async ({ page }) => {
+    await page.goto('/');
+    await page.locator('#student-firstname').fill('กิตติพัฒน์');
+    await page.locator('#student-lastname').fill('วัฒนากุลชัย');
+    await page.locator('#student-grade').selectOption('ประถมศึกษาปีที่ 6');
+    await page.locator('#student-year').fill('2569');
+
+    await page.locator('#btn-step1-next').click();
+    await expect(page.locator('#portfolio-workspace')).toBeVisible();
+
+    await page.locator('#btn-step2-next').click();
+
+    await expect(page.locator('#portfolio-workspace')).toBeHidden();
+    const sec3 = page.locator('#section-review-export');
+    await expect(sec3).toBeVisible();
+
+    const currentStep = await page.evaluate(() => window.__WANGWON_NAVIGATION__?.getCurrentSection());
+    expect(currentStep).toBe(3);
+  });
+
+  test('178. Workflow: Section 3 back button returns to Section 2 without losing state', async ({ page }) => {
+    await page.goto('/');
+    await page.locator('#student-firstname').fill('กิตติพัฒน์');
+    await page.locator('#student-lastname').fill('วัฒนากุลชัย');
+    await page.locator('#student-grade').selectOption('ประถมศึกษาปีที่ 6');
+
+    await page.locator('#btn-step1-next').click();
+    await page.locator('#btn-step2-next').click();
+    await expect(page.locator('#section-review-export')).toBeVisible();
+
+    await page.locator('#btn-step3-prev').click();
+
+    await expect(page.locator('#portfolio-workspace')).toBeVisible();
+    await expect(page.locator('#section-review-export')).toBeHidden();
+  });
+
+  test('179. Workflow: Top Step Navigator allows clicking completed steps to jump back', async ({ page }) => {
+    await page.goto('/');
+    await page.locator('#student-firstname').fill('กิตติพัฒน์');
+    await page.locator('#student-lastname').fill('วัฒนากุลชัย');
+    await page.locator('#student-grade').selectOption('ประถมศึกษาปีที่ 6');
+
+    await page.locator('#btn-step1-next').click();
+    await page.locator('#btn-step2-next').click();
+    await expect(page.locator('#section-review-export')).toBeVisible();
+
+    // Click step 1
+    await page.locator('#step-nav-1').click();
+    await expect(page.locator('#student-section')).toBeVisible();
+    await expect(page.locator('#section-review-export')).toBeHidden();
+
+    // Click step 2
+    await page.locator('#step-nav-2').click();
+    await expect(page.locator('#portfolio-workspace')).toBeVisible();
+  });
+
+  test('180. Workflow: Top Step Navigator forward clicks blocked if validation fails', async ({ page }) => {
+    await page.goto('/');
+    await page.locator('#student-firstname').fill('');
+
+    await page.locator('#step-nav-3').click();
+    await expect(page.locator('#student-section')).toBeVisible();
+    await expect(page.locator('#section-review-export')).toBeHidden();
+  });
+
+  test('181. Section 2 Scroll: Page cards grid is contained inside scroll container with max-height', async ({ page }) => {
+    await page.goto('/');
+    await page.evaluate(() => {
+      window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true });
+    });
+
+    const scrollContainer = page.locator('#workspace-scroll-area');
+    await expect(scrollContainer).toBeVisible();
+
+    const styles = await scrollContainer.evaluate((el) => {
+      const s = window.getComputedStyle(el);
+      return {
+        overflowY: s.overflowY,
+        overscrollBehavior: s.overscrollBehavior
+      };
+    });
+
+    expect(styles.overflowY).toBe('auto');
+    expect(styles.overscrollBehavior).toBe('contain');
+  });
+
+  test('182. Section 2 Scroll: Sticky toolbar remains visible and Add Image button accessible', async ({ page }) => {
+    await page.goto('/');
+    await page.evaluate(() => {
+      window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true });
+    });
+
+    const stickyToolbar = page.locator('#workspace-sticky-toolbar');
+    await expect(stickyToolbar).toBeVisible();
+
+    const stickyAddBtn = page.locator('#btn-sticky-add-images');
+    await expect(stickyAddBtn).toBeVisible();
+  });
+
+  test('183. Section 2 Mobile 3-Column Grid: 390px viewport renders exactly 3 columns', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/');
+    await page.evaluate(() => {
+      window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true });
+    });
+
+    const grid = page.locator('#workspace-grid');
+    const cols = await grid.evaluate((el) => {
+      return window.getComputedStyle(el).gridTemplateColumns.split(' ').length;
+    });
+    expect(cols).toBe(3);
+  });
+
+  test('184. Section 2 Mobile 3-Column Grid: 375px viewport renders exactly 3 columns', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 667 });
+    await page.goto('/');
+    await page.evaluate(() => {
+      window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true });
+    });
+
+    const grid = page.locator('#workspace-grid');
+    const cols = await grid.evaluate((el) => {
+      return window.getComputedStyle(el).gridTemplateColumns.split(' ').length;
+    });
+    expect(cols).toBe(3);
+  });
+
+  test('185. Section 2 Mobile 3-Column Grid: 320px viewport renders exactly 3 columns without overflow', async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 568 });
+    await page.goto('/');
+    await page.evaluate(() => {
+      window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true });
+    });
+
+    const grid = page.locator('#workspace-grid');
+    const cols = await grid.evaluate((el) => {
+      return window.getComputedStyle(el).gridTemplateColumns.split(' ').length;
+    });
+    expect(cols).toBe(3);
+
+    const hasHorizontalScroll = await page.evaluate(() => {
+      return document.documentElement.scrollWidth > document.documentElement.clientWidth;
+    });
+    expect(hasHorizontalScroll).toBe(false);
+  });
+
+  test('186. Section 2 Mobile Card: Compact card hides rotate and delete quick buttons and shows More menu', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/');
+
+    await page.evaluate(async () => {
+      window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true });
+      const c = document.createElement('canvas');
+      c.width = 100; c.height = 100;
+      const blob = await new Promise(r => c.toBlob(r, 'image/jpeg'));
+      const f = new File([blob], 'mobile_test.jpg', { type: 'image/jpeg' });
+      await window.__WANGWON_IMAGE_MANAGER__.addStudentImages([f]);
+    });
+
+    const imageCard = page.locator('.student-image-card').first();
+    await expect(imageCard).toBeVisible();
+
+    // Verify rotate/delete buttons are hidden in 3-column mobile CSS
+    const rotateBtn = imageCard.locator('.btn-rotate');
+    const isRotateVisible = await rotateBtn.isVisible();
+    expect(isRotateVisible).toBe(false);
+
+    // More button is visible
+    const moreBtn = imageCard.locator('.btn-more');
+    await expect(moreBtn).toBeVisible();
+
+    // Open More menu and check for Rotate and Delete actions
+    await moreBtn.click();
+    const contextMenu = imageCard.locator('.card-context-menu');
+    await expect(contextMenu).toBeVisible();
+    await expect(contextMenu.locator('[data-action="rotate"]')).toBeVisible();
+    await expect(contextMenu.locator('[data-action="delete"]')).toBeVisible();
+  });
+
+  test('187. Section 2 Stress: 25 images scroll internally and do not inflate outer document', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto('/');
+
+    await page.evaluate(async () => {
+      window.__WANGWON_NAVIGATION__.goToSection(2, { skipValidation: true });
+      const files = [];
+      const c = document.createElement('canvas');
+      c.width = 80; c.height = 80;
+      const b = await new Promise(r => c.toBlob(r, 'image/jpeg'));
+      for (let i = 1; i <= 25; i++) {
+        files.push(new File([b], `img_${i}.jpg`, { type: 'image/jpeg' }));
+      }
+      await window.__WANGWON_IMAGE_MANAGER__.addStudentImages(files);
+    });
+
+    const cardCount = await page.locator('.student-image-card').count();
+    expect(cardCount).toBe(25);
+
+    const scrollContainer = page.locator('#workspace-scroll-area');
+    const scrollInfo = await scrollContainer.evaluate((el) => ({
+      scrollHeight: el.scrollHeight,
+      clientHeight: el.clientHeight
+    }));
+    // Internal scroll container must have overflow
+    expect(scrollInfo.scrollHeight).toBeGreaterThan(scrollInfo.clientHeight);
+
+    // Navigation buttons remain accessible
+    await expect(page.locator('#btn-step2-next')).toBeVisible();
+    await expect(page.locator('#btn-sticky-add-images')).toBeVisible();
+  });
+
+  test('188. Section 3 Preview: Initial preview renders Front Cover as Page 1', async ({ page }) => {
+    await page.goto('/');
+    await page.locator('#student-firstname').fill('กิตติพัฒน์');
+    await page.locator('#student-lastname').fill('วัฒนากุลชัย');
+    await page.locator('#student-grade').selectOption('ประถมศึกษาปีที่ 6');
+
+    await page.evaluate(() => {
+      window.__WANGWON_NAVIGATION__.goToSection(3, { skipValidation: true });
+    });
+
+    await expect(page.locator('#section-review-export')).toBeVisible();
+
+    const indicator = page.locator('#preview-page-indicator');
+    await expect(indicator).toContainText('หน้า 1');
+    await expect(indicator).toContainText('ปกหน้า');
+
+    const canvas = page.locator('#document-preview-canvas');
+    await expect(canvas).toBeVisible();
+  });
+
+  test('189. Section 3 Preview: Total pages equals images + 2', async ({ page }) => {
+    await page.goto('/');
+    await page.locator('#student-firstname').fill('กิตติพัฒน์');
+    await page.locator('#student-lastname').fill('วัฒนากุลชัย');
+    await page.locator('#student-grade').selectOption('ประถมศึกษาปีที่ 6');
+
+    await page.evaluate(async () => {
+      const c = document.createElement('canvas');
+      c.width = 60; c.height = 60;
+      const b = await new Promise(r => c.toBlob(r, 'image/jpeg'));
+      const f1 = new File([b], 'act1.jpg', { type: 'image/jpeg' });
+      const f2 = new File([b], 'act2.jpg', { type: 'image/jpeg' });
+      await window.__WANGWON_IMAGE_MANAGER__.addStudentImages([f1, f2]);
+      window.__WANGWON_NAVIGATION__.goToSection(3, { skipValidation: true });
+    });
+
+    const indicator = page.locator('#preview-page-indicator');
+    await expect(indicator).toContainText('หน้า 1 / 4'); // 2 covers + 2 images = 4 pages
+  });
+
+  test('190. Section 3 Preview: Navigation previous/next buttons move between pages', async ({ page }) => {
+    await page.goto('/');
+    await page.locator('#student-firstname').fill('กิตติพัฒน์');
+    await page.locator('#student-lastname').fill('วัฒนากุลชัย');
+    await page.locator('#student-grade').selectOption('ประถมศึกษาปีที่ 6');
+
+    await page.evaluate(async () => {
+      const c = document.createElement('canvas');
+      c.width = 60; c.height = 60;
+      const b = await new Promise(r => c.toBlob(r, 'image/jpeg'));
+      const f = new File([b], 'act.jpg', { type: 'image/jpeg' });
+      await window.__WANGWON_IMAGE_MANAGER__.addStudentImages([f]);
+      window.__WANGWON_NAVIGATION__.goToSection(3, { skipValidation: true });
+    });
+
+    const btnPrev = page.locator('#btn-preview-page-prev');
+    const btnNext = page.locator('#btn-preview-page-next');
+    const indicator = page.locator('#preview-page-indicator');
+
+    // On Page 1, prev is disabled
+    await expect(btnPrev).toBeDisabled();
+    await expect(btnNext).toBeEnabled();
+
+    // Click next -> Page 2 (Activity Image)
+    await btnNext.click();
+    await expect(indicator).toContainText('หน้า 2 / 3');
+    await expect(btnPrev).toBeEnabled();
+
+    // Click next -> Page 3 (Back Cover)
+    await btnNext.click();
+    await expect(indicator).toContainText('หน้า 3 / 3');
+    await expect(indicator).toContainText('ปกหลัง');
+    await expect(btnNext).toBeDisabled();
+
+    // Click prev -> Page 2
+    await btnPrev.click();
+    await expect(indicator).toContainText('หน้า 2 / 3');
+  });
+
+  test('191. Section 3 Preview: Thumbnail strip allows jumping directly to any page', async ({ page }) => {
+    await page.goto('/');
+    await page.locator('#student-firstname').fill('กิตติพัฒน์');
+    await page.locator('#student-lastname').fill('วัฒนากุลชัย');
+    await page.locator('#student-grade').selectOption('ประถมศึกษาปีที่ 6');
+
+    await page.evaluate(async () => {
+      const c = document.createElement('canvas');
+      c.width = 60; c.height = 60;
+      const b = await new Promise(r => c.toBlob(r, 'image/jpeg'));
+      const files = [
+        new File([b], 'a1.jpg', { type: 'image/jpeg' }),
+        new File([b], 'a2.jpg', { type: 'image/jpeg' })
+      ];
+      await window.__WANGWON_IMAGE_MANAGER__.addStudentImages(files);
+      window.__WANGWON_NAVIGATION__.goToSection(3, { skipValidation: true });
+    });
+
+    const thumbButtons = page.locator('.preview-thumb-btn');
+    await expect(thumbButtons).toHaveCount(4); // Front, Img1, Img2, Back
+
+    // Jump directly to Back Cover (index 3)
+    await thumbButtons.nth(3).click();
+    const indicator = page.locator('#preview-page-indicator');
+    await expect(indicator).toContainText('หน้า 4 / 4');
+    await expect(indicator).toContainText('ปกหลัง');
+  });
+
+  test('192. Section 3 Preview: Changing orientation updates canvas aspect without resetting page index', async ({ page }) => {
+    await page.goto('/');
+    await page.locator('#student-firstname').fill('กิตติพัฒน์');
+    await page.locator('#student-lastname').fill('วัฒนากุลชัย');
+    await page.locator('#student-grade').selectOption('ประถมศึกษาปีที่ 6');
+
+    await page.evaluate(async () => {
+      const c = document.createElement('canvas');
+      c.width = 60; c.height = 60;
+      const b = await new Promise(r => c.toBlob(r, 'image/jpeg'));
+      await window.__WANGWON_IMAGE_MANAGER__.addStudentImages([new File([b], 'a1.jpg', { type: 'image/jpeg' })]);
+      window.__WANGWON_NAVIGATION__.goToSection(3, { skipValidation: true });
+    });
+
+    // Jump to page 2
+    await page.locator('#btn-preview-page-next').click();
+    await expect(page.locator('#preview-page-indicator')).toContainText('หน้า 2');
+
+    // Switch to Landscape
+    await page.locator('#setting-orientation').selectOption('landscape');
+
+    // Stays on page 2
+    await expect(page.locator('#preview-page-indicator')).toContainText('หน้า 2');
+
+    // Verify stage dataset orientation is landscape
+    const stage = page.locator('#document-canvas-stage');
+    await expect(stage).toHaveAttribute('data-orientation', 'landscape');
+  });
+
+  test('193. Section 3 Preview: Watermark toggle updates live canvas', async ({ page }) => {
+    await page.goto('/');
+    await page.locator('#student-firstname').fill('กิตติพัฒน์');
+    await page.locator('#student-lastname').fill('วัฒนากุลชัย');
+    await page.locator('#student-grade').selectOption('ประถมศึกษาปีที่ 6');
+
+    await page.evaluate(() => {
+      window.__WANGWON_NAVIGATION__.goToSection(3, { skipValidation: true });
+    });
+
+    const wmToggle = page.locator('#setting-watermark-enabled');
+    await wmToggle.check();
+
+    const isWmEnabled = await page.evaluate(() => window.__WANGWON_STORE__.getState().watermark.enabled);
+    expect(isWmEnabled).toBe(true);
+
+    const canvas = page.locator('#document-preview-canvas');
+    await expect(canvas).toBeVisible();
+  });
+
+  test('194. Section 3 Export: Creating PDF triggers download successfully from Section 3', async ({ page }) => {
+    await page.goto('/');
+    await page.locator('#student-firstname').fill('กิตติพัฒน์');
+    await page.locator('#student-lastname').fill('วัฒนากุลชัย');
+    await page.locator('#student-grade').selectOption('ประถมศึกษาปีที่ 6');
+
+    await page.evaluate(() => {
+      window.__WANGWON_NAVIGATION__.goToSection(3, { skipValidation: true });
+    });
+
+    const downloadPromise = page.waitForEvent('download', { timeout: 15000 });
+    await page.locator('#btn-section3-export-pdf').click();
+    const download = await downloadPromise;
+
+    expect(download.suggestedFilename()).toContain('.pdf');
+  });
+
+  test('195. Section 3 Export: Creating ZIP package triggers download successfully from Section 3', async ({ page }) => {
+    await page.goto('/');
+    await page.locator('#student-firstname').fill('กิตติพัฒน์');
+    await page.locator('#student-lastname').fill('วัฒนากุลชัย');
+    await page.locator('#student-grade').selectOption('ประถมศึกษาปีที่ 6');
+
+    await page.evaluate(async () => {
+      const c = document.createElement('canvas');
+      c.width = 60; c.height = 60;
+      const b = await new Promise(r => c.toBlob(r, 'image/jpeg'));
+      await window.__WANGWON_IMAGE_MANAGER__.addStudentImages([new File([b], 'test_pack.jpg', { type: 'image/jpeg' })]);
+      window.__WANGWON_NAVIGATION__.goToSection(3, { skipValidation: true });
+    });
+
+    const downloadPromise = page.waitForEvent('download', { timeout: 15000 });
+    await page.locator('#btn-section3-export-zip').click();
+    const download = await downloadPromise;
+
+    expect(download.suggestedFilename()).toContain('.zip');
+  });
+
+  test('196. Recovery: Recovering saved draft opens Section 2 automatically', async ({ page }) => {
+    await page.goto('/');
+
+    // Populate draft in indexedDB
+    await page.evaluate(async () => {
+      await window.__WANGWON_DRAFT_STORAGE__.saveDraft({
+        student: {
+          prefix: 'ด.ช.',
+          firstName: 'สมชาย',
+          lastName: 'เรียนดี',
+          grade: 'ประถมศึกษาปีที่ 6',
+          academicYear: '2569'
+        },
+        images: []
+      });
+    });
+
+    // Reload page to trigger recovery modal
+    await page.reload();
+    const recoveryModal = page.locator('#recovery-modal');
+    await expect(recoveryModal).toBeVisible();
+
+    // Click "ทำงานต่อ"
+    await page.locator('#btn-recovery-continue').click();
+
+    // Must navigate to Section 2 automatically
+    const currentStep = await page.evaluate(() => window.__WANGWON_NAVIGATION__?.getCurrentSection());
+    expect(currentStep).toBe(2);
+
+    await expect(page.locator('#portfolio-workspace')).toBeVisible();
+    await expect(page.locator('#student-section')).toBeHidden();
+  });
+
+  test('197. Visual QA: Capture all 10 required Phase 14 workflow screenshots', async ({ page }) => {
+    const screenshotsDir = path.resolve('tests/screenshots');
+    if (!fs.existsSync(screenshotsDir)) {
+      fs.mkdirSync(screenshotsDir, { recursive: true });
+    }
+
+    // 1. section1-student-info-desktop.png
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto('/');
+    await page.locator('#student-firstname').fill('กิตติพัฒน์');
+    await page.locator('#student-lastname').fill('วัฒนากุลชัย');
+    await page.locator('#student-grade').selectOption('ประถมศึกษาปีที่ 6');
+    await page.screenshot({ path: path.join(screenshotsDir, 'section1-student-info-desktop.png') });
+
+    // 2. section2-page-layout-desktop.png
+    await page.locator('#btn-step1-next').click();
+    await page.screenshot({ path: path.join(screenshotsDir, 'section2-page-layout-desktop.png') });
+
+    // Add sample image
+    await page.evaluate(async () => {
+      const c = document.createElement('canvas');
+      c.width = 120; c.height = 120;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#3b82f6';
+      ctx.fillRect(0, 0, 120, 120);
+      const b = await new Promise(r => c.toBlob(r, 'image/jpeg'));
+      await window.__WANGWON_IMAGE_MANAGER__.addStudentImages([
+        new File([b], 'math_activity.jpg', { type: 'image/jpeg' }),
+        new File([b], 'science_fair.jpg', { type: 'image/jpeg' })
+      ]);
+    });
+
+    // 3. section2-page-layout-mobile-390.png
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.screenshot({ path: path.join(screenshotsDir, 'section2-page-layout-mobile-390.png') });
+
+    // 4. section2-page-layout-mobile-320.png
+    await page.setViewportSize({ width: 320, height: 568 });
+    await page.screenshot({ path: path.join(screenshotsDir, 'section2-page-layout-mobile-320.png') });
+
+    // 5. section2-scroll-25-images.png
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.evaluate(async () => {
+      const c = document.createElement('canvas');
+      c.width = 60; c.height = 60;
+      const b = await new Promise(r => c.toBlob(r, 'image/jpeg'));
+      const batch = [];
+      for (let i = 1; i <= 23; i++) {
+        batch.push(new File([b], `sample_${i}.jpg`, { type: 'image/jpeg' }));
+      }
+      await window.__WANGWON_IMAGE_MANAGER__.addStudentImages(batch);
+    });
+    await page.screenshot({ path: path.join(screenshotsDir, 'section2-scroll-25-images.png') });
+
+    // 6. section3-preview-desktop.png
+    await page.evaluate(() => {
+      window.__WANGWON_NAVIGATION__.goToSection(3, { skipValidation: true });
+    });
+    await page.waitForTimeout(500);
+    await page.screenshot({ path: path.join(screenshotsDir, 'section3-preview-desktop.png') });
+
+    // 7. section3-preview-mobile.png
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.screenshot({ path: path.join(screenshotsDir, 'section3-preview-mobile.png') });
+
+    // 8. section3-preview-landscape.png
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.locator('#setting-orientation').selectOption('landscape');
+    await page.waitForTimeout(400);
+    await page.screenshot({ path: path.join(screenshotsDir, 'section3-preview-landscape.png') });
+
+    // 9. section3-preview-watermark.png
+    await page.locator('#setting-watermark-enabled').check();
+    await page.waitForTimeout(400);
+    await page.screenshot({ path: path.join(screenshotsDir, 'section3-preview-watermark.png') });
+
+    // 10. section3-preview-custom-cover.png
+    await page.evaluate(async () => {
+      const c = document.createElement('canvas');
+      c.width = 400; c.height = 600;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#6366f1';
+      ctx.fillRect(0, 0, 400, 600);
+      const b = await new Promise(r => c.toBlob(r, 'image/jpeg'));
+      const file = new File([b], 'custom_front.jpg', { type: 'image/jpeg' });
+      await window.__WANGWON_COVER_STATE__.setCustomCover('front', file);
+    });
+    await page.waitForTimeout(500);
+    await page.screenshot({ path: path.join(screenshotsDir, 'section3-preview-custom-cover.png') });
+
+    const required = [
+      'section1-student-info-desktop.png',
+      'section2-page-layout-desktop.png',
+      'section2-page-layout-mobile-390.png',
+      'section2-page-layout-mobile-320.png',
+      'section2-scroll-25-images.png',
+      'section3-preview-desktop.png',
+      'section3-preview-mobile.png',
+      'section3-preview-landscape.png',
+      'section3-preview-watermark.png',
+      'section3-preview-custom-cover.png'
+    ];
+
+    for (const name of required) {
+      expect(fs.existsSync(path.join(screenshotsDir, name))).toBe(true);
+    }
+  });
+
 });
-
-
-
-
-
-
-

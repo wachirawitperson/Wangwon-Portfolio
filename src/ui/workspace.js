@@ -131,6 +131,21 @@ export function initWorkspace(workspaceElement) {
     });
   }
 
+  // Trigger file selection from sticky toolbar button
+  const stickyAddBtn = workspaceElement.querySelector('#btn-sticky-add-images');
+  if (stickyAddBtn && addImagesInput) {
+    stickyAddBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      addImagesInput.click();
+    });
+    stickyAddBtn.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        addImagesInput.click();
+      }
+    });
+  }
+
   if (emptyPlaceholder && addImagesInput) {
     emptyPlaceholder.addEventListener('click', () => {
       addImagesInput.click();

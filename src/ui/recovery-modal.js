@@ -110,6 +110,14 @@ export async function initRecoveryModal() {
         // Resume autosave tracking
         autosaveManager.resume();
         autosaveManager.setStatus('saved');
+
+        // Automatically open Section 2 so user can immediately view/edit restored pages
+        try {
+          const { goToSection } = await import('./navigation.js');
+          goToSection(2, { skipValidation: true });
+        } catch (navErr) {
+          console.warn('[RecoveryModal] Navigation to section 2 failed:', navErr);
+        }
       } catch (err) {
         console.error('[RecoveryModal] Failed to restore draft state:', err);
         showToast('เกิดข้อผิดพลาดในการกู้คืนงาน', 'danger');

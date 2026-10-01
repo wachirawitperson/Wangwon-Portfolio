@@ -42,6 +42,10 @@ body.modal-open {
 }
 
 /* Screen reader only helper */
+[hidden] {
+  display: none !important;
+}
+
 .sr-only,
 .form-select.sr-only,
 .form-input.sr-only {
