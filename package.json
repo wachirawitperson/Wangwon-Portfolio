@@ -1,6 +1,6 @@
 {
   "name": "wangwon-portfolio",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "description": "Browser-based student portfolio PDF generator for Ban Wangwon School teachers",
   "type": "module",

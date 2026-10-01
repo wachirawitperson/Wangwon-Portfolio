@@ -132,6 +132,7 @@ export async function importStudentImages(files, options = {}) {
 
     const imageItem = {
       id,
+      file,
       originalFile: file,
       originalFilename: filename,
       outputExtension,
@@ -184,9 +185,9 @@ export async function importStudentImages(files, options = {}) {
  * @param {FileList|File[]} files
  */
 export function addStudentImages(files) {
-  if (!files || !files.length) return [];
+  if (!files || !files.length) return Promise.resolve([]);
   // For backwards compatibility, invoke importStudentImages
-  importStudentImages(files, { source: 'file-picker', allowDuplicates: true });
+  return importStudentImages(files, { source: 'file-picker', allowDuplicates: true });
 }
 
 /**

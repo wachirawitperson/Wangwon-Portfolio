@@ -151,12 +151,14 @@ export async function generatePortfolioPackage(projectState = {}, { onProgress, 
     throw new Error('ไม่สามารถสร้างโฟลเดอร์ภายในไฟล์ ZIP ได้');
   }
 
-  // 1. Insert PDF into student folder
-  folder.file(pdfResult.filename, pdfResult.blob, { binary: true });
+  // 1. Insert PDF into student folder (sanitizing entry name)
+  const safePdfName = (pdfResult.filename || 'portfolio.pdf').replace(/^.*[\\/]/, '');
+  folder.file(safePdfName, pdfResult.blob, { binary: true });
 
-  // 2. Insert renamed activity images in Portfolio order
+  // 2. Insert renamed activity images in Portfolio order (sanitizing entry name)
   for (const img of exportedImages) {
-    folder.file(img.filename, img.blob, { binary: true });
+    const safeImgName = (img.filename || 'image.jpg').replace(/^.*[\\/]/, '');
+    folder.file(safeImgName, img.blob, { binary: true });
   }
 
   reportProgress(88, 'compressing', 'กำลังบีบอัดและสร้างไฟล์ ZIP...');

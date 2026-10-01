@@ -28,7 +28,11 @@ import {
   hasDraft,
   migrateDraftRecord,
   rehydrateDraftState,
-  hasMeaningfulProjectData
+  hasMeaningfulProjectData,
+  DB_NAME,
+  DB_VERSION,
+  SCHEMA_VERSION,
+  APP_VERSION
 } from './core/draft-storage.js';
 import { autosaveManager } from './core/autosave-manager.js';
 import { initRecoveryModal } from './ui/recovery-modal.js';
@@ -68,7 +72,7 @@ import {
 } from './portfolio/image-manager.js';
 
 document.addEventListener('DOMContentLoaded', () => {
-  console.info('🚀 Wangwon Portfolio v0.3.0 initialized (Student Information + Reactive App State)');
+  console.info('🚀 Wangwon Portfolio v1.0.0 initialized (Production Release)');
 
   // Initialize Theme System (Light / Dark)
   initTheme();
@@ -178,7 +182,11 @@ document.addEventListener('DOMContentLoaded', () => {
     rehydrateDraftState,
     hasMeaningfulProjectData,
     autosaveManager,
-    hydrateProjectState
+    hydrateProjectState,
+    DB_NAME,
+    DB_VERSION,
+    SCHEMA_VERSION,
+    APP_VERSION
   };
   window.__WANGWON_FILENAME_UTILS__ = {
     generatePdfFilename,

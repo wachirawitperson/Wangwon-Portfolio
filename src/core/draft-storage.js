@@ -19,7 +19,7 @@ export const DB_VERSION = 1;
 export const STORE_NAME = 'drafts';
 export const DRAFT_KEY = 'default';
 export const SCHEMA_VERSION = 1;
-export const APP_VERSION = '0.12.0';
+export const APP_VERSION = '1.0.0';
 
 /**
  * Opens or upgrades the IndexedDB database.

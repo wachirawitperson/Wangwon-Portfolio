@@ -178,7 +178,7 @@ export async function exportSingleActivityImage(imageItem, { student = {}, seque
     extension: targetSpec.extension
   });
 
-  let sourceBlob = imageItem.file;
+  let sourceBlob = imageItem.file || imageItem.originalFile;
 
   // If missing file but has decoded image / preview, check for source
   if (!sourceBlob && imageItem.blob) {

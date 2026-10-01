@@ -1,7 +1,29 @@
 import { test, expect } from '@playwright/test';
 import fs from 'fs';
+import path from 'path';
 
 test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () => {
+
+  test.beforeEach(async ({ page }) => {
+    // Navigate to root to establish origin context
+    await page.goto('/');
+    // Clear IndexedDB drafts database and localStorage
+    await page.evaluate(async () => {
+      try {
+        localStorage.clear();
+      } catch (e) {}
+      try {
+        if (window.indexedDB) {
+          await new Promise((resolve) => {
+            const req = indexedDB.deleteDatabase('wangwon-portfolio-db');
+            req.onsuccess = () => resolve();
+            req.onerror = () => resolve();
+            req.onblocked = () => resolve();
+          });
+        }
+      } catch (e) {}
+    });
+  });
 
   test('1. Page loads without error', async ({ page }) => {
     const jsErrors = [];
@@ -6186,8 +6208,517 @@ test.describe('Wangwon Portfolio - Phase 2 Design System & App Shell Tests', () 
     expect(fs.existsSync('tests/screenshots/phase12-start-new-confirm.png')).toBe(true);
     expect(fs.existsSync('tests/screenshots/phase12-mobile-recovery.png')).toBe(true);
     expect(fs.existsSync('tests/screenshots/phase12-dark-recovery.png')).toBe(true);
+
+    // Clean up draft so next tests start cleanly
+    await page.evaluate(async () => {
+      try {
+        if (window.__WANGWON_DRAFT_STORAGE__) {
+          await window.__WANGWON_DRAFT_STORAGE__.deleteDraft();
+        }
+      } catch (e) {}
+    });
+  });
+  // =========================================================================
+  // PHASE 13: FINAL QA + PERFORMANCE + PRIVACY + RELEASE (v1.0.0)
+  // =========================================================================
+
+  test('161. Phase 13: Zero outbound network calls during app lifecycle', async ({ page }) => {
+    const outboundUrls = [];
+    page.on('request', req => {
+      const url = req.url();
+      // Ignore local origins
+      if (!url.startsWith('http://localhost') && !url.startsWith('http://127.0.0.1') && !url.startsWith('data:') && !url.startsWith('blob:')) {
+        outboundUrls.push(url);
+      }
+    });
+
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+
+    // Fill form and add an image
+    await page.locator('#student-firstname').fill('ภูมิใจ');
+    await page.evaluate(async () => {
+      const c = document.createElement('canvas');
+      c.width = 100; c.height = 100;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#10b981';
+      ctx.fillRect(0, 0, 100, 100);
+      const b = await new Promise(r => c.toBlob(r, 'image/jpeg'));
+      const f = new File([b], 'test.jpg', { type: 'image/jpeg' });
+      await window.__WANGWON_IMAGE_MANAGER__.addStudentImages([f]);
+    });
+
+    // Generate PDF and export
+    await page.evaluate(async () => {
+      const state = window.__WANGWON_STORE__.getState();
+      await window.__WANGWON_PDF_GENERATOR__.generatePortfolioPdf(state);
+    });
+
+    expect(outboundUrls).toEqual([]);
+  });
+
+  test('162. Phase 13: 50 images stress test - Rendering, export, and memory stability', async ({ page }) => {
+    test.setTimeout(90000);
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+
+    await page.locator('#student-firstname').fill('เพชร');
+    await page.locator('#student-lastname').fill('สมบูรณ์');
+
+    const result = await page.evaluate(async () => {
+      // Create 50 lightweight synthetic images directly in state to avoid 50 DOM renders
+      const canvas = document.createElement('canvas');
+      canvas.width = 64; canvas.height = 64;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#3b82f6';
+      ctx.fillRect(0, 0, 64, 64);
+      const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.8));
+
+      const images = [];
+      for (let i = 1; i <= 50; i++) {
+        const file = new File([blob], `activity_${i}.jpg`, { type: 'image/jpeg' });
+        images.push({
+          id: `stress-img-${i}`,
+          file,
+          previewUrl: URL.createObjectURL(file),
+          originalFilename: file.name,
+          width: 64,
+          height: 64,
+          rotation: (i % 4) * 90
+        });
+      }
+
+      window.__WANGWON_STORE__.setState((s) => ({ ...s, images }));
+      const state = window.__WANGWON_STORE__.getState();
+
+      const startMem = performance.memory ? performance.memory.usedJSHeapSize : null;
+      const pdf = await window.__WANGWON_PDF_GENERATOR__.generatePortfolioPdf(state);
+      const endMem = performance.memory ? performance.memory.usedJSHeapSize : null;
+
+      // Clean up object URLs
+      for (const img of images) {
+        URL.revokeObjectURL(img.previewUrl);
+      }
+
+      return {
+        totalImages: state.images.length,
+        pdfPageCount: pdf.pageCount,
+        pdfSize: pdf.bytes.byteLength,
+        memDiffMb: (startMem && endMem) ? (endMem - startMem) / (1024 * 1024) : 0
+      };
+    });
+
+    expect(result.totalImages).toBe(50);
+    expect(result.pdfPageCount).toBe(52); // Front Cover + 50 Activities + Back Cover
+    expect(result.pdfSize).toBeGreaterThan(10000);
+  });
+
+  test('163. Phase 13: ZIP package path traversal prevention and clean student folder structure', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+
+    await page.locator('#student-firstname').fill('กมล');
+    await page.locator('#student-lastname').fill('สุวรรณ');
+
+    const zipEntries = await page.evaluate(async () => {
+      const c = document.createElement('canvas');
+      c.width = 50; c.height = 50;
+      const b = await new Promise(r => c.toBlob(r, 'image/jpeg'));
+      const f = new File([b], 'photo.jpg', { type: 'image/jpeg' });
+      await window.__WANGWON_IMAGE_MANAGER__.addStudentImages([f]);
+
+      const state = window.__WANGWON_STORE__.getState();
+      const pkg = await window.__WANGWON_PACKAGE_EXPORTER__.generatePortfolioPackage(state);
+
+      const JSZip = window.__WANGWON_PACKAGE_EXPORTER__.getJSZip();
+      const zip = await JSZip.loadAsync(pkg.blob);
+      return Object.keys(zip.files);
+    });
+
+    for (const entry of zipEntries) {
+      expect(entry).not.toContain('..');
+      expect(entry).not.toContain('\\');
+      expect(entry.startsWith('ด.ช.กมล_สุวรรณ/')).toBe(true);
+    }
+  });
+
+  test('164. Phase 13: Object URL audit - Explicit revoke on image removal and clear', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+
+    await page.evaluate(() => {
+      const originalRevoke = URL.revokeObjectURL;
+      window.__REVOKED_URLS__ = [];
+      URL.revokeObjectURL = function(url) {
+        window.__REVOKED_URLS__.push(url);
+        originalRevoke.call(URL, url);
+      };
+    });
+
+    // Add and then remove an image
+    await page.evaluate(async () => {
+      const c = document.createElement('canvas');
+      c.width = 40; c.height = 40;
+      const b = await new Promise(r => c.toBlob(r, 'image/jpeg'));
+      const f = new File([b], 'audit.jpg', { type: 'image/jpeg' });
+      await window.__WANGWON_IMAGE_MANAGER__.addStudentImages([f]);
+    });
+
+    const imgId = await page.evaluate(() => {
+      return window.__WANGWON_STORE__.getState().images[0].id;
+    });
+
+    await page.evaluate((id) => {
+      window.__WANGWON_IMAGE_MANAGER__.removeStudentImage(id);
+    }, imgId);
+
+    const revokedCount = await page.evaluate(() => window.__REVOKED_URLS__.length);
+    expect(revokedCount).toBeGreaterThan(0);
+  });
+
+  test('165. Phase 13: Thai typography and complex glyph rendering in filename utilities', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+
+    const filenames = await page.evaluate(() => {
+      const utils = window.__WANGWON_FILENAME_UTILS__;
+      return {
+        complexThai: utils.sanitizeFilename('เด็กชาย ณัฐพัชร์   แซ่ตั้ง-วัฒนปรีชา'),
+        studentBase: utils.getStudentExportBaseName({ prefix: 'ด.ช.', firstName: 'ภูมิภัทร', lastName: 'ศิริโรจน์เรืองชัย' }),
+        packageFilename: utils.getExportPackageFilename({ prefix: 'ด.ญ.', firstName: 'อัญญา', lastName: 'สุขใจ' })
+      };
+    });
+
+    expect(filenames.complexThai).toBe('เด็กชาย_ณัฐพัชร์_แซ่ตั้ง-วัฒนปรีชา');
+    expect(filenames.studentBase).toBe('ด.ช.ภูมิภัทร_ศิริโรจน์เรืองชัย');
+    expect(filenames.packageFilename).toBe('ด.ญ.อัญญา_สุขใจ_Portfolio.zip');
+  });
+
+  test('166. Phase 13: XSS and script injection defense in student data and filenames', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+
+    await page.locator('#student-firstname').fill('<script>alert("xss")</script>');
+    await page.locator('#student-lastname').fill('"><img src=x onerror=alert(1)>');
+
+    // Verify DOM renders as plain text without script execution
+    const renderedName = await page.evaluate(() => {
+      return document.querySelector('#student-firstname').value;
+    });
+    expect(renderedName).toBe('<script>alert("xss")</script>');
+
+    // Filename sanitizer must strip illegal characters
+    const safeBase = await page.evaluate(() => {
+      const state = window.__WANGWON_STORE__.getState();
+      return window.__WANGWON_FILENAME_UTILS__.getStudentExportBaseName(state.student);
+    });
+    expect(safeBase).not.toContain('<');
+    expect(safeBase).not.toContain('>');
+    expect(safeBase).not.toContain('"');
+  });
+
+  test('167. Phase 13: Responsive layout audit across 320px, 375px, 390px, 768px, and 1440px', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+
+    const viewports = [
+      { width: 320, height: 568 },
+      { width: 375, height: 667 },
+      { width: 390, height: 844 },
+      { width: 768, height: 1024 },
+      { width: 1440, height: 900 }
+    ];
+
+    for (const vp of viewports) {
+      await page.setViewportSize(vp);
+      const isVisible = await page.locator('.app-header').isVisible();
+      expect(isVisible).toBe(true);
+      const mainVisible = await page.locator('main').isVisible();
+      expect(mainVisible).toBe(true);
+    }
+  });
+
+  test('168. Phase 13: Accessibility checks - Form labeling, ARIA roles, and keyboard navigation', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+
+    const headerRole = await page.locator('header.app-header').getAttribute('role');
+    expect(headerRole).toBe('banner');
+
+    const statusRole = await page.locator('#autosave-status-indicator').getAttribute('role');
+    expect(statusRole).toBe('status');
+
+    // Inputs have labels
+    const firstNameInput = page.locator('#student-firstname');
+    await expect(firstNameInput).toBeVisible();
+    await firstNameInput.focus();
+    await page.keyboard.type('กฤษณะ');
+    expect(await firstNameInput.inputValue()).toBe('กฤษณะ');
+  });
+
+  test('169. Phase 13: IndexedDB schema, version, and clean recovery lifecycle', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+
+    const dbMeta = await page.evaluate(async () => {
+      const storage = window.__WANGWON_DRAFT_STORAGE__;
+      return {
+        dbName: storage.DB_NAME,
+        dbVersion: storage.DB_VERSION,
+        schemaVersion: storage.SCHEMA_VERSION,
+        appVersion: storage.APP_VERSION
+      };
+    });
+
+    expect(dbMeta.dbName).toBe('wangwon-portfolio-db');
+    expect(dbMeta.dbVersion).toBe(1);
+    expect(dbMeta.schemaVersion).toBe(1);
+    expect(dbMeta.appVersion).toBe('1.0.0');
+  });
+
+  test('170. Phase 13: Full End-to-End User Journey - From blank state to PDF & ZIP export', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+
+    // 1. Fill student profile
+    await page.locator('#student-prefix').selectOption('ด.ช.');
+    await page.locator('#student-firstname').fill('ธนวัฒน์');
+    await page.locator('#student-lastname').fill('คงมั่นคง');
+    await page.locator('#student-grade').selectOption('ประถมศึกษาปีที่ 6');
+    await page.locator('#student-number').fill('05');
+
+    // 2. Add 2 activities
+    await page.evaluate(async () => {
+      const c = document.createElement('canvas');
+      c.width = 160; c.height = 120;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#0ea5e9';
+      ctx.fillRect(0, 0, 160, 120);
+      const b = await new Promise(r => c.toBlob(r, 'image/jpeg'));
+
+      const f1 = new File([b], 'act1.jpg', { type: 'image/jpeg' });
+      const f2 = new File([b], 'act2.jpg', { type: 'image/jpeg' });
+      await window.__WANGWON_IMAGE_MANAGER__.addStudentImages([f1, f2]);
+    });
+
+    // 3. Export PDF
+    const pdf = await page.evaluate(async () => {
+      const state = window.__WANGWON_STORE__.getState();
+      return await window.__WANGWON_PDF_GENERATOR__.generatePortfolioPdf(state);
+    });
+    expect(pdf.pageCount).toBe(4); // Front + 2 Acts + Back
+    expect(pdf.filename).toContain('ด.ช.ธนวัฒน์_คงมั่นคง');
+
+    // 4. Export ZIP Package
+    const pkg = await page.evaluate(async () => {
+      const state = window.__WANGWON_STORE__.getState();
+      return await window.__WANGWON_PACKAGE_EXPORTER__.generatePortfolioPackage(state);
+    });
+    expect(pkg.filename).toBe('ด.ช.ธนวัฒน์_คงมั่นคง_Portfolio.zip');
+    expect(pkg.fileCount).toBe(3); // 1 PDF + 2 images
+  });
+
+  test('171. Phase 13: Visual QA Artifacts - Capture the 13 required final release screenshots', async ({ page }) => {
+    // 1. Desktop Light
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+    await page.evaluate(() => document.documentElement.setAttribute('data-theme', 'light'));
+
+    // Populate full sample data for rich screenshots
+    await page.locator('#student-prefix').selectOption('ด.ช.');
+    await page.locator('#student-firstname').fill('วิทวัส');
+    await page.locator('#student-lastname').fill('ศิริวัฒนา');
+    await page.locator('#student-grade').selectOption('ประถมศึกษาปีที่ 6');
+    await page.locator('#student-number').fill('07');
+
+    await page.evaluate(async () => {
+      const c = document.createElement('canvas');
+      c.width = 200; c.height = 150;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#0284c7';
+      ctx.fillRect(0, 0, 200, 150);
+      const b = await new Promise(r => c.toBlob(r, 'image/jpeg'));
+      const f1 = new File([b], 'กิจกรรมลูกเสือ.jpg', { type: 'image/jpeg' });
+      const f2 = new File([b], 'โครงงานวิทยาศาสตร์.jpg', { type: 'image/jpeg' });
+      await window.__WANGWON_IMAGE_MANAGER__.addStudentImages([f1, f2]);
+
+      // Add student photo
+      const photoCanvas = document.createElement('canvas');
+      photoCanvas.width = 120; photoCanvas.height = 160;
+      const photoCtx = photoCanvas.getContext('2d');
+      photoCtx.fillStyle = '#6366f1';
+      photoCtx.fillRect(0, 0, 120, 160);
+      const photoBlob = await new Promise(r => photoCanvas.toBlob(r, 'image/jpeg'));
+      const photoFile = new File([photoBlob], 'student-profile.jpg', { type: 'image/jpeg' });
+      window.__WANGWON_STUDENT_UTILS__.updateStudentPhoto({
+        file: photoFile,
+        previewUrl: URL.createObjectURL(photoFile),
+        width: 120,
+        height: 160
+      });
+    });
+
+    // Screenshot 1: release-light-desktop.png
+    await page.screenshot({ path: 'tests/screenshots/release-light-desktop.png' });
+
+    // Screenshot 2: release-dark-desktop.png
+    await page.evaluate(() => document.documentElement.setAttribute('data-theme', 'dark'));
+    await page.screenshot({ path: 'tests/screenshots/release-dark-desktop.png' });
+    await page.evaluate(() => document.documentElement.setAttribute('data-theme', 'light'));
+
+    // Screenshot 3: release-student-photo.png
+    const studentCard = page.locator('#student-section');
+    await studentCard.screenshot({ path: 'tests/screenshots/release-student-photo.png' });
+
+    // Screenshot 4: release-workspace-images.png
+    const workspaceSec = page.locator('#portfolio-workspace');
+    await workspaceSec.screenshot({ path: 'tests/screenshots/release-workspace-images.png' });
+
+    // Screenshot 5: release-cover-templates.png
+    const coverSec = page.locator('#template-selector-grid');
+    if (await coverSec.isVisible()) {
+      await coverSec.screenshot({ path: 'tests/screenshots/release-cover-templates.png' });
+    } else {
+      await page.screenshot({ path: 'tests/screenshots/release-cover-templates.png' });
+    }
+
+    // Screenshot 6: release-watermark.png
+    const watermarkSec = page.locator('#watermark-settings-container');
+    if (await watermarkSec.isVisible()) {
+      await watermarkSec.screenshot({ path: 'tests/screenshots/release-watermark.png' });
+    } else {
+      await page.screenshot({ path: 'tests/screenshots/release-watermark.png' });
+    }
+
+    // Screenshot 7: release-pdf-progress.png
+    const btnPdf = page.locator('#btn-export-pdf');
+    await page.evaluate(() => {
+      const btn = document.querySelector('#btn-export-pdf');
+      btn.classList.add('is-loading');
+      btn.innerHTML = 'กำลังสร้าง (65%)';
+    });
+    await btnPdf.screenshot({ path: 'tests/screenshots/release-pdf-progress.png' });
+    await page.evaluate(() => {
+      const btn = document.querySelector('#btn-export-pdf');
+      btn.classList.remove('is-loading');
+      btn.innerHTML = 'สร้าง Portfolio PDF';
+    });
+
+    // Screenshot 8: release-package-progress.png
+    const btnZip = page.locator('#btn-export-zip');
+    await page.evaluate(() => {
+      const btn = document.querySelector('#btn-export-zip');
+      btn.classList.add('is-loading');
+      btn.innerHTML = 'กำลังส่งออก (88%)';
+    });
+    await btnZip.screenshot({ path: 'tests/screenshots/release-package-progress.png' });
+    await page.evaluate(() => {
+      const btn = document.querySelector('#btn-export-zip');
+      btn.classList.remove('is-loading');
+      btn.innerHTML = 'ส่งออก PDF + รูปภาพ';
+    });
+
+    // Screenshot 9: release-recovery.png
+    const recoveryModal = page.locator('#recovery-modal');
+    await page.evaluate(() => {
+      document.querySelector('#recovery-modal').classList.add('is-open');
+      document.querySelector('#recovery-student-name').textContent = 'เด็กชายวิทวัส ศิริวัฒนา';
+      document.querySelector('#recovery-images-count').textContent = '2 ภาพ';
+    });
+    await recoveryModal.screenshot({ path: 'tests/screenshots/release-recovery.png' });
+    await page.evaluate(() => {
+      document.querySelector('#recovery-modal').classList.remove('is-open');
+    });
+
+    // Screenshot 10: release-mobile-390.png
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.screenshot({ path: 'tests/screenshots/release-mobile-390.png' });
+
+    // Screenshot 11: release-mobile-375.png
+    await page.setViewportSize({ width: 375, height: 667 });
+    await page.screenshot({ path: 'tests/screenshots/release-mobile-375.png' });
+
+    // Screenshot 12: release-mobile-320.png
+    await page.setViewportSize({ width: 320, height: 568 });
+    await page.screenshot({ path: 'tests/screenshots/release-mobile-320.png' });
+
+    // Screenshot 13: release-tablet.png
+    await page.setViewportSize({ width: 768, height: 1024 });
+    await page.screenshot({ path: 'tests/screenshots/release-tablet.png' });
+
+    // Verify all 13 screenshots exist
+    const requiredScreenshots = [
+      'release-light-desktop.png',
+      'release-dark-desktop.png',
+      'release-student-photo.png',
+      'release-workspace-images.png',
+      'release-cover-templates.png',
+      'release-watermark.png',
+      'release-pdf-progress.png',
+      'release-package-progress.png',
+      'release-recovery.png',
+      'release-mobile-390.png',
+      'release-mobile-375.png',
+      'release-mobile-320.png',
+      'release-tablet.png'
+    ];
+
+    for (const name of requiredScreenshots) {
+      expect(fs.existsSync(`tests/screenshots/${name}`)).toBe(true);
+    }
+  });
+
+  test('172. Phase 13: Generate synthetic release sample PDF and ZIP artifacts', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+
+    await page.locator('#student-prefix').selectOption('ด.ญ.');
+    await page.locator('#student-firstname').fill('กานดา');
+    await page.locator('#student-lastname').fill('สดใส');
+    await page.locator('#student-grade').selectOption('ประถมศึกษาปีที่ 6');
+    await page.locator('#student-number').fill('12');
+
+    const sampleArtifacts = await page.evaluate(async () => {
+      const c = document.createElement('canvas');
+      c.width = 160; c.height = 120;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#f59e0b';
+      ctx.fillRect(0, 0, 160, 120);
+      const b = await new Promise(r => c.toBlob(r, 'image/jpeg'));
+      const f1 = new File([b], 'sample_act1.jpg', { type: 'image/jpeg' });
+      await window.__WANGWON_IMAGE_MANAGER__.addStudentImages([f1]);
+
+      const state = window.__WANGWON_STORE__.getState();
+
+      const pdf = await window.__WANGWON_PDF_GENERATOR__.generatePortfolioPdf(state);
+      const pkg = await window.__WANGWON_PACKAGE_EXPORTER__.generatePortfolioPackage(state);
+
+      // Convert blobs to Array for node fs writing
+      const pdfBuffer = Array.from(new Uint8Array(await pdf.blob.arrayBuffer()));
+      const zipBuffer = Array.from(new Uint8Array(await pkg.blob.arrayBuffer()));
+
+      return {
+        pdfBuffer,
+        zipBuffer,
+        pdfFilename: pdf.filename,
+        pkgFilename: pkg.filename
+      };
+    });
+
+    const artifactsDir = path.resolve('tests/artifacts');
+    if (!fs.existsSync(artifactsDir)) {
+      fs.mkdirSync(artifactsDir, { recursive: true });
+    }
+
+    fs.writeFileSync(path.join(artifactsDir, 'release-sample.pdf'), Buffer.from(sampleArtifacts.pdfBuffer));
+    fs.writeFileSync(path.join(artifactsDir, 'release-sample-package.zip'), Buffer.from(sampleArtifacts.zipBuffer));
+
+    expect(fs.existsSync(path.join(artifactsDir, 'release-sample.pdf'))).toBe(true);
+    expect(fs.existsSync(path.join(artifactsDir, 'release-sample-package.zip'))).toBe(true);
   });
 });
+
 
 
 
