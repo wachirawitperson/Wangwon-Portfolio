@@ -271,6 +271,11 @@ html, body {
     max-width: 100%;
   }
 
+  .photo-actions .btn {
+    min-height: 44px;
+    padding: 0 var(--space-4);
+  }
+
   /* CRITICAL REQUIREMENT: Exactly 3 page cards per row on mobile phones */
   .workspace-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr)) !important;

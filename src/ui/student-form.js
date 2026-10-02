@@ -27,15 +27,8 @@ export function initStudentForm(formElement) {
   const photoPreviewImg = document.querySelector('#student-photo-preview-img');
   const photoPlaceholder = document.querySelector('#student-photo-placeholder');
 
-  // Summary State Elements
-  const studentSection = document.querySelector('#student-section');
+  // Summary State Elements (Removed in Phase 16 to keep Section 1 focused)
   const studentEditCard = document.querySelector('#student-edit-card');
-  const studentSummaryCard = document.querySelector('#student-summary-card');
-  const btnEditStudent = document.querySelector('#btn-edit-student');
-  const btnCollapseStudent = document.querySelector('#btn-collapse-student');
-  const summaryPhotoImg = document.querySelector('#summary-student-photo');
-  const summaryName = document.querySelector('#summary-student-name');
-  const summaryDetails = document.querySelector('#summary-student-details');
 
   const fieldMap = {
     prefix: prefixSelect,
@@ -182,40 +175,7 @@ export function initStudentForm(formElement) {
     });
   }
 
-  // Summary State Toggles
-  function showSummaryView() {
-    if (studentEditCard && studentSummaryCard) {
-      studentEditCard.style.display = 'none';
-      studentSummaryCard.style.display = 'flex';
-    }
-  }
-
-  function showEditView() {
-    if (studentEditCard && studentSummaryCard) {
-      studentSummaryCard.style.display = 'none';
-      studentEditCard.style.display = 'block';
-      firstNameInput?.focus();
-    }
-  }
-
-  if (btnCollapseStudent) {
-    btnCollapseStudent.addEventListener('click', () => {
-      const { valid } = validateStudentInformation(projectStore.getState().student);
-      if (valid) {
-        showSummaryView();
-      } else {
-        validateAndHighlightStudentForm();
-      }
-    });
-  }
-
-  if (btnEditStudent) {
-    btnEditStudent.addEventListener('click', () => {
-      showEditView();
-    });
-  }
-
-  // Subscribe to store to update form fields and summary display
+  // Subscribe to store to update form fields and photo preview
   projectStore.subscribe((state) => {
     const student = state.student || {};
     const photo = state.studentPhoto;
@@ -258,28 +218,6 @@ export function initStudentForm(formElement) {
       if (photoPlaceholder) photoPlaceholder.style.display = 'flex';
       if (btnRemovePhoto) btnRemovePhoto.style.display = 'none';
       if (btnUploadPhoto) btnUploadPhoto.textContent = 'เลือกรูปถ่าย';
-    }
-
-    // Photo & info in summary state
-    if (summaryName) {
-      const full = `${student.prefix || ''}${student.firstName || ''} ${student.lastName || ''}`.trim();
-      summaryName.textContent = full || 'ยังไม่ได้ระบุชื่อนักเรียน';
-    }
-    if (summaryDetails) {
-      const parts = [];
-      if (student.grade) parts.push(`ชั้น ${student.grade}`);
-      if (student.studentNumber) parts.push(`เลขที่ ${student.studentNumber}`);
-      if (student.academicYear) parts.push(`ปีการศึกษา ${student.academicYear}`);
-      summaryDetails.textContent = parts.join(' • ') || 'กรุณากรอกข้อมูลนักเรียน';
-    }
-    if (summaryPhotoImg) {
-      if (photo?.previewUrl) {
-        summaryPhotoImg.src = photo.previewUrl;
-        summaryPhotoImg.style.display = 'block';
-      } else {
-        summaryPhotoImg.removeAttribute('src');
-        summaryPhotoImg.style.display = 'none';
-      }
     }
   });
 
