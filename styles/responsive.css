@@ -205,7 +205,8 @@ html, body {
     border-radius: var(--radius-md);
   }
 
-  .brand-logo-icon {
+  .brand-logo-icon,
+  .brand-logo-img {
     width: 36px;
     height: 36px;
     font-size: 1.15rem;
