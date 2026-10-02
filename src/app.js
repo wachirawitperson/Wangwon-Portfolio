@@ -114,7 +114,10 @@ document.addEventListener('DOMContentLoaded', () => {
       if (status === 'saving') {
         autosaveText.textContent = 'กำลังบันทึก...';
       } else if (status === 'saved') {
-        autosaveText.textContent = formattedTime ? `บันทึกล่าสุด ${formattedTime}` : 'บันทึกแล้ว';
+        autosaveText.textContent = '✓ บันทึกแล้ว';
+        if (formattedTime) {
+          autosaveIndicator.setAttribute('title', `บันทึกล่าสุดเวลา ${formattedTime} น.`);
+        }
       } else if (status === 'error') {
         autosaveText.textContent = 'บันทึกร่างไม่สำเร็จ';
       } else {

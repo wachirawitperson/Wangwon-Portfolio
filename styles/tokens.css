@@ -33,24 +33,36 @@
   --color-accent-hover: #d97706;
   --color-accent-soft: #fef3c7;        /* Soft warm cream highlight */
 
+  /* Global Semantic UI Layer Tokens */
+  --color-app-bg: #faf8f5;             /* Layer 1: App canvas backdrop */
+  --color-section-bg: #ffffff;         /* Layer 2: Main section surface */
+  --color-card-bg: #ffffff;            /* Layer 3: Cards, forms, panels */
+  --color-preview-bg: #334155;         /* Layer 4: Preview stage backdrop */
+  --color-control-bg: #ffffff;         /* Inputs & button base */
+  --color-primary-pressed: #172554;    /* Button active / pressed state */
+
   /* Surfaces & Backgrounds - Soft Workspace */
-  --color-bg: #faf8f5;                 /* Warm ivory background (#FAF8F5) */
-  --color-bg-soft: #faf8f5;
+  --color-bg: var(--color-app-bg);     /* Warm ivory background (#FAF8F5) */
+  --color-bg-soft: #f8fafc;
   --color-surface: #ffffff;            /* Pure white card / paper surface */
   --color-surface-alt: #f8fafc;        /* Secondary panel / neutral fill */
   --color-surface-hover: #f1f5f9;
 
   /* Typography Colors */
   --color-text: #0f172a;               /* High-contrast slate text */
+  --color-text-primary: #0f172a;       /* Semantic primary text */
+  --color-text-secondary: #334155;     /* Semantic secondary text */
   --color-text-soft: #334155;          /* Subdued body text */
   --color-text-muted: #64748b;         /* Helper / secondary label text */
   --color-text-inverse: #ffffff;       /* Pure white on dark surfaces */
 
   /* Borders & Dividers - Reduced visual borders */
-  --color-border: #f1f5f9;             /* Ultra-subtle border */
-  --color-border-subtle: #e2e8f0;      /* Standard divider */
-  --color-border-strong: #cbd5e1;      /* Interactive border / card boundary */
+  --color-border: #e2e8f0;             /* Standard border */
+  --color-border-subtle: #cbd5e1;      /* Subtle boundary */
+  --color-border-strong: #94a3b8;      /* Interactive border / card boundary */
   --color-border-focus: #2563eb;       /* Focus ring border */
+  --color-focus-ring: #2563eb;         /* Semantic focus ring color */
+  --shadow-focus: 0 0 0 3px rgba(37, 99, 235, 0.25);
 
   /* Semantic Feedback Colors (Non-neon, high contrast) */
   --color-success: #15803d;            /* Soft garden green */
@@ -144,6 +156,16 @@
 
   /* Touch Target Standards */
   --target-min-height: 44px;
+
+  /* Explicit Z-Index Scale */
+  --z-base: 1;
+  --z-sticky-sub: 10;
+  --z-dropdown: 20;
+  --z-sticky-toolbar: 30;
+  --z-header: 50;
+  --z-modal-backdrop: 1000;
+  --z-modal: 1010;
+  --z-toast: 1100;
 }
 
 /* ========================================================================
@@ -173,24 +195,36 @@
   --color-accent-hover: #f59e0b;
   --color-accent-soft: rgba(251, 191, 36, 0.16);
 
+  /* Global Semantic UI Layer Tokens - Dark Mode Hierarchy */
+  --color-app-bg: #0b1120;             /* Layer 1: App Canvas (Darkest Slate 950) */
+  --color-section-bg: #111c33;         /* Layer 2: Main Section / Workspace (#111c33) */
+  --color-card-bg: #1e293b;            /* Layer 3: Cards, forms, panels (Slate 800) */
+  --color-preview-bg: #070d18;         /* Layer 4: Live Document Preview Stage (Deep Canvas) */
+  --color-control-bg: #1e293b;         /* Inputs & button base */
+  --color-primary-pressed: #0284c7;    /* Active button pressed state */
+
   /* Surfaces & Backgrounds - Dark Soft Navy */
-  --color-bg: #0f172a;                 /* Slate 900 background */
-  --color-bg-soft: #141e33;
+  --color-bg: var(--color-app-bg);     /* Slate 950 background (#0b1120) */
+  --color-bg-soft: #111c33;
   --color-surface: #1e293b;            /* Slate 800 raised card surface */
-  --color-surface-alt: #0f172a;        /* Slate 900 secondary surface */
-  --color-surface-hover: #334155;
+  --color-surface-alt: #131f37;        /* Secondary panel / neutral fill */
+  --color-surface-hover: #27354f;
 
   /* Typography Colors */
   --color-text: #f8fafc;               /* Slate 50 high-contrast */
+  --color-text-primary: #f8fafc;       /* Semantic primary text */
+  --color-text-secondary: #cbd5e1;     /* Semantic secondary text */
   --color-text-soft: #cbd5e1;          /* Slate 300 body */
   --color-text-muted: #94a3b8;         /* Slate 400 helper/captions */
   --color-text-inverse: #0f172a;       /* Dark text on light button/accent */
 
   /* Borders & Dividers */
-  --color-border: rgba(148, 163, 184, 0.15);
-  --color-border-subtle: rgba(148, 163, 184, 0.25);
-  --color-border-strong: rgba(148, 163, 184, 0.4);
+  --color-border: rgba(148, 163, 184, 0.18);
+  --color-border-subtle: rgba(148, 163, 184, 0.28);
+  --color-border-strong: rgba(148, 163, 184, 0.45);
   --color-border-focus: #38bdf8;       /* Vibrant accessible sky focus */
+  --color-focus-ring: #38bdf8;         /* Semantic focus ring */
+  --shadow-focus: 0 0 0 3px rgba(56, 189, 248, 0.35);
 
   /* Semantic Feedback Colors */
   --color-success: #4ade80;
@@ -210,18 +244,18 @@
   --color-info-border: rgba(56, 189, 248, 0.35);
 
   /* Component specifics */
-  --header-bg: linear-gradient(180deg, #111c33 0%, #0f172a 100%);
-  --header-border: rgba(148, 163, 184, 0.2);
-  --intro-bg: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%);
+  --header-bg: linear-gradient(180deg, #111c33 0%, #0d1527 100%);
+  --header-border: rgba(148, 163, 184, 0.22);
+  --intro-bg: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(17, 28, 51, 0.9) 100%);
   --intro-border: rgba(56, 189, 248, 0.3);
-  --action-toolbar-bg: rgba(15, 23, 42, 0.95);
-  --action-toolbar-border: rgba(148, 163, 184, 0.2);
-  --footer-border: rgba(148, 163, 184, 0.15);
-  --footer-text: #64748b;
-  --input-bg: #1e293b;
-  --input-border: rgba(148, 163, 184, 0.3);
+  --action-toolbar-bg: rgba(13, 21, 39, 0.96);
+  --action-toolbar-border: rgba(148, 163, 184, 0.22);
+  --footer-border: rgba(148, 163, 184, 0.18);
+  --footer-text: #94a3b8;
+  --input-bg: #131f37;
+  --input-border: rgba(148, 163, 184, 0.32);
   --card-bg: #1e293b;
-  --card-border: rgba(148, 163, 184, 0.25);
+  --card-border: rgba(148, 163, 184, 0.28);
 
   /* Elevation & Shadows */
   --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.3);

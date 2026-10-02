@@ -95,11 +95,17 @@ function applySectionVisibility() {
     item.classList.remove('is-active', 'is-completed');
     item.removeAttribute('aria-current');
 
+    const stepNumEl = item.querySelector('.step-number');
+
     if (step === currentSection) {
       item.classList.add('is-active');
       item.setAttribute('aria-current', 'step');
+      if (stepNumEl) stepNumEl.textContent = String(step);
     } else if (step < currentSection) {
       item.classList.add('is-completed');
+      if (stepNumEl) stepNumEl.textContent = '✓';
+    } else {
+      if (stepNumEl) stepNumEl.textContent = String(step);
     }
   });
 
