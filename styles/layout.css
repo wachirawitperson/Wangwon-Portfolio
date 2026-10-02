@@ -240,6 +240,8 @@
   align-items: center;
   gap: var(--space-2);
   padding: 8px 18px;
+  min-height: 44px;
+  box-sizing: border-box;
   border-radius: var(--radius-pill);
   background-color: var(--color-surface);
   border: 1px solid var(--color-border);

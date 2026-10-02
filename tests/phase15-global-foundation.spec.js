@@ -128,24 +128,65 @@ test.describe('Phase 15 — Global UX/UI Foundation Tests', () => {
   });
 
   test('6. Mobile touch target sizes: Interactive controls meet min-target standard (~44x44px)', async ({ page }) => {
-    await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto('/');
+    for (const width of [320, 390]) {
+      await page.setViewportSize({ width, height: 800 });
+      await page.goto('/');
 
-    const themeBtn = page.locator('#btn-theme-toggle');
-    const themeBox = await themeBtn.boundingBox();
-    expect(themeBox).not.toBeNull();
-    expect(themeBox.height).toBeGreaterThanOrEqual(38);
-    expect(themeBox.width).toBeGreaterThanOrEqual(38);
+      const themeBtn = page.locator('#btn-theme-toggle');
+      const themeBox = await themeBtn.boundingBox();
+      expect(themeBox).not.toBeNull();
+      expect(themeBox.height).toBeGreaterThanOrEqual(43.5);
+      expect(themeBox.width).toBeGreaterThanOrEqual(43.5);
 
-    const helpBtn = page.locator('#btn-help');
-    const helpBox = await helpBtn.boundingBox();
-    expect(helpBox).not.toBeNull();
-    expect(helpBox.height).toBeGreaterThanOrEqual(38);
+      const resetBtn = page.locator('#btn-reset-project');
+      const resetBox = await resetBtn.boundingBox();
+      expect(resetBox).not.toBeNull();
+      expect(resetBox.height).toBeGreaterThanOrEqual(43.5);
+      expect(resetBox.width).toBeGreaterThanOrEqual(43.5);
 
-    const step1 = page.locator('#step-nav-1');
-    const step1Box = await step1.boundingBox();
-    expect(step1Box).not.toBeNull();
-    expect(step1Box.height).toBeGreaterThanOrEqual(34);
+      const helpBtn = page.locator('#btn-help');
+      const helpBox = await helpBtn.boundingBox();
+      expect(helpBox).not.toBeNull();
+      expect(helpBox.height).toBeGreaterThanOrEqual(43.5);
+      expect(helpBox.width).toBeGreaterThanOrEqual(43.5);
+
+      const step1 = page.locator('#step-nav-1');
+      const step1Box = await step1.boundingBox();
+      expect(step1Box).not.toBeNull();
+      expect(step1Box.height).toBeGreaterThanOrEqual(43.5);
+      expect(step1Box.width).toBeGreaterThanOrEqual(43.5);
+
+      const step2 = page.locator('#step-nav-2');
+      const step2Box = await step2.boundingBox();
+      expect(step2Box).not.toBeNull();
+      expect(step2Box.height).toBeGreaterThanOrEqual(43.5);
+      expect(step2Box.width).toBeGreaterThanOrEqual(43.5);
+
+      const step3 = page.locator('#step-nav-3');
+      const step3Box = await step3.boundingBox();
+      expect(step3Box).not.toBeNull();
+      expect(step3Box.height).toBeGreaterThanOrEqual(43.5);
+      expect(step3Box.width).toBeGreaterThanOrEqual(43.5);
+
+      // Real user tap / click interaction on theme toggle
+      await themeBtn.click();
+      await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+      await themeBtn.click();
+      await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+
+      // Real user tap / click interaction on help button & modal close
+      await helpBtn.click();
+      const helpModal = page.locator('#help-modal');
+      await expect(helpModal).toBeVisible();
+      await page.waitForTimeout(250); // Wait for modal-dialog scale(1) CSS animation to settle
+      const closeBtn = helpModal.locator('.btn-icon[data-dismiss="modal"]');
+      const closeBox = await closeBtn.boundingBox();
+      expect(closeBox).not.toBeNull();
+      expect(closeBox.height).toBeGreaterThanOrEqual(43.5);
+      expect(closeBox.width).toBeGreaterThanOrEqual(43.5);
+      await closeBtn.click();
+      await expect(helpModal).toBeHidden();
+    }
   });
 
   test('7. Sticky UI safety: Header does not cover focused element and page has scroll-padding-top', async ({ page }) => {
