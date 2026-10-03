@@ -276,6 +276,20 @@ html, body {
     padding: 0 var(--space-4);
   }
 
+  .workspace-sticky-toolbar {
+    position: static !important;
+    top: auto;
+    z-index: 1;
+    margin-bottom: var(--space-2);
+    pointer-events: none;
+  }
+
+  .workspace-sticky-toolbar button,
+  .workspace-sticky-toolbar a,
+  .workspace-sticky-toolbar [role="button"] {
+    pointer-events: auto;
+  }
+
   /* CRITICAL REQUIREMENT: Exactly 3 page cards per row on mobile phones */
   .workspace-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
@@ -295,6 +309,10 @@ html, body {
   }
 
   /* Compact Mobile Card Design: Hide verbose actions row, use More (...) */
+  .student-image-card {
+    overflow: visible; /* Let context menu escape card boundary; card-preview has its own overflow:hidden */
+  }
+
   .student-image-card .card-header {
     padding: 3px 4px;
     gap: 2px;
@@ -345,9 +363,9 @@ html, body {
 
   /* In 3-column mobile view, keep More button compact and hide full-text quick buttons */
   .student-image-card .card-actions {
-    padding: 2px;
-    gap: 2px;
-    justify-content: flex-end;
+    padding: 3px 2px;
+    gap: 0;
+    justify-content: stretch;
   }
 
   .student-image-card .quick-actions-toolbar .btn-rotate,
@@ -357,10 +375,31 @@ html, body {
 
   .student-image-card .quick-actions-toolbar .btn-more {
     width: 100%;
-    height: 22px;
+    min-height: 32px;
     font-size: 11px;
     padding: 0 4px;
     border-radius: var(--radius-xs);
+    position: relative;
+  }
+
+  /* Accessible touch pseudo-target vertically without horizontal card spill */
+  .student-image-card .quick-actions-toolbar .btn-more::before {
+    content: '';
+    position: absolute;
+    top: -6px;
+    bottom: -6px;
+    left: 0;
+    right: 0;
+  }
+
+  /* Ensure card context menu on mobile uses fixed positioning to escape scroll container overflow */
+  .card-context-menu {
+    position: fixed !important;
+    z-index: 1000 !important;
+    bottom: auto;
+    right: auto;
+    min-width: 155px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
   }
 
   /* Compact Locked Covers on Mobile 3-Column */

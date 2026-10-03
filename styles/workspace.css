@@ -46,7 +46,7 @@
   overflow: hidden;
   position: relative;
   transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
-  min-height: 380px;
+  min-height: 300px;
 }
 
 .portfolio-card:hover {
@@ -77,6 +77,34 @@
   gap: var(--space-2);
 }
 
+.card-header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+.page-badge {
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-xs);
+  padding: 3px 8px;
+  background-color: var(--color-primary-soft);
+  color: var(--color-primary);
+  border: 1px solid var(--color-primary-subtle, rgba(37, 99, 235, 0.2));
+  border-radius: var(--radius-pill);
+  letter-spacing: 0.2px;
+}
+
+.image-name {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: inline-block;
+}
+
 .card-header.locked-header {
   background-color: var(--color-surface-alt);
   border-bottom: 1px solid var(--color-border-subtle);
@@ -99,7 +127,7 @@
 
 .cover-visual-preview {
   flex: 1;
-  min-height: 230px;
+  min-height: 180px;
   background-color: #ffffff;
   border-radius: var(--radius-md);
   border: 1px solid #e2e8f0;
@@ -272,7 +300,7 @@
   justify-content: center;
   padding: var(--space-6);
   text-align: center;
-  min-height: 380px;
+  min-height: 300px;
   transition: all var(--transition-fast);
   cursor: pointer;
 }
@@ -358,12 +386,12 @@
   justify-content: center;
   position: relative;
   overflow: hidden;
-  min-height: 220px;
+  min-height: 175px;
 }
 
 .student-image-card .card-preview img {
   max-width: 100%;
-  max-height: 220px;
+  max-height: 175px;
   object-fit: contain;
   transition: transform var(--transition-base);
 }

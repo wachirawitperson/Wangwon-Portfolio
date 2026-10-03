@@ -196,6 +196,34 @@ export function createImageCard(image, displayIndex, totalImages = 1) {
     if (!isCurrentlyOpen) {
       contextMenu.hidden = false;
       btnMore.setAttribute('aria-expanded', 'true');
+
+      // Position menu for fixed positioning on mobile (escapes scroll container overflow)
+      const menuStyle = getComputedStyle(contextMenu);
+      if (menuStyle.position === 'fixed') {
+        const btnRect = btnMore.getBoundingClientRect();
+        const menuHeight = contextMenu.offsetHeight;
+        const menuWidth = contextMenu.offsetWidth;
+        const viewportH = window.innerHeight;
+        const viewportW = window.innerWidth;
+
+        // Prefer showing above the button; fall back to below if not enough space
+        let top;
+        if (btnRect.top - menuHeight - 4 >= 0) {
+          top = btnRect.top - menuHeight - 4;
+        } else {
+          top = btnRect.bottom + 4;
+        }
+        // Align right edge with button, but keep within viewport
+        let left = btnRect.right - menuWidth;
+        if (left < 4) left = 4;
+        if (left + menuWidth > viewportW - 4) left = viewportW - menuWidth - 4;
+        if (top + menuHeight > viewportH - 4) top = viewportH - menuHeight - 4;
+        if (top < 4) top = 4;
+
+        contextMenu.style.top = `${top}px`;
+        contextMenu.style.left = `${left}px`;
+      }
+
       // Focus first available item
       const firstItem = contextMenu.querySelector('.menu-item:not([disabled])');
       firstItem?.focus();
