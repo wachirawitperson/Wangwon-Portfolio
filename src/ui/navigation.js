@@ -135,6 +135,12 @@ function applySectionVisibility() {
     workspaceContainer.classList.toggle('is-active-section', currentSection === 2);
   }
 
+  // Hero section compact state when leaving Section 1
+  const heroSection = document.querySelector('#section1-hero');
+  if (heroSection) {
+    heroSection.classList.toggle('is-compact', currentSection !== 1);
+  }
+
   // Dispatch custom window event and resize event to trigger layout/overlay updates
   window.dispatchEvent(
     new CustomEvent('wangwon:section-changed', {

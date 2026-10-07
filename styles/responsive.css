@@ -88,35 +88,50 @@ html, body {
     box-sizing: border-box;
   }
 
+  .section1-hero .hero-inner {
+    padding: var(--space-6) var(--space-4) var(--space-4);
+    gap: var(--space-4);
+  }
+
+  .hero-title {
+    font-size: 1.6rem;
+  }
+
   .step-navigator {
-    padding: 0 var(--space-4);
-    gap: var(--space-2);
+    padding: 0;
+    gap: var(--space-1);
     align-items: stretch;
+    width: 100%;
   }
 
   .step-item {
-    padding: 8px 12px;
+    padding: 8px 10px;
     min-height: 44px;
-    font-size: var(--font-size-xs);
+    font-size: 11px;
     box-sizing: border-box;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    flex: 1;
   }
 
   .step-divider {
-    width: 16px;
+    width: 12px;
   }
 
-  .student-form-layout {
+  .student-cards-layout {
     grid-template-columns: 1fr;
-    justify-items: center;
     gap: var(--space-4);
+  }
+
+  .student-photo-panel {
+    align-items: center;
   }
 
   .student-form-grid {
     grid-template-columns: 1fr 1fr;
     width: 100%;
+    gap: var(--space-3);
   }
 
   .student-form-grid .field-prefix {
@@ -128,19 +143,19 @@ html, body {
   }
 
   .student-form-grid .field-lastname {
-    grid-column: 1 / span 1;
+    grid-column: 1 / span 2;
   }
 
   .student-form-grid .field-grade {
-    grid-column: 2 / span 1;
-  }
-
-  .student-form-grid .field-number {
     grid-column: 1 / span 1;
   }
 
-  .student-form-grid .field-year {
+  .student-form-grid .field-number {
     grid-column: 2 / span 1;
+  }
+
+  .student-form-grid .field-year {
+    grid-column: 1 / span 2;
     max-width: 100%;
   }
 
@@ -526,19 +541,21 @@ html, body {
 /* Micro screens (320px - 360px e.g. iPhone 5/SE1 or narrow containers) */
 @media (max-width: 360px) {
   .step-navigator {
-    padding: 0 8px;
-    gap: 4px;
+    padding: 0;
+    gap: 2px;
+    width: 100%;
   }
 
   .step-item {
-    padding: 6px 8px;
+    padding: 6px 4px;
     min-height: 44px;
-    gap: 4px;
-    font-size: 11px;
+    gap: 3px;
+    font-size: 10px;
+    flex: 1;
   }
 
   .step-divider {
-    width: 8px;
+    width: 6px;
   }
 
   .workspace-grid {

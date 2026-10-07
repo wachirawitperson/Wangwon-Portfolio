@@ -33,6 +33,21 @@
   --color-accent-hover: #d97706;
   --color-accent-soft: #fef3c7;        /* Soft warm cream highlight */
 
+  /* Section 1 Visual Tokens: Modern Educational Aqua / Teal + Deep Blue */
+  --section1-teal: #0891b2;
+  --section1-teal-light: #06b6d4;
+  --section1-teal-dark: #0e7490;
+  --section1-teal-subtle: #ecfeff;
+  --section1-teal-border: #a5f3fc;
+  --section1-gradient-teal: linear-gradient(135deg, #06b6d4 0%, #0284c7 50%, #1e3a8a 100%);
+  --section1-gradient-teal-hover: linear-gradient(135deg, #0891b2 0%, #0369a1 50%, #172554 100%);
+  --section1-hero-overlay: linear-gradient(180deg, rgba(15, 23, 42, 0.45) 0%, rgba(15, 23, 42, 0.72) 100%);
+  --section1-card-border: #e2e8f0;
+  --section1-card-bg: #ffffff;
+  --section1-card-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.06), 0 2px 6px -1px rgba(15, 23, 42, 0.04);
+  --section1-badge-bg: #e0f2fe;
+  --section1-badge-text: #0369a1;
+
   /* Global Semantic UI Layer Tokens */
   --color-app-bg: #faf8f5;             /* Layer 1: App canvas backdrop */
   --color-section-bg: #ffffff;         /* Layer 2: Main section surface */
@@ -194,6 +209,21 @@
   --color-accent: #fbbf24;
   --color-accent-hover: #f59e0b;
   --color-accent-soft: rgba(251, 191, 36, 0.16);
+
+  /* Section 1 Visual Tokens: Dark Mode Refinements */
+  --section1-teal: #22d3ee;
+  --section1-teal-light: #67e8f9;
+  --section1-teal-dark: #0891b2;
+  --section1-teal-subtle: rgba(34, 211, 238, 0.12);
+  --section1-teal-border: rgba(34, 211, 238, 0.35);
+  --section1-gradient-teal: linear-gradient(135deg, #0891b2 0%, #1e40af 50%, #1e3a8a 100%);
+  --section1-gradient-teal-hover: linear-gradient(135deg, #06b6d4 0%, #1d4ed8 50%, #1e40af 100%);
+  --section1-hero-overlay: linear-gradient(180deg, rgba(11, 17, 32, 0.65) 0%, rgba(11, 17, 32, 0.88) 100%);
+  --section1-card-border: rgba(148, 163, 184, 0.24);
+  --section1-card-bg: #1e293b;
+  --section1-card-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.4);
+  --section1-badge-bg: rgba(34, 211, 238, 0.15);
+  --section1-badge-text: #38bdf8;
 
   /* Global Semantic UI Layer Tokens - Dark Mode Hierarchy */
   --color-app-bg: #0b1120;             /* Layer 1: App Canvas (Darkest Slate 950) */

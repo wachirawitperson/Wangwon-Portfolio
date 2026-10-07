@@ -89,167 +89,194 @@
     </div>
   </header>
 
-  <!-- Compact 3-Step Navigator -->
-  <nav class="step-navigator" id="step-navigator" aria-label="ขั้นตอนการสร้าง Portfolio">
-    <div class="step-item is-active" id="step-nav-1" data-step="1" role="button" tabindex="0" aria-label="ขั้นตอนที่ 1 ข้อมูลนักเรียน" aria-current="step">
-      <span class="step-number">1</span>
-      <span class="step-label">ข้อมูลนักเรียน</span>
+  <!-- Section 1 Hero with Ban Wangwon School Photo & Stepper -->
+  <section class="section1-hero" id="section1-hero" aria-labelledby="heading-student-hero">
+    <div class="hero-bg" aria-hidden="true">
+      <img src="./assets/hero/ban-wangwon-school-hero.jpg" alt="" class="hero-bg-img" />
+      <div class="hero-overlay"></div>
     </div>
-    <div class="step-divider" aria-hidden="true"></div>
-    <div class="step-item" id="step-nav-2" data-step="2" role="button" tabindex="0" aria-label="ขั้นตอนที่ 2 เพิ่มรูปภาพและจัดหน้า">
-      <span class="step-number">2</span>
-      <span class="step-label">เพิ่มรูปภาพและจัดหน้า</span>
+    <div class="hero-inner">
+      <div class="hero-content">
+        <span class="hero-overline">STUDENT PORTFOLIO</span>
+        <h2 class="hero-title" id="heading-student-hero">ข้อมูลนักเรียน</h2>
+        <p class="hero-desc">กรอกข้อมูลนักเรียนสำหรับจัดทำหน้าปกและเอกสารแฟ้มสะสมผลงาน</p>
+      </div>
+
+      <!-- Compact 3-Step Navigator -->
+      <nav class="step-navigator" id="step-navigator" aria-label="ขั้นตอนการสร้าง Portfolio">
+        <div class="step-item is-active" id="step-nav-1" data-step="1" role="button" tabindex="0" aria-label="ขั้นตอนที่ 1 ข้อมูลนักเรียน" aria-current="step">
+          <span class="step-number">1</span>
+          <span class="step-label">ข้อมูลนักเรียน</span>
+        </div>
+        <div class="step-divider" aria-hidden="true"></div>
+        <div class="step-item" id="step-nav-2" data-step="2" role="button" tabindex="0" aria-label="ขั้นตอนที่ 2 เพิ่มรูปภาพและจัดหน้า">
+          <span class="step-number">2</span>
+          <span class="step-label">เพิ่มรูปภาพและจัดหน้า</span>
+        </div>
+        <div class="step-divider" aria-hidden="true"></div>
+        <div class="step-item" id="step-nav-3" data-step="3" role="button" tabindex="0" aria-label="ขั้นตอนที่ 3 ตั้งค่าและสร้างไฟล์">
+          <span class="step-number">3</span>
+          <span class="step-label">ตั้งค่าและสร้างไฟล์</span>
+        </div>
+      </nav>
     </div>
-    <div class="step-divider" aria-hidden="true"></div>
-    <div class="step-item" id="step-nav-3" data-step="3" role="button" tabindex="0" aria-label="ขั้นตอนที่ 3 ตั้งค่าและสร้างไฟล์">
-      <span class="step-number">3</span>
-      <span class="step-label">ตั้งค่าและสร้างไฟล์</span>
-    </div>
-  </nav>
+  </section>
 
   <!-- Main Application Body -->
   <main class="main-content" id="main-content">
     
     <!-- Section 1: Student Information -->
-    <section class="app-section" id="student-section" aria-labelledby="heading-student-info">
-      <!-- Edit Mode Card -->
-      <div class="student-edit-card" id="student-edit-card">
-        <div class="section-header">
-          <div>
-            <h2 class="section-title" id="heading-student-info">
-              <span class="section-step-badge">1</span> ข้อมูลนักเรียน
-            </h2>
-            <p class="section-subtitle">กรอกข้อมูลนักเรียนสำหรับจัดทำหน้าปกและเอกสารแฟ้มสะสมผลงาน</p>
+    <section class="app-section section1-container" id="student-section" aria-labelledby="heading-student-info">
+      <div class="student-cards-layout">
+        <!-- Card 1: Student Photo Card (Left) -->
+        <div class="student-card student-photo-panel" id="student-photo-card">
+          <div class="card-header-block">
+            <h3 class="card-title-main">รูปถ่ายนักเรียน (ไม่บังคับ)</h3>
+            <p class="card-subtitle-main">ใช้สำหรับหน้าปกแฟ้มสะสมผลงาน</p>
+          </div>
+
+          <div class="student-photo-frame" id="student-photo-preview-wrap">
+            <div class="student-photo-placeholder" id="student-photo-placeholder">
+              <div class="photo-icon-circle" aria-hidden="true">
+                <svg class="photo-icon" xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              </div>
+              <span class="photo-placeholder-title">ยังไม่ได้เลือกรูปถ่าย</span>
+              <span class="photo-placeholder-ratio">อัตราส่วน 4:5</span>
+              <span class="photo-placeholder-dim">(แนะนำ 800 × 1000 px)</span>
+            </div>
+            <img id="student-photo-preview-img" class="student-photo-img" alt="รูปถ่ายนักเรียน" style="display: none;" />
+          </div>
+
+          <div class="photo-actions">
+            <button type="button" class="btn btn-secondary btn-sm btn-upload-photo" id="btn-upload-student-photo">
+              <svg class="icon-inline" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              เลือกรูปถ่าย
+            </button>
+            <button type="button" class="btn btn-ghost btn-sm btn-danger-text" id="btn-remove-student-photo" style="display: none;">
+              ลบรูป
+            </button>
+            <input
+              type="file"
+              id="student-photo-input"
+              class="sr-only"
+              accept="image/jpeg,image/png,image/webp,image/bmp,image/heic,image/heif"
+              aria-hidden="true"
+            />
           </div>
         </div>
 
-        <div class="student-form-layout">
-          <!-- Student Photo Picker (4:5 Aspect Ratio, Optional) -->
-          <div class="student-photo-column">
-            <div class="student-photo-card" id="student-photo-card">
-              <label class="form-label photo-picker-label">รูปถ่ายนักเรียน (ไม่บังคับ)</label>
-              <div class="student-photo-frame" id="student-photo-preview-wrap">
-                <div class="student-photo-placeholder" id="student-photo-placeholder">
-                  <svg class="photo-icon" xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/></svg>
-                  <span class="photo-placeholder-text">ยังไม่มีรูปถ่าย</span>
-                  <span class="photo-placeholder-sub">อัตราส่วน 4:5</span>
-                </div>
-                <img id="student-photo-preview-img" class="student-photo-img" alt="รูปถ่ายนักเรียน" style="display: none;" />
-              </div>
-              <div class="photo-actions">
-                <button type="button" class="btn btn-secondary btn-sm" id="btn-upload-student-photo">
-                  เลือกรูปถ่าย
-                </button>
-                <button type="button" class="btn btn-ghost btn-sm btn-danger-text" id="btn-remove-student-photo" style="display: none;">
-                  ลบรูป
-                </button>
-                <input
-                  type="file"
-                  id="student-photo-input"
-                  class="sr-only"
-                  accept="image/jpeg,image/png,image/webp,image/bmp,image/heic,image/heif"
-                  aria-hidden="true"
-                />
-              </div>
-              <span class="form-helper photo-helper-text">รองรับ JPG, PNG, HEIC</span>
-            </div>
+        <!-- Card 2: Student Basic Information Card (Right) -->
+        <div class="student-card student-info-panel" id="student-edit-card">
+          <div class="card-header-block">
+            <h2 class="card-title-main" id="heading-student-info">
+              ข้อมูลพื้นฐานของนักเรียน
+            </h2>
+            <p class="card-subtitle-main">กรอกข้อมูลให้ถูกต้องและครบถ้วน เพื่อนำไปใช้ในการสร้างแฟ้มสะสมผลงาน</p>
           </div>
 
-          <!-- Form Fields Column (Row 1: Prefix, First, Last, Grade; Row 2: Number, Year) -->
-          <div class="student-fields-column">
-            <form id="student-info-form" class="student-form-grid" novalidate onsubmit="return false;">
-              <!-- Row 1 -->
-              <div class="form-group field-prefix">
-                <label for="student-prefix" class="form-label">
-                  คำนำหน้า <span class="required-indicator" aria-hidden="true">*</span>
-                </label>
-                <select id="student-prefix" name="prefix" class="form-select" aria-required="true" required>
-                  <option value="ด.ช.">เด็กชาย (ด.ช.)</option>
-                  <option value="ด.ญ.">เด็กหญิง (ด.ญ.)</option>
-                  <option value="นาย">นาย</option>
-                  <option value="นางสาว">นางสาว</option>
-                </select>
-              </div>
+          <form id="student-info-form" class="student-form-grid" novalidate onsubmit="return false;">
+            <!-- Row 1: คำนำหน้า, ชื่อ, นามสกุล -->
+            <div class="form-group field-prefix">
+              <label for="student-prefix" class="form-label">
+                คำนำหน้า <span class="required-indicator" aria-hidden="true">*</span>
+              </label>
+              <select id="student-prefix" name="prefix" class="form-select" aria-required="true" required>
+                <option value="ด.ช.">เด็กชาย (ด.ช.)</option>
+                <option value="ด.ญ.">เด็กหญิง (ด.ญ.)</option>
+                <option value="นาย">นาย</option>
+                <option value="นางสาว">นางสาว</option>
+              </select>
+            </div>
 
-              <div class="form-group field-firstname">
-                <label for="student-firstname" class="form-label">
-                  ชื่อ <span class="required-indicator" aria-hidden="true">*</span>
-                </label>
-                <input
-                  type="text"
-                  id="student-firstname"
-                  name="firstName"
-                  class="form-input"
-                  placeholder="เช่น กิตติพัฒน์"
-                  autocomplete="off"
-                  aria-required="true"
-                  required
-                />
-              </div>
+            <div class="form-group field-firstname">
+              <label for="student-firstname" class="form-label">
+                ชื่อ <span class="required-indicator" aria-hidden="true">*</span>
+              </label>
+              <input
+                type="text"
+                id="student-firstname"
+                name="firstName"
+                class="form-input"
+                placeholder="เช่น กิตติพัฒน์"
+                autocomplete="off"
+                aria-required="true"
+                required
+              />
+            </div>
 
-              <div class="form-group field-lastname">
-                <label for="student-lastname" class="form-label">
-                  นามสกุล <span class="required-indicator" aria-hidden="true">*</span>
-                </label>
-                <input
-                  type="text"
-                  id="student-lastname"
-                  name="lastName"
-                  class="form-input"
-                  placeholder="เช่น วัฒนากุลชัย"
-                  autocomplete="off"
-                  aria-required="true"
-                  required
-                />
-              </div>
+            <div class="form-group field-lastname">
+              <label for="student-lastname" class="form-label">
+                นามสกุล <span class="required-indicator" aria-hidden="true">*</span>
+              </label>
+              <input
+                type="text"
+                id="student-lastname"
+                name="lastName"
+                class="form-input"
+                placeholder="เช่น วัฒนากุลชัย"
+                autocomplete="off"
+                aria-required="true"
+                required
+              />
+            </div>
 
-              <div class="form-group field-grade">
-                <label for="student-grade" class="form-label">
-                  ชั้น <span class="required-indicator" aria-hidden="true">*</span>
-                </label>
-                <select id="student-grade" name="grade" class="form-select" aria-required="true" required>
-                  <option value="" disabled selected>-- เลือกระดับชั้น --</option>
-                  <option value="อนุบาล 1">อนุบาล 1</option>
-                  <option value="อนุบาล 2">อนุบาล 2</option>
-                  <option value="อนุบาล 3">อนุบาล 3</option>
-                  <option value="ประถมศึกษาปีที่ 1">ประถมศึกษาปีที่ 1</option>
-                  <option value="ประถมศึกษาปีที่ 2">ประถมศึกษาปีที่ 2</option>
-                  <option value="ประถมศึกษาปีที่ 3">ประถมศึกษาปีที่ 3</option>
-                  <option value="ประถมศึกษาปีที่ 4">ประถมศึกษาปีที่ 4</option>
-                  <option value="ประถมศึกษาปีที่ 5">ประถมศึกษาปีที่ 5</option>
-                  <option value="ประถมศึกษาปีที่ 6">ประถมศึกษาปีที่ 6</option>
-                </select>
-              </div>
+            <!-- Row 2: ชั้น, เลขที่, ปีการศึกษา -->
+            <div class="form-group field-grade">
+              <label for="student-grade" class="form-label">
+                ชั้น <span class="required-indicator" aria-hidden="true">*</span>
+              </label>
+              <select id="student-grade" name="grade" class="form-select" aria-required="true" required>
+                <option value="" disabled selected>-- เลือกระดับชั้น --</option>
+                <option value="อนุบาล 1">อนุบาล 1</option>
+                <option value="อนุบาล 2">อนุบาล 2</option>
+                <option value="อนุบาล 3">อนุบาล 3</option>
+                <option value="ประถมศึกษาปีที่ 1">ประถมศึกษาปีที่ 1</option>
+                <option value="ประถมศึกษาปีที่ 2">ประถมศึกษาปีที่ 2</option>
+                <option value="ประถมศึกษาปีที่ 3">ประถมศึกษาปีที่ 3</option>
+                <option value="ประถมศึกษาปีที่ 4">ประถมศึกษาปีที่ 4</option>
+                <option value="ประถมศึกษาปีที่ 5">ประถมศึกษาปีที่ 5</option>
+                <option value="ประถมศึกษาปีที่ 6">ประถมศึกษาปีที่ 6</option>
+              </select>
+            </div>
 
-              <!-- Row 2 -->
-              <div class="form-group field-number">
-                <label for="student-number" class="form-label">เลขที่</label>
-                <input
-                  type="text"
-                  id="student-number"
-                  name="studentNumber"
-                  class="form-input"
-                  placeholder="เช่น 1, 2, 4"
-                  autocomplete="off"
-                />
-              </div>
+            <div class="form-group field-number">
+              <label for="student-number" class="form-label">เลขที่</label>
+              <input
+                type="text"
+                id="student-number"
+                name="studentNumber"
+                class="form-input"
+                placeholder="เช่น 1, 2, 4"
+                autocomplete="off"
+              />
+            </div>
 
-              <div class="form-group field-year">
-                <label for="student-year" class="form-label">
-                  ปีการศึกษา <span class="required-indicator" aria-hidden="true">*</span>
-                </label>
-                <input
-                  type="text"
-                  id="student-year"
-                  name="academicYear"
-                  class="form-input"
-                  placeholder="เช่น 2569"
-                  autocomplete="off"
-                  aria-required="true"
-                  required
-                />
-              </div>
-            </form>
+            <div class="form-group field-year">
+              <label for="student-year" class="form-label">
+                ปีการศึกษา <span class="required-indicator" aria-hidden="true">*</span>
+              </label>
+              <input
+                type="text"
+                id="student-year"
+                name="academicYear"
+                class="form-input"
+                placeholder="เช่น 2569"
+                autocomplete="off"
+                aria-required="true"
+                required
+              />
+            </div>
+          </form>
+
+          <!-- Recommendation Panel -->
+          <div class="student-recommendation-card" role="note" aria-label="คำแนะนำการกรอกข้อมูล">
+            <div class="recommendation-header">
+              <span class="recommendation-badge">คำแนะนำ</span>
+            </div>
+            <ul class="recommendation-list">
+              <li>ชื่อและนามสกุลจะถูกนำไปใช้บนหน้าปกและชื่อไฟล์เอกสารอัตโนมัติ</li>
+              <li>หากไม่มีรูปถ่าย ระบบจะจัดวางเลย์เอาต์หน้าปกแบบไม่มีรูปถ่ายให้อย่างสวยงาม</li>
+            </ul>
           </div>
         </div>
       </div>

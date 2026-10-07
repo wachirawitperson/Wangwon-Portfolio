@@ -233,46 +233,82 @@
   word-break: break-all;
 }
 
-/* Student Form Layout & Photo Picker */
-.student-form-layout {
+/* ==========================================================================
+   Section 1 Modern Two-Card Layout & Student Information System
+   ========================================================================== */
+.section1-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.student-cards-layout {
   display: grid;
-  grid-template-columns: 160px 1fr;
+  grid-template-columns: 340px 1fr;
   gap: var(--space-6);
   align-items: start;
 }
 
-.student-photo-card {
+.student-card {
+  background-color: var(--section1-card-bg);
+  border: 1px solid var(--section1-card-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--section1-card-shadow);
+  padding: var(--space-6);
   display: flex;
   flex-direction: column;
-  align-items: center;
+  transition: all var(--transition-base);
 }
 
-.photo-picker-label {
-  margin-bottom: var(--space-2);
-  text-align: center;
+.card-header-block {
+  margin-bottom: var(--space-5);
+}
+
+.card-title-main {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+  line-height: var(--line-height-snug);
+  margin-bottom: 4px;
+}
+
+.card-subtitle-main {
   font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  line-height: var(--line-height-normal);
+}
+
+/* Student Photo Card (Left) */
+.student-photo-panel {
+  align-items: center;
+  text-align: center;
+}
+
+.student-photo-panel .card-header-block {
+  width: 100%;
+  text-align: left;
 }
 
 .student-photo-frame {
-  width: 140px;
-  height: 175px;
-  aspect-ratio: 4/5;
+  width: 180px;
+  height: 225px;
+  aspect-ratio: 4 / 5;
   border-radius: var(--radius-lg);
-  border: 1.5px dashed var(--color-border-strong, #cbd5e1);
-  background-color: var(--color-surface-alt);
+  border: 2px dashed var(--section1-teal-border);
+  background: var(--section1-teal-subtle);
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
   position: relative;
-  margin-bottom: var(--space-2);
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  margin: var(--space-2) auto var(--space-4);
+  box-shadow: 0 4px 14px rgba(6, 182, 212, 0.08);
+  transition: all var(--transition-fast);
 }
 
 .student-photo-frame:hover {
-  border-color: var(--color-primary);
-  box-shadow: 0 4px 12px rgba(29, 78, 216, 0.08);
+  border-color: var(--section1-teal);
+  box-shadow: 0 6px 18px rgba(6, 182, 212, 0.16);
 }
 
 .student-photo-placeholder {
@@ -281,58 +317,93 @@
   align-items: center;
   justify-content: center;
   text-align: center;
-  color: var(--color-text-muted);
-  padding: var(--space-2);
-  gap: 6px;
+  padding: var(--space-3);
+  gap: 4px;
+  width: 100%;
+}
+
+.photo-icon-circle {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgba(6, 182, 212, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
 }
 
 .photo-icon {
-  color: #94a3b8;
+  color: var(--section1-teal-dark);
 }
 
-.photo-placeholder-text {
+.photo-placeholder-title {
   font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-text-soft);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
 }
 
-.photo-placeholder-sub {
+.photo-placeholder-ratio {
+  font-size: 11px;
+  font-weight: var(--font-weight-medium);
+  color: var(--section1-teal-dark);
+}
+
+.photo-placeholder-dim {
   font-size: 10px;
-  color: #94a3b8;
+  color: var(--color-text-muted);
 }
 
 .student-photo-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  display: block;
 }
 
 .photo-actions {
   display: flex;
+  flex-direction: column;
   gap: var(--space-2);
-  justify-content: center;
-  margin-bottom: 4px;
+  width: 100%;
+  max-width: 200px;
+  margin: 0 auto;
 }
 
-.photo-helper-text {
-  font-size: 11px;
-  color: var(--color-text-muted);
-  text-align: center;
+.btn-upload-photo {
+  background: var(--section1-teal-subtle);
+  border-color: var(--section1-teal-border);
+  color: var(--section1-teal-dark);
+  font-weight: var(--font-weight-semibold);
+  width: 100%;
+  min-height: 42px;
+}
+
+.btn-upload-photo:hover:not(:disabled) {
+  background: var(--section1-teal);
+  border-color: var(--section1-teal);
+  color: #ffffff;
 }
 
 .btn-danger-text {
   color: var(--color-danger);
+  min-height: 38px;
 }
 
 .btn-danger-text:hover {
   background-color: var(--color-danger-soft);
 }
 
-/* Student Form Grid (Row 1 & Row 2 Hierarchy) */
+/* Student Info Panel (Right) */
+.student-info-panel {
+  flex: 1;
+}
+
+/* Student Form Grid (Row 1: Prefix, First, Last; Row 2: Grade, Number, Year) */
 .student-form-grid {
   display: grid;
-  grid-template-columns: 130px 1.25fr 1.25fr 1.1fr;
-  gap: var(--space-3) var(--space-4);
+  grid-template-columns: 140px 1fr 1fr;
+  gap: var(--space-4);
   align-items: start;
 }
 
@@ -349,17 +420,57 @@
 }
 
 .student-form-grid .field-grade {
-  grid-column: 4 / span 1;
+  grid-column: 1 / span 1;
 }
 
 .student-form-grid .field-number {
-  grid-column: 1 / span 1;
-  max-width: 120px;
+  grid-column: 2 / span 1;
 }
 
 .student-form-grid .field-year {
-  grid-column: 2 / span 1;
-  max-width: 220px;
+  grid-column: 3 / span 1;
+}
+
+/* Student Recommendation Panel */
+.student-recommendation-card {
+  margin-top: var(--space-6);
+  padding: var(--space-4) var(--space-5);
+  background: var(--section1-teal-subtle);
+  border: 1px solid var(--section1-teal-border);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.recommendation-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.recommendation-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  background-color: var(--section1-badge-bg);
+  color: var(--section1-badge-text);
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.02em;
+}
+
+.recommendation-list {
+  margin: 0;
+  padding-left: var(--space-4);
+  list-style-type: disc;
+  color: var(--color-text-soft);
+  font-size: var(--font-size-xs);
+  line-height: var(--line-height-relaxed);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
 }
 
 /* Watermark Settings Card */
