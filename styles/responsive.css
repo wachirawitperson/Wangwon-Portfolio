@@ -246,6 +246,23 @@ html, body {
     padding: var(--space-2) var(--space-2) var(--space-12);
   }
 
+  .section1-hero .hero-inner {
+    padding: var(--space-5) var(--space-3) var(--space-3);
+    gap: var(--space-3);
+  }
+
+  .section1-hero .hero-bg-img {
+    object-position: center 48%;
+  }
+
+  .hero-title {
+    font-size: 1.4rem;
+  }
+
+  .hero-desc {
+    font-size: var(--font-size-xs);
+  }
+
   .app-section {
     padding: var(--space-3) var(--space-2);
     border-radius: var(--radius-md);
