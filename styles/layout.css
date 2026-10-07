@@ -465,12 +465,10 @@
   margin-top: 2px;
 }
 
-/* 2-Column Desktop Workspace Layout */
+/* Section 2 Workspace Layout Container (Aligned with Section 3 outer frame) */
 .workspace-layout-container {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 340px;
-  gap: var(--space-6);
-  align-items: start;
+  display: flex;
+  flex-direction: column;
   max-width: 1400px;
   width: 100%;
   margin: 0 auto;
