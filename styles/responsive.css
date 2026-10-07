@@ -10,14 +10,29 @@ html, body {
   overflow-x: hidden;
 }
 
-/* Large Screens (Desktop > 1200px) */
-@media (min-width: 1200px) {
+/* Desktop Grid Density (Phase 18.5) */
+@media (min-width: 1440px) {
   .workspace-grid {
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    gap: var(--space-4) !important;
   }
 }
 
-/* Medium Tablets & Small Desktops (<= 1024px) */
+@media (min-width: 1200px) and (max-width: 1439px) {
+  .workspace-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: var(--space-4) !important;
+  }
+}
+
+/* Medium Tablets & Small Desktops (768px - 1199px): 3 cards per row */
+@media (min-width: 769px) and (max-width: 1199px) {
+  .workspace-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: var(--space-3) !important;
+  }
+}
+
 @media (max-width: 1024px) {
   .main-content {
     padding: var(--space-4) var(--space-4) var(--space-10);
@@ -34,11 +49,6 @@ html, body {
 
   .settings-sidebar {
     position: static;
-  }
-
-  .workspace-grid {
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: var(--space-4);
   }
 
   .app-intro-card {
@@ -168,8 +178,8 @@ html, body {
   }
 
   .workspace-grid {
-    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
-    gap: var(--space-3);
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: var(--space-3) !important;
   }
 
   .toolbar-inner {

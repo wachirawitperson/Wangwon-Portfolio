@@ -311,7 +311,7 @@
 
 /* Compact 3-Step Navigator */
 .step-navigator {
-  max-width: 1280px;
+  max-width: 1400px;
   width: 100%;
   margin: 0 auto;
   padding: 0;
@@ -471,7 +471,7 @@
   grid-template-columns: minmax(0, 1fr) 340px;
   gap: var(--space-6);
   align-items: start;
-  max-width: 1280px;
+  max-width: 1400px;
   width: 100%;
   margin: 0 auto;
 }
@@ -519,18 +519,11 @@
   margin-right: 4px;
 }
 
-/* Primary Sticky / Bottom Action Toolbar */
+/* Primary Sticky / Bottom Action Toolbar (Permanently hidden in Phase 18.5) */
 .action-toolbar {
-  position: sticky;
-  bottom: 0;
-  background: var(--action-toolbar-bg);
-  backdrop-filter: blur(12px);
-  border-top: 1px solid var(--action-toolbar-border);
-  box-shadow: 0 -4px 20px rgba(15, 23, 42, 0.06);
-  padding: var(--space-3) var(--space-6);
-  z-index: var(--z-sticky-toolbar, 30);
-  transition: background var(--duration-base) var(--ease-standard),
-              border-color var(--duration-base) var(--ease-standard);
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
 }
 
 .toolbar-inner {
@@ -587,30 +580,32 @@
   transform: translateY(-1px);
 }
 
-/* App Footer (Simplified & Minimal) */
+/* App Footer (Compact & Lightweight System Info) */
 .app-footer {
   text-align: center;
-  padding: 14px var(--space-6);
-  font-size: var(--font-size-xs);
-  color: var(--footer-text);
-  border-top: 1px solid var(--footer-border);
+  padding: 8px var(--space-4);
+  font-size: 11px;
+  color: var(--footer-text, var(--color-text-muted));
+  border-top: 1px solid var(--footer-border, var(--color-border-subtle));
   background-color: var(--color-bg);
   transition: background-color var(--duration-base) var(--ease-standard),
               border-color var(--duration-base) var(--ease-standard),
               color var(--duration-base) var(--ease-standard);
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  justify-content: center;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-2);
+  flex-wrap: wrap;
 }
 
 .app-footer p {
   margin: 0;
-  line-height: 1.5;
+  line-height: 1.4;
 }
 
 .footer-school-brand {
-  font-weight: var(--font-weight-semibold);
+  font-weight: var(--font-weight-medium);
   color: var(--color-text-soft);
 }
 
@@ -663,14 +658,14 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
-  max-width: 1280px;
+  max-width: 1400px;
   width: 100%;
   margin: 0 auto;
 }
 
 .section-3-grid-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.6fr) minmax(350px, 380px);
+  grid-template-columns: minmax(0, 1.85fr) minmax(330px, 360px);
   gap: var(--space-6);
   align-items: start;
 }
@@ -753,26 +748,26 @@
   gap: var(--space-2);
 }
 
-/* Canvas Stage (Expanded for 15-25% larger preview paper) */
+/* Canvas Stage (Expanded in Phase 18.5 for another 10-20% larger paper preview) */
 .document-canvas-stage {
   background-color: #334155;
   background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px);
   background-size: 16px 16px;
   border-radius: var(--radius-md);
-  padding: var(--space-3);
+  padding: var(--space-2);
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 520px;
-  max-height: 72vh;
+  min-height: 580px;
+  max-height: 78vh;
   overflow: hidden;
 }
 
 .document-preview-canvas {
   max-width: 100%;
-  max-height: 68vh;
+  max-height: 74vh;
   object-fit: contain;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.45);
   border-radius: 2px;
   background-color: #ffffff;
   transition: transform var(--transition-fast);
@@ -942,18 +937,18 @@
 .setting-group-card {
   border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-md);
-  padding: var(--space-3) var(--space-4);
+  padding: var(--space-3);
   background: var(--color-surface, #ffffff);
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--space-2);
 }
 
 .setting-group-header {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  padding-bottom: var(--space-2);
+  padding-bottom: 6px;
   border-bottom: 1px solid var(--color-border-subtle);
 }
 
@@ -964,10 +959,12 @@
 }
 
 .setting-group-title {
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-xs);
   font-weight: var(--font-weight-bold);
   color: var(--color-text);
   margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .watermark-status-badge {

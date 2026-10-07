@@ -27,11 +27,11 @@
   flex-wrap: wrap;
 }
 
-/* Grid Layout for Portfolio Workspace */
+/* Grid Layout for Portfolio Workspace (Phase 18.5 Density: 5 cols >= 1440px) */
 .workspace-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: var(--space-5);
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--space-4);
   align-items: stretch;
 }
 

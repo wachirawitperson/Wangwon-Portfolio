@@ -135,11 +135,12 @@ function applySectionVisibility() {
     workspaceContainer.classList.toggle('is-active-section', currentSection === 2);
   }
 
-  // Primary action toolbar: hidden in Section 3 since Section 3 has its own dedicated sticky export area
+  // Primary action toolbar: permanently hidden in Phase 18.5 across all sections
   const actionToolbar = document.querySelector('#action-toolbar');
   if (actionToolbar) {
-    actionToolbar.hidden = currentSection === 3;
-    actionToolbar.classList.toggle('is-hidden', currentSection === 3);
+    actionToolbar.hidden = true;
+    actionToolbar.classList.add('is-hidden');
+    actionToolbar.setAttribute('aria-hidden', 'true');
   }
 
   // Hero section compact state when leaving Section 1
