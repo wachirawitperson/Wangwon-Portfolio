@@ -19,6 +19,7 @@ import { showToast } from './notifications.js';
 import { openModal, closeModal } from './modal.js';
 import { icons } from './icons.js';
 import { autosaveManager } from '../core/autosave-manager.js';
+import { getPendingEditTarget, clearPendingEditTarget } from './navigation.js';
 
 export function initWorkspace(workspaceElement) {
   if (!workspaceElement) return;
@@ -948,6 +949,78 @@ export function initWorkspace(workspaceElement) {
     updateCoverWatermarkOverlay('back', s);
     updateActivityWatermarkOverlays(s);
   }
+
+  // ==========================================================================
+  // Phase 19: Cross-Page Edit Highlight Handling
+  // ==========================================================================
+  let editHighlightTimeout = null;
+
+  function clearActiveHighlight() {
+    if (editHighlightTimeout) {
+      clearTimeout(editHighlightTimeout);
+      editHighlightTimeout = null;
+    }
+    if (!studentImagesContainer) return;
+    const existingHighlighted = studentImagesContainer.querySelectorAll('.is-edit-target');
+    existingHighlighted.forEach((el) => {
+      el.classList.remove('is-edit-target');
+      const badge = el.querySelector('.edit-target-badge');
+      if (badge) badge.remove();
+    });
+  }
+
+  function handlePendingEditTarget() {
+    const target = getPendingEditTarget();
+    if (!target || !studentImagesContainer) return;
+
+    // Immediately clear transient state so subsequent normal transitions don't re-trigger
+    clearPendingEditTarget();
+
+    const targetCard = studentImagesContainer.querySelector(`.student-image-card[data-id="${target.targetId}"]`);
+    if (!targetCard) return;
+
+    clearActiveHighlight();
+
+    // Scroll card smoothly into center of #workspace-scroll-area
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    targetCard.scrollIntoView({
+      behavior: prefersReducedMotion ? 'auto' : 'smooth',
+      block: 'center',
+      inline: 'nearest'
+    });
+
+    // Apply highlight class
+    targetCard.classList.add('is-edit-target');
+
+    // Add temporary badge "กำลังแก้ไข" to card header
+    const headerLeft = targetCard.querySelector('.card-header-left');
+    if (headerLeft && !headerLeft.querySelector('.edit-target-badge')) {
+      const badge = document.createElement('span');
+      badge.className = 'badge edit-target-badge';
+      badge.textContent = 'กำลังแก้ไข';
+      headerLeft.appendChild(badge);
+    }
+
+    // Set keyboard focus
+    targetCard.setAttribute('tabindex', '-1');
+    targetCard.focus({ preventScroll: true });
+
+    // Informative toast
+    showToast(`ไปยังหน้า ${target.pageIndex + 1} แล้ว`, 'info', 2500);
+
+    // Auto-clear highlight after 3000ms
+    editHighlightTimeout = setTimeout(() => {
+      clearActiveHighlight();
+    }, 3000);
+  }
+
+  window.addEventListener('wangwon:section-changed', (e) => {
+    if (e.detail?.section === 2) {
+      handlePendingEditTarget();
+    } else {
+      clearActiveHighlight();
+    }
+  });
 
   // Subscribe to state updates
   projectStore.subscribe((state) => {

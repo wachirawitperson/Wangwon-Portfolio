@@ -13,6 +13,7 @@ import { projectStore } from '../portfolio/portfolio-state.js';
 import { generateCoverCanvas } from '../portfolio/cover-generator.js';
 import { renderActivityPageCanvas, renderCoverPageCanvas, loadImageElement } from '../portfolio/page-renderer.js';
 import { getWatermarkImageSrc } from '../portfolio/watermark-renderer.js';
+import { goToSection, setPendingEditTarget } from './navigation.js';
 
 let activePageIndex = 0; // 0-based: 0 = Front Cover, 1..N = images, N+1 = Back Cover
 let previewCanvas = null;
@@ -20,6 +21,7 @@ let previewContainer = null;
 let pageCounterText = null;
 let btnPrev = null;
 let btnNext = null;
+let btnEditPage = null; // Phase 19 "แก้ไขหน้านี้" button
 let thumbnailStrip = null;
 let jumpInput = null;
 let btnJumpGo = null;
@@ -201,6 +203,24 @@ function updatePreviewNavUI(totalPages) {
     btnNext.disabled = activePageIndex >= totalPages - 1;
     btnNext.setAttribute('aria-disabled', String(activePageIndex >= totalPages - 1));
   }
+
+  // Phase 19: Update "แก้ไขหน้านี้" button state and tooltip
+  if (btnEditPage) {
+    const isFrontCover = activePageIndex === 0;
+    const isBackCover = activePageIndex === totalPages - 1;
+    const isActivityPage = !isFrontCover && !isBackCover;
+
+    btnEditPage.disabled = !isActivityPage;
+    btnEditPage.setAttribute('aria-disabled', String(!isActivityPage));
+
+    if (isFrontCover) {
+      btnEditPage.title = 'หน้านี้เป็นปกหน้า ไม่สามารถแก้ไขในขั้นตอนจัดหน้าได้';
+    } else if (isBackCover) {
+      btnEditPage.title = 'หน้านี้เป็นปกหลัง ไม่สามารถแก้ไขในขั้นตอนจัดหน้าได้';
+    } else {
+      btnEditPage.title = `ไปที่ภาพผลงานของหน้า ${activePageIndex + 1} ในขั้นตอนจัดหน้า`;
+    }
+  }
 }
 
 function updateThumbnailStrip(totalPages) {
@@ -349,6 +369,20 @@ export function initDocumentPreview(container) {
   thumbnailStrip = container.querySelector('#preview-thumbnail-strip');
   jumpInput = container.querySelector('#preview-jump-input');
   btnJumpGo = container.querySelector('#btn-preview-jump-go');
+  btnEditPage = container.querySelector('#btn-preview-edit-page');
+
+  if (btnEditPage) {
+    btnEditPage.addEventListener('click', () => {
+      const state = projectStore.getState();
+      const totalPages = getTotalPreviewPages(state);
+      if (activePageIndex <= 0 || activePageIndex >= totalPages - 1) return;
+      const imgIndex = activePageIndex - 1;
+      const img = state.images?.[imgIndex];
+      if (!img) return;
+      setPendingEditTarget({ targetId: img.id, pageIndex: activePageIndex });
+      goToSection(2);
+    });
+  }
 
   if (btnPrev) {
     btnPrev.addEventListener('click', previewPrevPage);

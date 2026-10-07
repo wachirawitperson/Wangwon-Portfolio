@@ -9,6 +9,24 @@ import { showToast } from './notifications.js';
 let currentSection = 1;
 const listeners = new Set();
 
+// Phase 19: Transient cross-page edit target state (Not persisted to IndexedDB)
+let pendingEditTarget = null; // { targetId: string, pageIndex: number }
+
+export function setPendingEditTarget(target) {
+  pendingEditTarget = target ? { ...target } : null;
+  // Expose on window for testing / transient inspection
+  window.__WANGWON_PENDING_EDIT_TARGET__ = pendingEditTarget;
+}
+
+export function getPendingEditTarget() {
+  return pendingEditTarget;
+}
+
+export function clearPendingEditTarget() {
+  pendingEditTarget = null;
+  window.__WANGWON_PENDING_EDIT_TARGET__ = null;
+}
+
 export function getCurrentSection() {
   return currentSection;
 }
