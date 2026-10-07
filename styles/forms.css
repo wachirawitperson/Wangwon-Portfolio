@@ -237,15 +237,15 @@
    Section 1 Modern Two-Card Layout & Student Information System
    ========================================================================== */
 .section1-container {
-  max-width: 1280px;
+  max-width: 1400px;
   margin: 0 auto;
   width: 100%;
 }
 
 .student-cards-layout {
   display: grid;
-  grid-template-columns: 340px 1fr;
-  gap: var(--space-6);
+  grid-template-columns: 290px 1fr;
+  gap: var(--space-5);
   align-items: start;
 }
 
@@ -254,14 +254,14 @@
   border: 1px solid var(--section1-card-border);
   border-radius: var(--radius-xl);
   box-shadow: var(--section1-card-shadow);
-  padding: var(--space-6);
+  padding: var(--space-5);
   display: flex;
   flex-direction: column;
   transition: all var(--transition-base);
 }
 
 .card-header-block {
-  margin-bottom: var(--space-5);
+  margin-bottom: var(--space-4);
 }
 
 .card-title-main {
@@ -402,7 +402,7 @@
 /* Student Form Grid (Row 1: Prefix, First, Last; Row 2: Grade, Number, Year) */
 .student-form-grid {
   display: grid;
-  grid-template-columns: 140px 1fr 1fr;
+  grid-template-columns: 160px 1fr 1fr;
   gap: var(--space-4);
   align-items: start;
 }
@@ -433,8 +433,8 @@
 
 /* Student Recommendation Panel */
 .student-recommendation-card {
-  margin-top: var(--space-6);
-  padding: var(--space-4) var(--space-5);
+  margin-top: var(--space-4);
+  padding: var(--space-3) var(--space-4);
   background: var(--section1-teal-subtle);
   border: 1px solid var(--section1-teal-border);
   border-radius: var(--radius-lg);

@@ -231,9 +231,9 @@
 .hero-inner {
   position: relative;
   z-index: 1;
-  max-width: 1280px;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: var(--space-8) var(--space-6) var(--space-5);
+  padding: var(--space-8) var(--space-5) var(--space-5);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -406,10 +406,10 @@
 
 /* Main Container */
 .main-content {
-  max-width: 1280px;
+  max-width: 1400px;
   width: 100%;
   margin: 0 auto;
-  padding: var(--space-4) var(--space-6) var(--space-12);
+  padding: var(--space-4) var(--space-5) var(--space-12);
   display: flex;
   flex-direction: column;
   gap: var(--space-5);
@@ -471,6 +471,9 @@
   grid-template-columns: minmax(0, 1fr) 340px;
   gap: var(--space-6);
   align-items: start;
+  max-width: 1280px;
+  width: 100%;
+  margin: 0 auto;
 }
 
 .settings-sidebar {
@@ -655,10 +658,14 @@
 /* ==========================================================================
    Section 3: Document Preview & Settings Grid Layout
    ========================================================================== */
-.section-review-export {
+.section-review-export,
+.review-export-section {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
+  max-width: 1280px;
+  width: 100%;
+  margin: 0 auto;
 }
 
 .section-3-grid-layout {
