@@ -212,16 +212,38 @@ html, body {
   .document-preview-pane {
     position: static;
   }
+
+  .section-3-settings-column {
+    position: static;
+    max-height: none;
+  }
+
+  .section-3-settings-column .settings-sidebar {
+    max-height: none;
+  }
 }
 
 /* Tablet Portrait & Large Phones (<= 768px) */
 @media (max-width: 768px) {
   .section-3-grid-layout {
     grid-template-columns: 1fr;
+    gap: var(--space-4);
   }
 
   .document-preview-pane {
     position: static;
+    padding: var(--space-3);
+  }
+
+  .preview-pane-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+  }
+
+  .preview-header-actions {
+    width: 100%;
+    justify-content: space-between;
   }
 
   .document-canvas-stage {
@@ -231,11 +253,24 @@ html, body {
   }
 
   .document-preview-canvas {
-    max-height: 45vh;
+    max-height: 46vh;
   }
 
   .workspace-scroll-container {
     max-height: 60vh;
+  }
+
+  .section-3-settings-column {
+    position: static;
+    max-height: none;
+  }
+
+  .section-3-settings-column .settings-sidebar {
+    max-height: none;
+  }
+
+  .settings-scrollable-content {
+    padding: var(--space-3);
   }
 }
 
@@ -586,5 +621,31 @@ html, body {
   .student-image-card .page-badge {
     font-size: 8px;
     padding: 1px 2px;
+  }
+
+  .preview-pane-header {
+    padding-bottom: var(--space-2);
+  }
+
+  .preview-page-indicator-text {
+    font-size: 12px;
+  }
+
+  .preview-jump-input {
+    width: 44px;
+    height: 28px;
+    font-size: 11px;
+  }
+
+  .btn-jump-go {
+    height: 28px;
+    padding: 0 6px;
+    font-size: 11px;
+  }
+
+  .preview-page-nav-controls .btn-sm {
+    padding: 0 8px;
+    height: 30px;
+    font-size: 11px;
   }
 }

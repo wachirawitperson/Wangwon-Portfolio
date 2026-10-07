@@ -61,6 +61,7 @@ export function initSettingsPanel(panelElement) {
 
   // Watermark Elements
   const watermarkToggle = panelElement.querySelector('#setting-watermark-enabled');
+  const watermarkStatusBadge = panelElement.querySelector('#watermark-status-badge');
   const watermarkOptionsContainer = panelElement.querySelector('#watermark-options-container');
   const watermarkSchoolCheckbox = panelElement.querySelector('#setting-watermark-school');
   const watermarkFileInput = panelElement.querySelector('#watermark-file-input');
@@ -148,10 +149,18 @@ export function initSettingsPanel(panelElement) {
   }
 
   // 4. Watermark Handlers
+  function updateWatermarkBadgeUI(enabled) {
+    if (!watermarkStatusBadge) return;
+    watermarkStatusBadge.textContent = enabled ? 'เปิด' : 'ปิด';
+    watermarkStatusBadge.classList.toggle('is-on', !!enabled);
+    watermarkStatusBadge.classList.toggle('is-off', !enabled);
+  }
+
   if (watermarkToggle) {
     watermarkToggle.addEventListener('change', (e) => {
       const enabled = e.target.checked;
       setWatermarkEnabled(enabled);
+      updateWatermarkBadgeUI(enabled);
       if (watermarkOptionsContainer) {
         watermarkOptionsContainer.style.display = enabled ? 'flex' : 'none';
       }
@@ -285,6 +294,7 @@ export function initSettingsPanel(panelElement) {
     if (watermarkToggle) {
       watermarkToggle.checked = !!wm.enabled;
     }
+    updateWatermarkBadgeUI(!!wm.enabled);
     if (watermarkOptionsContainer) {
       watermarkOptionsContainer.style.display = wm.enabled ? 'flex' : 'none';
     }
@@ -358,6 +368,7 @@ export function initSettingsPanel(panelElement) {
   if (watermarkToggle) {
     watermarkToggle.checked = !!initWm.enabled;
   }
+  updateWatermarkBadgeUI(!!initWm.enabled);
   if (watermarkOptionsContainer) {
     watermarkOptionsContainer.style.display = initWm.enabled ? 'flex' : 'none';
   }

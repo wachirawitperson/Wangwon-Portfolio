@@ -407,15 +407,33 @@
               <span class="preview-indicator-icon" aria-hidden="true">📖</span>
               <span id="preview-page-indicator" class="preview-page-indicator-text" aria-live="polite">หน้า 1 / 2 • ปกหน้า</span>
             </div>
-            <div class="preview-page-nav-controls" role="group" aria-label="การเปลี่ยนหน้าตัวอย่าง">
-              <button type="button" class="btn btn-secondary btn-sm" id="btn-preview-page-prev" aria-label="หน้าก่อนหน้า" disabled>
-                <svg class="icon-inline" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
-                ก่อนหน้า
-              </button>
-              <button type="button" class="btn btn-secondary btn-sm" id="btn-preview-page-next" aria-label="หน้าถัดไป">
-                ถัดไป
-                <svg class="icon-inline" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
-              </button>
+            <div class="preview-header-actions">
+              <div class="preview-jump-wrap" role="group" aria-label="ไปยังหน้าที่ระบุ">
+                <label for="preview-jump-input" class="sr-only">ไปยังหน้า</label>
+                <input
+                  type="number"
+                  id="preview-jump-input"
+                  class="preview-jump-input"
+                  min="1"
+                  max="2"
+                  value="1"
+                  aria-label="ระบุเลขหน้าที่ต้องการไป"
+                  title="ระบุเลขหน้า"
+                />
+                <button type="button" class="btn btn-secondary btn-xs btn-jump-go" id="btn-preview-jump-go" aria-label="ไปยังหน้าที่ระบุ">
+                  ไป
+                </button>
+              </div>
+              <div class="preview-page-nav-controls" role="group" aria-label="การเปลี่ยนหน้าตัวอย่าง">
+                <button type="button" class="btn btn-secondary btn-sm" id="btn-preview-page-prev" aria-label="หน้าก่อนหน้า" disabled>
+                  <svg class="icon-inline" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+                  ก่อนหน้า
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm" id="btn-preview-page-next" aria-label="หน้าถัดไป">
+                  ถัดไป
+                  <svg class="icon-inline" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -427,306 +445,324 @@
           <!-- Thumbnail Strip Navigation -->
           <div class="preview-thumbnail-strip-wrap" aria-label="แถบเลือกหน้าเอกสาร">
             <div class="preview-thumbnail-strip" id="preview-thumbnail-strip" role="tablist">
-              <!-- Dynamically populated thumbnail buttons -->
+              <!-- Dynamically populated thumbnail cards -->
             </div>
           </div>
         </div>
 
         <!-- Right Column: Settings Panel & Export Controls -->
         <div class="section-3-settings-column">
-<!-- Section 3: Settings Sidebar ("ตั้งค่า Portfolio") -->
-      <aside class="app-section settings-sidebar" id="settings-panel" aria-labelledby="heading-settings">
-        <div class="sidebar-header">
-          <h2 class="section-title" id="heading-settings">
-            <span class="section-step-badge">3</span> ตั้งค่า Portfolio
-          </h2>
-          <p class="section-subtitle">ปรับแต่งกระดาษและสร้างไฟล์</p>
-        </div>
+          <!-- Section 3: Settings Sidebar ("ตั้งค่า Portfolio") -->
+          <aside class="app-section settings-sidebar" id="settings-panel" aria-labelledby="heading-settings">
+            <div class="sidebar-header">
+              <h2 class="section-title" id="heading-settings">
+                <span class="section-step-badge">3</span> ตั้งค่า Portfolio
+              </h2>
+              <p class="section-subtitle">ปรับแต่งกระดาษ ลายน้ำ และสร้างไฟล์เอกสาร</p>
+            </div>
 
-        <div class="sidebar-settings-grid">
-          <!-- Group 1: กระดาษ -->
-          <div class="form-group setting-section">
-            <label for="setting-orientation" class="form-label">
-              <span class="setting-step-num">1</span> กระดาษ
-            </label>
-            <select id="setting-orientation" class="form-select">
-              <option value="portrait" selected>A4 แนวตั้ง (Portrait)</option>
-              <option value="landscape">A4 แนวนอน (Landscape)</option>
-            </select>
-            <span class="form-helper">ขนาดมาตรฐาน A4 (210 × 297 มม.)</span>
-          </div>
+            <!-- Scrollable Settings Container -->
+            <div class="settings-scrollable-content" id="settings-scrollable-content">
+              <div class="sidebar-settings-grid">
+                <!-- Group 1: เอกสาร (Document Settings) -->
+                <div class="setting-group-card" id="group-document-settings">
+                  <div class="setting-group-header">
+                    <span class="setting-step-num">1</span>
+                    <h3 class="setting-group-title">เอกสาร</h3>
+                  </div>
 
-          <!-- Group 2: รูปแบบปก (Cover Templates Bento Selector) -->
-          <div class="form-group setting-section cover-template-section">
-            <label class="form-label" id="heading-cover-templates">
-              <span class="setting-step-num">2</span> รูปแบบปก
-            </label>
-            <div class="template-bento-grid" role="radiogroup" aria-labelledby="heading-cover-templates">
-              <!-- Template 1: Minimal School -->
-              <div
-                class="template-card is-active"
-                role="radio"
-                tabindex="0"
-                aria-checked="true"
-                data-template-id="minimal-school"
-                id="tpl-opt-minimal-school"
-              >
-                <div class="template-thumb-preview thumb-minimal-school" aria-hidden="true">
-                  <div class="thumb-mini-header"></div>
-                  <div class="thumb-mini-emblem"></div>
-                  <div class="thumb-mini-text bold"></div>
-                  <div class="thumb-mini-frame"></div>
-                  <div class="thumb-mini-text sm"></div>
-                </div>
-                <div class="template-info">
-                  <span class="template-name">Minimal School</span>
-                  <span class="template-sub">โรงเรียนมาตรฐาน</span>
-                </div>
-              </div>
+                  <!-- 1.1 กระดาษ -->
+                  <div class="form-group setting-section">
+                    <label for="setting-orientation" class="form-label">การวางแนวกระดาษ</label>
+                    <select id="setting-orientation" class="form-select">
+                      <option value="portrait" selected>A4 แนวตั้ง (Portrait)</option>
+                      <option value="landscape">A4 แนวนอน (Landscape)</option>
+                    </select>
+                    <span class="form-helper">ขนาดมาตรฐาน A4 (210 × 297 มม.)</span>
+                  </div>
 
-              <!-- Template 2: Colorful Portfolio -->
-              <div
-                class="template-card"
-                role="radio"
-                tabindex="0"
-                aria-checked="false"
-                data-template-id="colorful-portfolio"
-                id="tpl-opt-colorful-portfolio"
-              >
-                <div class="template-thumb-preview thumb-colorful-portfolio" aria-hidden="true">
-                  <div class="thumb-mini-blob"></div>
-                  <div class="thumb-mini-emblem"></div>
-                  <div class="thumb-mini-pill"></div>
-                  <div class="thumb-mini-frame rounded"></div>
-                  <div class="thumb-mini-text sm"></div>
-                </div>
-                <div class="template-info">
-                  <span class="template-name">Colorful Portfolio</span>
-                  <span class="template-sub">สีสันสดใส</span>
-                </div>
-              </div>
+                  <!-- 1.2 การวางภาพ -->
+                  <div class="form-group setting-section">
+                    <label class="form-label">การวางภาพ</label>
+                    <div class="segmented-control" role="radiogroup" aria-label="การวางภาพ">
+                      <button
+                        type="button"
+                        class="segmented-option is-active"
+                        role="radio"
+                        aria-checked="true"
+                        data-setting="placement"
+                        data-value="fit"
+                      >
+                        Fit (พอดีหน้า)
+                      </button>
+                      <button
+                        type="button"
+                        class="segmented-option"
+                        role="radio"
+                        aria-checked="false"
+                        data-setting="placement"
+                        data-value="fill"
+                      >
+                        Fill (เต็มหน้า)
+                      </button>
+                    </div>
+                    <span class="form-helper">Fit: แสดงรูปครบไม่ตัดขอบ | Fill: ขยายเต็มแผ่น</span>
+                  </div>
 
-              <!-- Template 3: Modern Academic -->
-              <div
-                class="template-card"
-                role="radio"
-                tabindex="0"
-                aria-checked="false"
-                data-template-id="modern-academic"
-                id="tpl-opt-modern-academic"
-              >
-                <div class="template-thumb-preview thumb-modern-academic" aria-hidden="true">
-                  <div class="thumb-mini-side-col"></div>
-                  <div class="thumb-mini-content">
-                    <div class="thumb-mini-text bold"></div>
-                    <div class="thumb-mini-frame"></div>
-                    <div class="thumb-mini-box"></div>
+                  <!-- 1.3 คุณภาพเอกสาร PDF -->
+                  <div class="form-group setting-section">
+                    <label for="setting-quality" class="form-label">คุณภาพเอกสาร PDF</label>
+                    <div class="segmented-control" role="radiogroup" aria-label="คุณภาพเอกสาร PDF">
+                      <button
+                        type="button"
+                        class="segmented-option"
+                        role="radio"
+                        aria-checked="false"
+                        data-setting="quality"
+                        data-value="small"
+                      >
+                        ไฟล์เล็ก
+                      </button>
+                      <button
+                        type="button"
+                        class="segmented-option is-active"
+                        role="radio"
+                        aria-checked="true"
+                        data-setting="quality"
+                        data-value="balanced"
+                      >
+                        สมดุล
+                      </button>
+                      <button
+                        type="button"
+                        class="segmented-option"
+                        role="radio"
+                        aria-checked="false"
+                        data-setting="quality"
+                        data-value="high"
+                      >
+                        คุณภาพสูง
+                      </button>
+                    </div>
+                    <select id="setting-quality" class="form-select sr-only" aria-label="คุณภาพเอกสาร PDF">
+                      <option value="small">ไฟล์เล็ก (Small)</option>
+                      <option value="balanced" selected>สมดุล (Balanced)</option>
+                      <option value="high">คุณภาพสูง (High)</option>
+                    </select>
+                    <span class="form-helper">แนะนำ "สมดุล" เพื่อความคมชัดและขนาดไฟล์ที่พอดี</span>
                   </div>
                 </div>
-                <div class="template-info">
-                  <span class="template-name">Modern Academic</span>
-                  <span class="template-sub">วิชาการสมัยใหม่</span>
+
+                <!-- Group 2: ปก (Cover Templates Bento Selector) -->
+                <div class="setting-group-card" id="group-cover-settings">
+                  <div class="setting-group-header">
+                    <span class="setting-step-num">2</span>
+                    <h3 class="setting-group-title" id="heading-cover-templates">ปก</h3>
+                  </div>
+
+                  <div class="form-group setting-section cover-template-section">
+                    <label class="form-label sr-only">รูปแบบปก</label>
+                    <div class="template-bento-grid" role="radiogroup" aria-labelledby="heading-cover-templates">
+                      <!-- Template 1: Minimal School -->
+                      <div
+                        class="template-card is-active"
+                        role="radio"
+                        tabindex="0"
+                        aria-checked="true"
+                        data-template-id="minimal-school"
+                        id="tpl-opt-minimal-school"
+                      >
+                        <div class="template-thumb-preview thumb-minimal-school" aria-hidden="true">
+                          <div class="thumb-mini-header"></div>
+                          <div class="thumb-mini-emblem"></div>
+                          <div class="thumb-mini-text bold"></div>
+                          <div class="thumb-mini-frame"></div>
+                          <div class="thumb-mini-text sm"></div>
+                        </div>
+                        <div class="template-info">
+                          <span class="template-name">Minimal School</span>
+                          <span class="template-sub">โรงเรียนมาตรฐาน</span>
+                        </div>
+                      </div>
+
+                      <!-- Template 2: Colorful Portfolio -->
+                      <div
+                        class="template-card"
+                        role="radio"
+                        tabindex="0"
+                        aria-checked="false"
+                        data-template-id="colorful-portfolio"
+                        id="tpl-opt-colorful-portfolio"
+                      >
+                        <div class="template-thumb-preview thumb-colorful-portfolio" aria-hidden="true">
+                          <div class="thumb-mini-blob"></div>
+                          <div class="thumb-mini-emblem"></div>
+                          <div class="thumb-mini-pill"></div>
+                          <div class="thumb-mini-frame rounded"></div>
+                          <div class="thumb-mini-text sm"></div>
+                        </div>
+                        <div class="template-info">
+                          <span class="template-name">Colorful Portfolio</span>
+                          <span class="template-sub">สีสันสดใส</span>
+                        </div>
+                      </div>
+
+                      <!-- Template 3: Modern Academic -->
+                      <div
+                        class="template-card"
+                        role="radio"
+                        tabindex="0"
+                        aria-checked="false"
+                        data-template-id="modern-academic"
+                        id="tpl-opt-modern-academic"
+                      >
+                        <div class="template-thumb-preview thumb-modern-academic" aria-hidden="true">
+                          <div class="thumb-mini-side-col"></div>
+                          <div class="thumb-mini-content">
+                            <div class="thumb-mini-text bold"></div>
+                            <div class="thumb-mini-frame"></div>
+                            <div class="thumb-mini-box"></div>
+                          </div>
+                        </div>
+                        <div class="template-info">
+                          <span class="template-name">Modern Academic</span>
+                          <span class="template-sub">วิชาการสมัยใหม่</span>
+                        </div>
+                      </div>
+                    </div>
+                    <span class="form-helper">เปลี่ยนรูปแบบทั้งปกหน้าและปกหลังให้เข้าชุดกัน</span>
+                  </div>
+                </div>
+
+                <!-- Group 3: ลายน้ำ (Watermark Settings) -->
+                <div class="setting-group-card watermark-settings-card" id="group-watermark-settings">
+                  <div class="setting-group-header watermark-toggle-row">
+                    <div class="setting-group-header-left">
+                      <span class="setting-step-num">3</span>
+                      <h3 class="setting-group-title">ลายน้ำ</h3>
+                      <span id="watermark-status-badge" class="watermark-status-badge is-off">ปิด</span>
+                    </div>
+                    <label class="switch-toggle" aria-label="เปิดหรือปิดลายน้ำ">
+                      <input type="checkbox" id="setting-watermark-enabled" class="switch-input" />
+                      <span class="switch-slider" aria-hidden="true"></span>
+                    </label>
+                  </div>
+
+                  <!-- Options Container (Progressive Disclosure) -->
+                  <div class="watermark-options-container" id="watermark-options-container" style="display: none;">
+                    <!-- Option: Use School Emblem -->
+                    <label class="custom-checkbox-label">
+                      <input type="checkbox" id="setting-watermark-school" class="custom-checkbox-input" />
+                      <span>ใช้ตราโรงเรียนบ้านวังวน</span>
+                    </label>
+
+                    <!-- Custom Watermark Upload / Preview -->
+                    <div class="watermark-upload-area">
+                      <div class="watermark-upload-placeholder" id="watermark-upload-placeholder">
+                        <button type="button" class="btn btn-secondary btn-sm" id="btn-upload-watermark">
+                          <svg class="icon-inline" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+                          เพิ่มรูปลายน้ำ
+                        </button>
+                        <span class="form-helper">รองรับ PNG โปร่งใส, JPG</span>
+                      </div>
+
+                      <div class="watermark-thumbnail-box" id="watermark-thumbnail-box" style="display: none;">
+                        <div class="watermark-thumb-wrap">
+                          <img id="watermark-preview-img" class="watermark-thumb-img" alt="ตัวอย่างลายน้ำ" />
+                        </div>
+                        <div class="watermark-thumb-actions">
+                          <button type="button" class="btn btn-secondary btn-xs" id="btn-replace-watermark">เปลี่ยนลายน้ำ</button>
+                          <button type="button" class="btn btn-ghost btn-xs btn-danger-text" id="btn-remove-watermark">ลบลายน้ำ</button>
+                        </div>
+                      </div>
+
+                      <input type="file" id="watermark-file-input" class="sr-only" accept="image/png,image/jpeg,image/webp,image/heic,image/heif" aria-hidden="true" />
+                    </div>
+
+                    <!-- Watermark Opacity Slider -->
+                    <div class="watermark-opacity-row">
+                      <div class="slider-label-row">
+                        <label for="watermark-opacity-slider" class="form-label-xs">ความโปร่งใส:</label>
+                        <span id="watermark-opacity-val" class="opacity-val-badge">18%</span>
+                      </div>
+                      <input type="range" id="watermark-opacity-slider" min="5" max="80" value="18" step="1" class="form-range" aria-label="ระดับความโปร่งใสของลายน้ำ" />
+                    </div>
+
+                    <!-- Watermark Scale Slider (Supports up to 100%) -->
+                    <div class="watermark-scale-row">
+                      <div class="slider-label-row">
+                        <label for="watermark-scale-slider" class="form-label-xs">ขนาดลายน้ำ:</label>
+                        <span id="watermark-scale-val" class="opacity-val-badge">18%</span>
+                      </div>
+                      <input type="range" id="watermark-scale-slider" min="8" max="100" value="18" step="1" class="form-range" aria-label="ระดับขนาดของลายน้ำ (เปอร์เซ็นต์ของหน้า)" />
+                    </div>
+
+                    <!-- Watermark Position 3x3 Grid -->
+                    <div class="watermark-position-row">
+                      <span class="form-label-xs">ตำแหน่งลายน้ำ:</span>
+                      <div class="watermark-position-grid" id="watermark-position-grid" role="radiogroup" aria-label="ตำแหน่งลายน้ำ">
+                        <button type="button" class="position-cell" data-position="top-left" role="radio" aria-checked="false" aria-label="บนซ้าย" title="บนซ้าย"></button>
+                        <button type="button" class="position-cell" data-position="top-center" role="radio" aria-checked="false" aria-label="บนกลาง" title="บนกลาง"></button>
+                        <button type="button" class="position-cell" data-position="top-right" role="radio" aria-checked="false" aria-label="บนขวา" title="บนขวา"></button>
+                        <button type="button" class="position-cell" data-position="middle-left" role="radio" aria-checked="false" aria-label="กลางซ้าย" title="กลางซ้าย"></button>
+                        <button type="button" class="position-cell" data-position="center" role="radio" aria-checked="false" aria-label="ตรงกลาง" title="ตรงกลาง"></button>
+                        <button type="button" class="position-cell" data-position="middle-right" role="radio" aria-checked="false" aria-label="กลางขวา" title="กลางขวา"></button>
+                        <button type="button" class="position-cell" data-position="bottom-left" role="radio" aria-checked="false" aria-label="ล่างซ้าย" title="ล่างซ้าย"></button>
+                        <button type="button" class="position-cell" data-position="bottom-center" role="radio" aria-checked="false" aria-label="ล่างกลาง" title="ล่างกลาง"></button>
+                        <button type="button" class="position-cell is-active" data-position="bottom-right" role="radio" aria-checked="true" aria-label="ล่างขวา" title="ล่างขวา"></button>
+                      </div>
+                    </div>
+
+                    <!-- Watermark Target (Apply To) -->
+                    <div class="watermark-target-row">
+                      <span class="form-label-xs">หน้าที่ใส่ลายน้ำ:</span>
+                      <div class="segmented-control watermark-target-control" id="watermark-target-selector" role="radiogroup" aria-label="หน้าที่ใส่ลายน้ำ">
+                        <button type="button" class="segmented-option" data-setting="applyTo" data-value="all-pages" role="radio" aria-checked="false">ทุกหน้า</button>
+                        <button type="button" class="segmented-option is-active" data-setting="applyTo" data-value="activity-only" role="radio" aria-checked="true">เฉพาะรูปผลงาน</button>
+                        <button type="button" class="segmented-option" data-setting="applyTo" data-value="exclude-covers" role="radio" aria-checked="false">ไม่รวมปก</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Group 4: ไฟล์ (Filename & Export Meta) -->
+                <div class="setting-group-card sidebar-filename-group" id="group-file-settings">
+                  <div class="setting-group-header">
+                    <span class="setting-step-num">4</span>
+                    <h3 class="setting-group-title">ไฟล์</h3>
+                  </div>
+                  <div class="form-group setting-section">
+                    <label class="form-label" for="preview-filename-badge-settings">ชื่อไฟล์ที่จะสร้าง</label>
+                    <div class="sidebar-filename-card" aria-live="polite">
+                      <span class="sidebar-filename-icon" aria-hidden="true">📄</span>
+                      <span id="preview-filename-badge-settings" class="filename-badge">portfolio-นักเรียน.pdf</span>
+                    </div>
+                    <span class="form-helper">ชื่อไฟล์อ้างอิงจากข้อมูลนักเรียนในขั้นตอนที่ 1</span>
+                  </div>
                 </div>
               </div>
             </div>
-            <span class="form-helper">เปลี่ยนรูปแบบทั้งปกหน้าและปกหลังให้เข้าชุดกัน</span>
-          </div>
 
-          <!-- Group 3: การวางภาพ -->
-          <div class="form-group setting-section">
-            <label class="form-label">
-              <span class="setting-step-num">3</span> การวางภาพ
-            </label>
-            <div class="segmented-control" role="radiogroup" aria-label="การวางภาพ">
-              <button
-                type="button"
-                class="segmented-option is-active"
-                role="radio"
-                aria-checked="true"
-                data-setting="placement"
-                data-value="fit"
-              >
-                Fit (พอดีหน้า)
-              </button>
-              <button
-                type="button"
-                class="segmented-option"
-                role="radio"
-                aria-checked="false"
-                data-setting="placement"
-                data-value="fill"
-              >
-                Fill (เต็มหน้า)
-              </button>
-            </div>
-            <span class="form-helper">Fit: แสดงรูปครบไม่ตัดขอบ | Fill: ขยายเต็มแผ่น</span>
-          </div>
-
-          <!-- Group 4: คุณภาพเอกสาร PDF (Segmented Control + Synced Select) -->
-          <div class="form-group setting-section">
-            <label for="setting-quality" class="form-label">
-              <span class="setting-step-num">4</span> คุณภาพเอกสาร PDF
-            </label>
-            <div class="segmented-control" role="radiogroup" aria-label="คุณภาพเอกสาร PDF">
-              <button
-                type="button"
-                class="segmented-option"
-                role="radio"
-                aria-checked="false"
-                data-setting="quality"
-                data-value="small"
-              >
-                ไฟล์เล็ก
-              </button>
-              <button
-                type="button"
-                class="segmented-option is-active"
-                role="radio"
-                aria-checked="true"
-                data-setting="quality"
-                data-value="balanced"
-              >
-                สมดุล
-              </button>
-              <button
-                type="button"
-                class="segmented-option"
-                role="radio"
-                aria-checked="false"
-                data-setting="quality"
-                data-value="high"
-              >
-                คุณภาพสูง
-              </button>
-            </div>
-            <select id="setting-quality" class="form-select sr-only" aria-label="คุณภาพเอกสาร PDF">
-              <option value="small">ไฟล์เล็ก (Small)</option>
-              <option value="balanced" selected>สมดุล (Balanced)</option>
-              <option value="high">คุณภาพสูง (High)</option>
-            </select>
-            <span class="form-helper">แนะนำ "สมดุล" เพื่อความคมชัดและขนาดไฟล์ที่พอดี</span>
-          </div>
-
-          <!-- Group 5: ชื่อไฟล์ (Relocated from Student Card) -->
-          <div class="form-group setting-section sidebar-filename-group">
-            <label class="form-label" for="preview-filename-badge">
-              <span class="setting-step-num">5</span> ชื่อไฟล์
-            </label>
-            <div class="sidebar-filename-card" aria-live="polite">
-              <span class="sidebar-filename-icon" aria-hidden="true">📄</span>
-              <span id="preview-filename-badge-settings" class="filename-badge">portfolio-นักเรียน.pdf</span>
-            </div>
-            <span class="form-helper">สร้างชื่อไฟล์อัตโนมัติตามชื่อและชั้นนักเรียน</span>
-          </div>
-
-          <!-- Group 6: Watermark Redesign -->
-          <div class="form-group setting-section watermark-settings-card">
-            <div class="watermark-toggle-row">
-              <label class="form-label" for="setting-watermark-enabled" style="margin-bottom: 0;">
-                <span class="setting-step-num">6</span> ลายน้ำ (Watermark)
-              </label>
-              <label class="switch-toggle" aria-label="เปิดหรือปิดลายน้ำ">
-                <input type="checkbox" id="setting-watermark-enabled" class="switch-input" />
-                <span class="switch-slider" aria-hidden="true"></span>
-              </label>
-            </div>
-
-            <!-- Options Container (Toggled via JS) -->
-            <div class="watermark-options-container" id="watermark-options-container" style="display: none;">
-              <!-- Option: Use School Emblem -->
-              <label class="custom-checkbox-label">
-                <input type="checkbox" id="setting-watermark-school" class="custom-checkbox-input" />
-                <span>ใช้ตราโรงเรียนบ้านวังวน</span>
-              </label>
-
-              <!-- Custom Watermark Upload / Preview -->
-              <div class="watermark-upload-area">
-                <div class="watermark-upload-placeholder" id="watermark-upload-placeholder">
-                  <button type="button" class="btn btn-secondary btn-sm" id="btn-upload-watermark">
-                    <svg class="icon-inline" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
-                    เพิ่มรูปลายน้ำ
+            <!-- Final Export Actions Card (Sticky at bottom of Settings Column) -->
+            <div class="settings-sticky-export-area">
+              <div class="section-3-export-card" id="section-3-export-card">
+                <div class="export-card-header">
+                  <h3 class="export-card-title">สร้างไฟล์เอกสาร</h3>
+                  <p class="export-card-desc">ตรวจสอบตัวอย่างทางซ้ายให้เรียบร้อยก่อนกดสร้างไฟล์</p>
+                </div>
+                <div class="export-card-actions">
+                  <button type="button" class="btn btn-secondary action-btn-secondary w-full" id="btn-section3-export-zip">
+                    <svg class="icon-inline" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+                    ส่งออก PDF + รูปภาพ
                   </button>
-                  <span class="form-helper">รองรับ PNG โปร่งใส, JPG</span>
-                </div>
-
-                <div class="watermark-thumbnail-box" id="watermark-thumbnail-box" style="display: none;">
-                  <div class="watermark-thumb-wrap">
-                    <img id="watermark-preview-img" class="watermark-thumb-img" alt="ตัวอย่างลายน้ำ" />
-                  </div>
-                  <div class="watermark-thumb-actions">
-                    <button type="button" class="btn btn-secondary btn-xs" id="btn-replace-watermark">เปลี่ยนลายน้ำ</button>
-                    <button type="button" class="btn btn-ghost btn-xs btn-danger-text" id="btn-remove-watermark">ลบลายน้ำ</button>
-                  </div>
-                </div>
-
-                <input type="file" id="watermark-file-input" class="sr-only" accept="image/png,image/jpeg,image/webp,image/heic,image/heif" aria-hidden="true" />
-              </div>
-
-              <!-- Watermark Opacity Slider -->
-              <div class="watermark-opacity-row">
-                <div class="slider-label-row">
-                  <label for="watermark-opacity-slider" class="form-label-xs">ความโปร่งใส:</label>
-                  <span id="watermark-opacity-val" class="opacity-val-badge">18%</span>
-                </div>
-                <input type="range" id="watermark-opacity-slider" min="5" max="80" value="18" step="1" class="form-range" aria-label="ระดับความโปร่งใสของลายน้ำ" />
-              </div>
-
-              <!-- Watermark Scale Slider -->
-              <div class="watermark-scale-row">
-                <div class="slider-label-row">
-                  <label for="watermark-scale-slider" class="form-label-xs">ขนาดลายน้ำ:</label>
-                  <span id="watermark-scale-val" class="opacity-val-badge">18%</span>
-                </div>
-                <input type="range" id="watermark-scale-slider" min="8" max="40" value="18" step="1" class="form-range" aria-label="ระดับขนาดของลายน้ำ (เปอร์เซ็นต์ของหน้า)" />
-              </div>
-
-              <!-- Watermark Position 3x3 Grid -->
-              <div class="watermark-position-row">
-                <span class="form-label-xs">ตำแหน่งลายน้ำ:</span>
-                <div class="watermark-position-grid" id="watermark-position-grid" role="radiogroup" aria-label="ตำแหน่งลายน้ำ">
-                  <button type="button" class="position-cell" data-position="top-left" role="radio" aria-checked="false" aria-label="บนซ้าย" title="บนซ้าย"></button>
-                  <button type="button" class="position-cell" data-position="top-center" role="radio" aria-checked="false" aria-label="บนกลาง" title="บนกลาง"></button>
-                  <button type="button" class="position-cell" data-position="top-right" role="radio" aria-checked="false" aria-label="บนขวา" title="บนขวา"></button>
-                  <button type="button" class="position-cell" data-position="middle-left" role="radio" aria-checked="false" aria-label="กลางซ้าย" title="กลางซ้าย"></button>
-                  <button type="button" class="position-cell" data-position="center" role="radio" aria-checked="false" aria-label="ตรงกลาง" title="ตรงกลาง"></button>
-                  <button type="button" class="position-cell" data-position="middle-right" role="radio" aria-checked="false" aria-label="กลางขวา" title="กลางขวา"></button>
-                  <button type="button" class="position-cell" data-position="bottom-left" role="radio" aria-checked="false" aria-label="ล่างซ้าย" title="ล่างซ้าย"></button>
-                  <button type="button" class="position-cell" data-position="bottom-center" role="radio" aria-checked="false" aria-label="ล่างกลาง" title="ล่างกลาง"></button>
-                  <button type="button" class="position-cell is-active" data-position="bottom-right" role="radio" aria-checked="true" aria-label="ล่างขวา" title="ล่างขวา"></button>
-                </div>
-              </div>
-
-              <!-- Watermark Target (Apply To) -->
-              <div class="watermark-target-row">
-                <span class="form-label-xs">หน้าที่ใส่ลายน้ำ:</span>
-                <div class="segmented-control watermark-target-control" id="watermark-target-selector" role="radiogroup" aria-label="หน้าที่ใส่ลายน้ำ">
-                  <button type="button" class="segmented-option" data-setting="applyTo" data-value="all-pages" role="radio" aria-checked="false">ทุกหน้า</button>
-                  <button type="button" class="segmented-option is-active" data-setting="applyTo" data-value="activity-only" role="radio" aria-checked="true">เฉพาะรูปผลงาน</button>
-                  <button type="button" class="segmented-option" data-setting="applyTo" data-value="exclude-covers" role="radio" aria-checked="false">ไม่รวมปก</button>
+                  <button type="button" class="btn btn-primary btn-lg action-btn-primary w-full" id="btn-section3-export-pdf">
+                    <svg class="icon-inline" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M12 18v-6"/><path d="m9 15 3 3 3-3"/></svg>
+                    สร้าง Portfolio PDF
+                  </button>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      </aside>
-
-          <!-- Final Export Actions Card (Integrated directly in Section 3) -->
-          <div class="section-3-export-card" id="section-3-export-card">
-            <div class="export-card-header">
-              <h3 class="export-card-title">สร้างไฟล์เอกสาร</h3>
-              <p class="export-card-desc">ตรวจสอบตัวอย่างทางซ้ายให้เรียบร้อยก่อนกดสร้างไฟล์</p>
-            </div>
-            <div class="export-card-actions">
-              <button type="button" class="btn btn-secondary action-btn-secondary w-full" id="btn-section3-export-zip">
-                <svg class="icon-inline" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
-                ส่งออก PDF + รูปภาพ
-              </button>
-              <button type="button" class="btn btn-primary btn-lg action-btn-primary w-full" id="btn-section3-export-pdf">
-                <svg class="icon-inline" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M12 18v-6"/><path d="m9 15 3 3 3-3"/></svg>
-                สร้าง Portfolio PDF
-              </button>
-            </div>
-          </div>
+          </aside>
         </div>
       </div>
 

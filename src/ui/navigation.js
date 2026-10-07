@@ -135,6 +135,13 @@ function applySectionVisibility() {
     workspaceContainer.classList.toggle('is-active-section', currentSection === 2);
   }
 
+  // Primary action toolbar: hidden in Section 3 since Section 3 has its own dedicated sticky export area
+  const actionToolbar = document.querySelector('#action-toolbar');
+  if (actionToolbar) {
+    actionToolbar.hidden = currentSection === 3;
+    actionToolbar.classList.toggle('is-hidden', currentSection === 3);
+  }
+
   // Hero section compact state when leaving Section 1
   const heroSection = document.querySelector('#section1-hero');
   if (heroSection) {

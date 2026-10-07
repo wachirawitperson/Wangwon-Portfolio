@@ -670,7 +670,7 @@
 
 .section-3-grid-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(320px, 1fr);
+  grid-template-columns: minmax(0, 1.6fr) minmax(350px, 380px);
   gap: var(--space-6);
   align-items: start;
 }
@@ -708,59 +708,99 @@
   color: var(--color-text);
 }
 
+.preview-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.preview-jump-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.preview-jump-input {
+  width: 54px;
+  height: 32px;
+  padding: 0 6px;
+  text-align: center;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.preview-jump-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-primary-soft, rgba(29, 78, 216, 0.15));
+}
+
+.btn-jump-go {
+  height: 32px;
+  padding: 0 10px;
+  font-weight: var(--font-weight-semibold);
+}
+
 .preview-page-nav-controls {
   display: flex;
   align-items: center;
   gap: var(--space-2);
 }
 
-/* Canvas Stage */
+/* Canvas Stage (Expanded for 15-25% larger preview paper) */
 .document-canvas-stage {
   background-color: #334155;
   background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px);
   background-size: 16px 16px;
   border-radius: var(--radius-md);
-  padding: var(--space-4);
+  padding: var(--space-3);
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 440px;
-  max-height: 65vh;
+  min-height: 520px;
+  max-height: 72vh;
   overflow: hidden;
 }
 
 .document-preview-canvas {
   max-width: 100%;
-  max-height: 58vh;
+  max-height: 68vh;
   object-fit: contain;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
   border-radius: 2px;
   background-color: #ffffff;
   transition: transform var(--transition-fast);
 }
 
-/* Thumbnail Strip */
+/* Thumbnail Strip (Realistic Page Cards) */
 .preview-thumbnail-strip-wrap {
   overflow-x: auto;
-  padding: 4px 2px;
+  padding: 6px 2px;
   overscroll-behavior: contain;
+  border-top: 1px solid var(--color-border-subtle);
 }
 
 .preview-thumbnail-strip {
   display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 0;
+  align-items: stretch;
+  gap: 8px;
+  padding: 4px 2px;
 }
 
 .preview-thumb-btn {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  min-width: 48px;
-  height: 52px;
-  padding: 4px 6px;
+  justify-content: flex-start;
+  min-width: 58px;
+  max-width: 64px;
+  padding: 4px;
   border-radius: var(--radius-sm);
   border: 1.5px solid var(--color-border);
   background-color: var(--color-surface);
@@ -768,6 +808,7 @@
   cursor: pointer;
   transition: all var(--transition-fast);
   flex-shrink: 0;
+  text-align: center;
 }
 
 .preview-thumb-btn:hover {
@@ -781,53 +822,204 @@
   background-color: var(--color-primary-soft, #eff6ff);
   color: var(--color-primary);
   font-weight: var(--font-weight-bold);
-  box-shadow: 0 1px 4px rgba(29, 78, 216, 0.2);
+  box-shadow: 0 0 0 1.5px var(--color-primary);
 }
 
-.preview-thumb-btn .thumb-page-num {
-  font-size: 13px;
+/* Realistic Mini Page Thumbnails */
+.thumb-paper-preview {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  background-color: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.thumb-paper-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.thumb-paper-empty {
+  width: 100%;
+  height: 100%;
+  background: #f1f5f9;
+}
+
+.thumb-cover-front {
+  background: linear-gradient(145deg, #1e3a8a 0%, #2563eb 100%);
+}
+
+.thumb-mini-emblem-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background-color: #fbbf24;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
+}
+
+.thumb-cover-back {
+  background: linear-gradient(145deg, #0f172a 0%, #1e293b 100%);
+}
+
+.thumb-mini-line-dot {
+  width: 16px;
+  height: 3px;
+  border-radius: 2px;
+  background-color: #94a3b8;
+}
+
+.thumb-page-badge {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  background-color: rgba(15, 23, 42, 0.75);
+  color: #ffffff;
+  font-size: 8px;
+  line-height: 1;
+  padding: 2px 3px;
+  border-radius: 2px;
   font-weight: 700;
 }
 
-.preview-thumb-btn .thumb-page-name {
-  font-size: 9px;
+.thumb-page-name {
+  font-size: 10px;
+  line-height: 1.2;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 /* Right Column: Settings & Export Card */
 .section-3-settings-column {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  position: sticky;
+  top: 72px;
+  max-height: calc(100vh - 90px);
 }
 
 .section-3-settings-column .settings-sidebar {
   border: 1px solid var(--card-border, #e2e8f0);
   border-radius: var(--radius-lg);
-  padding: var(--space-4);
+  padding: 0;
   box-shadow: var(--shadow-sm);
   background: var(--card-bg, #ffffff);
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 90px);
+  overflow: hidden;
+  position: static;
 }
 
-.section-3-export-card {
-  background: var(--card-bg, #ffffff);
-  border: 1px solid var(--card-border, #e2e8f0);
-  border-radius: var(--radius-lg);
-  padding: var(--space-5);
-  box-shadow: var(--shadow-sm);
+.settings-sidebar .sidebar-header {
+  padding: var(--space-4) var(--space-4) var(--space-3);
+  margin-bottom: 0;
+  border-bottom: 1px solid var(--color-border-subtle);
+  flex-shrink: 0;
+}
+
+.settings-scrollable-content {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: var(--space-4);
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
+  scrollbar-gutter: stable;
+}
+
+/* Setting Group Cards (1. เอกสาร, 2. ปก, 3. ลายน้ำ, 4. ไฟล์) */
+.setting-group-card {
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-surface, #ffffff);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.setting-group-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.setting-group-header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.setting-group-title {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+  margin: 0;
+}
+
+.watermark-status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  border-radius: var(--radius-circle);
+  font-size: 10px;
+  font-weight: var(--font-weight-bold);
+  line-height: 1.3;
+}
+
+.watermark-status-badge.is-on {
+  background-color: #dcfce7;
+  color: #15803d;
+}
+
+.watermark-status-badge.is-off {
+  background-color: #f1f5f9;
+  color: #64748b;
+}
+
+/* Sticky Bottom Export Area */
+.settings-sticky-export-area {
+  flex-shrink: 0;
+  position: sticky;
+  bottom: 0;
+  background: var(--card-bg, #ffffff);
+  border-top: 1px solid var(--color-border-subtle);
+  z-index: 5;
+  box-shadow: 0 -4px 12px rgba(15, 23, 42, 0.05);
+}
+
+.section-3-export-card {
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
 }
 
 .export-card-title {
-  font-size: var(--font-size-md);
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-bold);
   color: var(--color-text);
 }
 
 .export-card-desc {
-  font-size: var(--font-size-xs);
+  font-size: 11px;
   color: var(--color-text-muted);
   margin-top: 2px;
 }
@@ -835,7 +1027,12 @@
 .export-card-actions {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--space-2);
+}
+
+/* Hide duplicate floating toolbar when Section 3 is visible */
+#section-review-export:not([hidden]) ~ #action-toolbar {
+  display: none !important;
 }
 
 .w-full {

@@ -21,9 +21,12 @@ let pageCounterText = null;
 let btnPrev = null;
 let btnNext = null;
 let thumbnailStrip = null;
+let jumpInput = null;
+let btnJumpGo = null;
 let currentRenderPromise = null;
 let preloadedWatermarkImg = null;
 let lastWatermarkSrc = '';
+let lastRenderedThumbnailCount = -1;
 
 /**
  * Calculates page dimensions for screen preview (optimized, lightweight).
@@ -48,6 +51,20 @@ export function getCurrentPreviewPageIndex() {
 }
 
 /**
+ * Sets the active preview page with bounds checking.
+ * @param {number} newIndex
+ */
+export function setPreviewPageIndex(newIndex) {
+  const state = projectStore.getState();
+  const totalPages = getTotalPreviewPages(state);
+  const clamped = Math.max(0, Math.min(newIndex, totalPages - 1));
+  if (clamped !== activePageIndex) {
+    activePageIndex = clamped;
+    renderCurrentPreviewPage();
+  }
+}
+
+/**
  * Renders the active preview page onto the main canvas.
  */
 export async function renderCurrentPreviewPage() {
@@ -65,7 +82,7 @@ export async function renderCurrentPreviewPage() {
   const placement = state.pdfSettings?.placement || 'fit';
   const dims = getPreviewCanvasDimensions(orientation);
 
-  // Update UI navigation controls
+  // Update UI navigation controls & jump input
   updatePreviewNavUI(totalPages);
 
   // Preload watermark image if needed
@@ -151,7 +168,7 @@ export async function renderCurrentPreviewPage() {
     console.error('[DocPreview] Render error on page', activePageIndex, err);
   }
 
-  // Update thumbnail strip highlighting
+  // Update thumbnail strip highlighting without rebuilding DOM
   updateThumbnailStrip(totalPages);
 }
 
@@ -168,6 +185,11 @@ function updatePreviewNavUI(totalPages) {
       pageLabel = `หน้าผลงาน ${activePageIndex} (หน้า ${activePageIndex + 1})`;
     }
     pageCounterText.textContent = `หน้า ${activePageIndex + 1} / ${totalPages} • ${pageLabel}`;
+  }
+
+  if (jumpInput) {
+    jumpInput.max = String(totalPages);
+    jumpInput.value = String(activePageIndex + 1);
   }
 
   if (btnPrev) {
@@ -191,7 +213,7 @@ function updateThumbnailStrip(totalPages) {
     btn.setAttribute('aria-current', isActive ? 'page' : 'false');
   });
 
-  // Scroll active thumbnail into view smoothly
+  // Scroll active thumbnail into view smoothly without scrolling whole page
   const activeBtn = thumbnailStrip.querySelector(`.preview-thumb-btn[data-page="${activePageIndex}"]`);
   if (activeBtn) {
     activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
@@ -199,14 +221,17 @@ function updateThumbnailStrip(totalPages) {
 }
 
 /**
- * Rebuilds the thumbnail button strip.
+ * Rebuilds the thumbnail cards strip when page count or images list changes.
+ * Uses real image previews for activity pages, and stylized mini covers for covers.
  */
 export function buildThumbnailStrip() {
   if (!thumbnailStrip) return;
 
   const state = projectStore.getState();
   const totalPages = getTotalPreviewPages(state);
+  const images = state.images || [];
 
+  lastRenderedThumbnailCount = totalPages;
   thumbnailStrip.innerHTML = '';
 
   for (let i = 0; i < totalPages; i++) {
@@ -215,13 +240,53 @@ export function buildThumbnailStrip() {
     btn.className = `preview-thumb-btn ${i === activePageIndex ? 'is-active' : ''}`;
     btn.dataset.page = String(i);
 
-    let name = '';
-    if (i === 0) name = 'ปกหน้า';
-    else if (i === totalPages - 1) name = 'ปกหลัง';
-    else name = `${i}`;
+    let labelName = '';
+    let previewContent = '';
 
-    btn.setAttribute('aria-label', `ไปยังหน้า ${i + 1} (${name})`);
-    btn.innerHTML = `<span class="thumb-page-num">${i + 1}</span><span class="thumb-page-name">${name}</span>`;
+    if (i === 0) {
+      // Front cover card
+      labelName = 'ปกหน้า';
+      btn.setAttribute('aria-label', `ไปยังหน้า 1 (ปกหน้า)`);
+      previewContent = `
+        <div class="thumb-paper-preview thumb-cover-front">
+          <div class="thumb-mini-emblem-dot" aria-hidden="true"></div>
+          <span class="thumb-page-badge">#1</span>
+        </div>
+        <span class="thumb-page-name">ปกหน้า</span>
+      `;
+    } else if (i === totalPages - 1) {
+      // Back cover card
+      labelName = 'ปกหลัง';
+      btn.setAttribute('aria-label', `ไปยังหน้า ${totalPages} (ปกหลัง)`);
+      previewContent = `
+        <div class="thumb-paper-preview thumb-cover-back">
+          <div class="thumb-mini-line-dot" aria-hidden="true"></div>
+          <span class="thumb-page-badge">#${totalPages}</span>
+        </div>
+        <span class="thumb-page-name">ปกหลัง</span>
+      `;
+    } else {
+      // Activity image page card
+      const imgIdx = i - 1;
+      const imgItem = images[imgIdx];
+      labelName = `ผลงาน ${i}`;
+      btn.setAttribute('aria-label', `ไปยังหน้า ${i + 1} (${labelName})`);
+
+      const imgSrc = imgItem?.previewUrl || '';
+      const imgTag = imgSrc
+        ? `<img src="${imgSrc}" class="thumb-paper-img" alt="" loading="lazy" />`
+        : `<div class="thumb-paper-empty" aria-hidden="true"></div>`;
+
+      previewContent = `
+        <div class="thumb-paper-preview thumb-activity-preview">
+          ${imgTag}
+          <span class="thumb-page-badge">#${i + 1}</span>
+        </div>
+        <span class="thumb-page-name">ผลงาน ${i}</span>
+      `;
+    }
+
+    btn.innerHTML = previewContent;
 
     btn.addEventListener('click', () => {
       activePageIndex = i;
@@ -230,6 +295,22 @@ export function buildThumbnailStrip() {
 
     thumbnailStrip.appendChild(btn);
   }
+}
+
+/**
+ * Executes jump to specific page from input.
+ */
+function handleQuickJump() {
+  if (!jumpInput) return;
+  const pageNum = parseInt(jumpInput.value, 10);
+  if (isNaN(pageNum)) return;
+
+  const state = projectStore.getState();
+  const totalPages = getTotalPreviewPages(state);
+  const targetIndex = Math.max(0, Math.min(pageNum - 1, totalPages - 1));
+
+  activePageIndex = targetIndex;
+  renderCurrentPreviewPage();
 }
 
 /**
@@ -266,6 +347,8 @@ export function initDocumentPreview(container) {
   btnPrev = container.querySelector('#btn-preview-page-prev');
   btnNext = container.querySelector('#btn-preview-page-next');
   thumbnailStrip = container.querySelector('#preview-thumbnail-strip');
+  jumpInput = container.querySelector('#preview-jump-input');
+  btnJumpGo = container.querySelector('#btn-preview-jump-go');
 
   if (btnPrev) {
     btnPrev.addEventListener('click', previewPrevPage);
@@ -275,8 +358,24 @@ export function initDocumentPreview(container) {
     btnNext.addEventListener('click', previewNextPage);
   }
 
+  if (btnJumpGo) {
+    btnJumpGo.addEventListener('click', handleQuickJump);
+  }
+
+  if (jumpInput) {
+    jumpInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        handleQuickJump();
+      }
+    });
+  }
+
   // Keyboard navigation when inside preview area
   container.addEventListener('keydown', (e) => {
+    // Avoid hijacking left/right arrow when typing inside the jump input
+    if (e.target === jumpInput) return;
+
     if (e.key === 'ArrowLeft') {
       e.preventDefault();
       previewPrevPage();
@@ -286,12 +385,14 @@ export function initDocumentPreview(container) {
     }
   });
 
-  // Rebuild thumbnail strip and render when state changes
+  // Rebuild thumbnail strip only when page count/images change, otherwise just re-render preview page
   projectStore.subscribe((state) => {
-    // Only perform full render if preview is visible or being shown
     const sec3 = document.querySelector('#section-review-export');
     if (sec3 && !sec3.hidden) {
-      buildThumbnailStrip();
+      const currentPages = getTotalPreviewPages(state);
+      if (currentPages !== lastRenderedThumbnailCount) {
+        buildThumbnailStrip();
+      }
       renderCurrentPreviewPage();
     }
   });
