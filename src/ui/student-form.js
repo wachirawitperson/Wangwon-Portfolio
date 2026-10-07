@@ -26,6 +26,8 @@ export function initStudentForm(formElement) {
   const btnRemovePhoto = document.querySelector('#btn-remove-student-photo');
   const photoPreviewImg = document.querySelector('#student-photo-preview-img');
   const photoPlaceholder = document.querySelector('#student-photo-placeholder');
+  const photoFrame = document.querySelector('#student-photo-preview-wrap');
+  const photoHintText = document.querySelector('#photo-frame-hint-text');
 
   // Summary State Elements (Removed in Phase 16 to keep Section 1 focused)
   const studentEditCard = document.querySelector('#student-edit-card');
@@ -151,10 +153,31 @@ export function initStudentForm(formElement) {
     }
   }
 
-  if (btnUploadPhoto && photoInput) {
+  function triggerPhotoPicker() {
+    if (photoInput) {
+      photoInput.click();
+    }
+  }
+
+  if (btnUploadPhoto) {
     btnUploadPhoto.addEventListener('click', (e) => {
       e.stopPropagation();
-      photoInput.click();
+      triggerPhotoPicker();
+    });
+  }
+
+  if (photoFrame) {
+    photoFrame.addEventListener('click', (e) => {
+      // Don't double trigger if an internal button was clicked
+      if (e.target.closest('button')) return;
+      triggerPhotoPicker();
+    });
+
+    photoFrame.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        triggerPhotoPicker();
+      }
     });
   }
 
@@ -168,7 +191,8 @@ export function initStudentForm(formElement) {
   }
 
   if (btnRemovePhoto) {
-    btnRemovePhoto.addEventListener('click', () => {
+    btnRemovePhoto.addEventListener('click', (e) => {
+      e.stopPropagation();
       clearStudentPhoto();
       autosaveManager.triggerImmediateSave(projectStore.getState());
       showToast('ลบรูปนักเรียนเรียบร้อย', 'info');
@@ -210,6 +234,13 @@ export function initStudentForm(formElement) {
       if (photoPlaceholder) photoPlaceholder.style.display = 'none';
       if (btnRemovePhoto) btnRemovePhoto.style.display = 'inline-flex';
       if (btnUploadPhoto) btnUploadPhoto.textContent = 'เปลี่ยนรูป';
+      if (photoFrame) {
+        photoFrame.classList.add('has-photo');
+        photoFrame.setAttribute('aria-label', 'เปลี่ยนรูปถ่ายนักเรียน (คลิกหรือกดเพื่อเปลี่ยนรูป)');
+      }
+      if (photoHintText) {
+        photoHintText.textContent = 'คลิกเพื่อเปลี่ยนรูป';
+      }
     } else {
       if (photoPreviewImg) {
         photoPreviewImg.removeAttribute('src');
@@ -218,6 +249,13 @@ export function initStudentForm(formElement) {
       if (photoPlaceholder) photoPlaceholder.style.display = 'flex';
       if (btnRemovePhoto) btnRemovePhoto.style.display = 'none';
       if (btnUploadPhoto) btnUploadPhoto.textContent = 'เลือกรูปถ่าย';
+      if (photoFrame) {
+        photoFrame.classList.remove('has-photo');
+        photoFrame.setAttribute('aria-label', 'เลือกรูปถ่ายนักเรียน (คลิกหรือกดเพื่อเลือกรูป)');
+      }
+      if (photoHintText) {
+        photoHintText.textContent = 'คลิกเพื่อเลือกรูป';
+      }
     }
   });
 

@@ -135,7 +135,13 @@
             <p class="card-subtitle-main">ใช้สำหรับหน้าปกแฟ้มสะสมผลงาน</p>
           </div>
 
-          <div class="student-photo-frame" id="student-photo-preview-wrap">
+          <div
+            class="student-photo-frame"
+            id="student-photo-preview-wrap"
+            role="button"
+            tabindex="0"
+            aria-label="เลือกรูปถ่ายนักเรียน (คลิกหรือกดเพื่อเลือกรูป)"
+          >
             <div class="student-photo-placeholder" id="student-photo-placeholder">
               <div class="photo-icon-circle" aria-hidden="true">
                 <svg class="photo-icon" xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -145,6 +151,12 @@
               <span class="photo-placeholder-dim">(แนะนำ 800 × 1000 px)</span>
             </div>
             <img id="student-photo-preview-img" class="student-photo-img" alt="รูปถ่ายนักเรียน" style="display: none;" />
+            
+            <!-- Hover/Focus Action Hint Overlay (Desktop visual cue) -->
+            <div class="photo-frame-hint-overlay" id="photo-frame-hint-overlay" aria-hidden="true">
+              <svg class="icon-inline" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <span class="hint-text" id="photo-frame-hint-text">คลิกเพื่อเลือกรูป</span>
+            </div>
           </div>
 
           <div class="photo-actions">
